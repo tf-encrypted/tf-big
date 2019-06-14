@@ -3,10 +3,10 @@ licenses(["notice"])  # Apache 2.0
 package(default_visibility = ["//visibility:public"])
 
 cc_binary(
-    name = 'python/ops/_tf_big_ops.so',
+    name = 'python/ops/big_ops.so',
     srcs = [
-        "cc/kernels/tf_big_kernels.cc",
-        "cc/ops/tf_big_ops.cc",
+        "cc/kernels/big_kernels.cc",
+        "cc/ops/big_ops.cc",
     ],
     linkshared = 1,
     deps = [
@@ -19,24 +19,24 @@ cc_binary(
 )
 
 py_library(
-    name = "tf_big_ops_py",
+    name = "big_ops_py",
     srcs = ([
-        "python/ops/tf_big_ops.py",
+        "python/ops/big_ops.py",
     ]),
     data = [
-        ":python/ops/_tf_big_ops.so"
+        ":python/ops/big_ops.so"
     ],
     srcs_version = "PY2AND3",
 )
 
 py_test(
-    name = "tf_big_ops_py_test",
+    name = "big_ops_py_test",
     srcs = [
-        "python/ops/tf_big_ops_test.py"
+        "python/ops/big_ops_test.py",
     ],
-    main = "python/ops/tf_big_ops_test.py",
+    main = "python/ops/big_ops_test.py",
     deps = [
-        ":tf_big_ops_py",
+        ":big_ops_py",
     ],
     srcs_version = "PY2AND3",
 )
@@ -49,7 +49,7 @@ py_library(
         "python/ops/__init__.py",
     ]),
     deps = [
-        ":tf_big_ops_py"
+        ":big_ops_py"
     ],
     srcs_version = "PY2AND3",
 )

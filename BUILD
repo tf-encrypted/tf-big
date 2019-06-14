@@ -5,6 +5,6 @@ sh_binary(
         "LICENSE",
         "MANIFEST.in",
         "setup.py",
-        "//tf-big:tf_big_py",
+        "//tf_big:tf_big_py",
     ],
 )
