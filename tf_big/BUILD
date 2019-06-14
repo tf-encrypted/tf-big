@@ -3,7 +3,7 @@ licenses(["notice"])  # Apache 2.0
 package(default_visibility = ["//visibility:public"])
 
 cc_binary(
-    name = 'python/ops/big_ops.so',
+    name = 'python/ops/_big_ops.so',
     srcs = [
         "cc/kernels/big_kernels.cc",
         "cc/ops/big_ops.cc",
@@ -24,7 +24,7 @@ py_library(
         "python/ops/big_ops.py",
     ]),
     data = [
-        ":python/ops/big_ops.so"
+        ":python/ops/_big_ops.so"
     ],
     srcs_version = "PY2AND3",
 )
