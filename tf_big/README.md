@@ -30,7 +30,7 @@ sudo apt install gmp
 sudo docker run -it -v `pwd`:/opt/my-project \
   -w /opt/my-project \
   tensorflow/tensorflow:custom-op \
-  /bin/bash -c "sudo apt install gmp && make test"
+  /bin/bash -c "make test"
 ```
 
 **MacOS**

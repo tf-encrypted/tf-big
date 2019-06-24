@@ -5,7 +5,7 @@ cc_library(
                 "lib/libgmp.dylib",
                 "lib/libgmpxx.dylib",
            ],
-           "@bazel_tools//src/conditions:linux_x86_64": [
+           "//conditions:default": [
                 "lib/libgmp.so",
                 "lib/libgmpxx.so",
            ]
