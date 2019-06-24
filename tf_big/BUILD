@@ -15,7 +15,7 @@ cc_binary(
         "@libgmp//:lib"
     ],
     copts = ["-pthread", "-std=c++11", "-D_GLIBCXX_USE_CXX11_ABI=0"],
-    linkopts = ["-lgmp", "-lgmpxx"]
+    linkopts = ["-lgmp"]
 )
 
 py_library(
