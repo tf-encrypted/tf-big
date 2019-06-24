@@ -40,8 +40,6 @@ BigTensor::BigTensor(const BigTensor& other) {
 void BigTensor::Encode(VariantTensorData* data) const {
     size_t count_p;
 
-    gmp_printf("HELELLELELELLE %Zd\n", value);
-
     char * p = (char *)mpz_export(NULL, &count_p, 1, sizeof(unsigned long), 0, 0, value);
 
     int total_size = count_p * sizeof(unsigned long);
@@ -56,10 +54,6 @@ bool BigTensor::Decode(const VariantTensorData& data) {
     string metadata("");
     data.get_metadata(&metadata);
     mpz_import(value, 1, 1, sizeof(unsigned long), 0, 0, metadata.c_str());
-
-    gmp_printf("%Zd", value);
-
-    std::cout << "HI" << std::endl;
 
     return true;
 }

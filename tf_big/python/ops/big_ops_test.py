@@ -6,43 +6,34 @@ from tf_big.python.ops.big_ops import big_import
 from tf_big.python.ops.big_ops import big_export
 from tf_big.python.ops.big_ops import big_add
 
-class NTLMatrixTest(test.TestCase):
-  """NTLMatrix test"""
+class BigTest(test.TestCase):
+  """BigTest test"""
 
-  # def core(self, inp, output_type):
-  #   with self.test_session():
-  #     var1 = big.big_import(inp, 555666)
-  #     var2 = big.big_import(inp, 555666)
+  def test_import_export(self):
+    with tf.Session() as sess:
+      inp = "43424"
+      variant = big_import(inp)
+      output = big_export(variant)
 
-  #     res = big.big_add(var1, var2, 555666)
+      assert sess.run(output).decode('ascii') == inp
 
-  #     # s = ntl_to_native(res, output_type)
+  def test_add(self):
+    with tf.Session() as sess:
+      a = "5453452435245245245242534"
+      b = "1424132412341234123412341234134"
 
-  #     return s.eval()
+      expected = int(a) + int(b)
 
-  # def test_ntl_matrix_string(self):
-  #   # not sure why these are binary strings
-  #   expected = [[b"50", b"50"], [b"50", b"50"]]
+      a_var = big_import(a)
+      b_var = big_import(b)
 
-  #   actual = self.core([["5", "5"], ["5", "5"]], tf.string)
+      c_var = big_add(a_var, b_var)
 
-  #   np.testing.assert_array_equal(expected, actual)
+      c_str = big_export(c_var)
 
-  # def test_ntl_matrix_int32(self):
-  #   # not sure why these are binary strings
-  #   expected = [[50, 50], [50, 50]]
+      output = sess.run(c_str)
 
-  #   actual = self.core(np.array([[5, 5], [5, 5]]).astype(np.int32), tf.int32)
-
-  #   np.testing.assert_array_equal(expected, actual)
-
-  # def test_ntl_matrix_int64(self):
-  #   # not sure why these are binary strings
-  #   expected = [[50, 50], [50, 50]]
-
-  #   actual = self.core(np.array([[5, 5], [5, 5]]).astype(np.int64), tf.int64)
-
-  #   np.testing.assert_array_equal(expected, actual)
+      assert int(output) == expected
 
 
 if __name__ == '__main__':

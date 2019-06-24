@@ -40,7 +40,6 @@ function main() {
   # give us an absolute paths with tilde characters resolved to the destination
   # directory.
   mkdir -p ${DEST}
-  DEST=$(readlink -f "${DEST}")
   echo "=== destination directory: ${DEST}"
 
   TMPDIR=$(mktemp -d -t tmp.XXXXXXXXXX)
@@ -50,13 +49,14 @@ function main() {
   echo "=== Copy TensorFlow Zero Out files"
 
   cp ${PIP_FILE_PREFIX}setup.py "${TMPDIR}"
+  cp ${PIP_FILE_PREFIX}README.md "${TMPDIR}"
   cp ${PIP_FILE_PREFIX}MANIFEST.in "${TMPDIR}"
-  cp ${PIP_FILE_PREFIX}LICENSE "${TMPDIR}"
-  rsync -avm -L --exclude='*_test.py' ${PIP_FILE_PREFIX}tensorflow_zero_out "${TMPDIR}"
+  rsync -avm -L --exclude='*_test.py' ${PIP_FILE_PREFIX}tf_big "${TMPDIR}"
 
   pushd ${TMPDIR}
   echo $(date) : "=== Building wheel"
 
+  cat README.md
   python setup.py bdist_wheel > /dev/null
 
   cp dist/*.whl "${DEST}"
