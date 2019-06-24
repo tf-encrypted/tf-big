@@ -16,12 +16,16 @@ brew install gmp
 
 ## Building
 
+### Tests
+
+**Linux**
+
 ```
 sudo docker run -it -v `pwd`:/opt/my-project \
   -w /opt/my-project \
-  tf-encrypted/tf-big:0.1.0 /bin/bash
+  tf-encrypted/tf-big:0.1.0 /bin/bash -c "make test"
 ```
 
-### Tests
+**MacOS**
 
 ### Pip Package
