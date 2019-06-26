@@ -20,7 +20,8 @@ TEST(BigTensorTest, EncodeDecode) {
   EXPECT_EQ(b2.value(0, 0).get_str(10), input);
 }
 
-// TODO I don't think we need a main function but I couldn't make it work without!
+// TODO I don't think we need a main function but I couldn't make it work
+// without!
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

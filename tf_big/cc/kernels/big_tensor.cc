@@ -47,7 +47,8 @@ bool BigTensor::Decode(const VariantTensorData& data) {
 
   for (int i = 0; i < rows; i++) {
     for (int j = 0; j < cols; j++) {
-      mpz_import(value(i, j).get_mpz_t(), 1, 1, sizeof(unsigned long), 0, 0, mat(i, j).c_str());
+      mpz_import(value(i, j).get_mpz_t(), 1, 1, sizeof(unsigned long), 0, 0,
+                 mat(i, j).c_str());
     }
   }
 
