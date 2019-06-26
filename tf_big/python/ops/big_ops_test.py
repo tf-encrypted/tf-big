@@ -11,11 +11,11 @@ class BigTest(test.TestCase):
 
   def test_import_export(self):
     with tf.Session() as sess:
-      inp = "43424"
+      inp = [[b"43424"]]
       variant = big_import(inp)
       output = big_export(variant)
 
-      assert sess.run(output).decode('ascii') == inp
+      assert sess.run(output) == inp
 
   def test_add(self):
     with tf.Session() as sess:
@@ -24,8 +24,8 @@ class BigTest(test.TestCase):
 
       expected = int(a) + int(b)
 
-      a_var = big_import(a)
-      b_var = big_import(b)
+      a_var = big_import([[a]])
+      b_var = big_import([[b]])
 
       c_var = big_add(a_var, b_var)
 

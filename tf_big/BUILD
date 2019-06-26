@@ -6,6 +6,8 @@ cc_binary(
     name = 'python/ops/_big_ops.so',
     srcs = [
         "cc/kernels/big_kernels.cc",
+        "cc/kernels/big_tensor.h",
+        "cc/kernels/big_tensor.cc",
         "cc/ops/big_ops.cc",
     ],
     linkshared = 1,
@@ -15,7 +17,25 @@ cc_binary(
         "@libgmp//:lib"
     ],
     copts = ["-pthread", "-std=c++11", "-D_GLIBCXX_USE_CXX11_ABI=0"],
-    linkopts = ["-lgmp"]
+    linkopts = ["-lgmp", "-lgmpxx"]
+)
+
+cc_test(
+    name = "big_ops_test",
+    srcs = [
+        "cc/kernels/big_tensor_test.cc",
+        "cc/kernels/big_tensor.h",
+        "cc/kernels/big_tensor.cc",
+    ],
+    deps = [
+        "@com_google_googletest//:gtest",
+        "python/ops/_big_ops.so",
+        "@local_config_tf//:libtensorflow_framework",
+        "@local_config_tf//:tf_header_lib",
+        "@libgmp//:lib"
+    ],
+    copts = ["-pthread", "-std=c++11", "-D_GLIBCXX_USE_CXX11_ABI=0"],
+    linkopts = ["-lgmp", "-lgmpxx"]
 )
 
 py_library(
