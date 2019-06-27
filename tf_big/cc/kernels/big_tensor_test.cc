@@ -3,6 +3,8 @@
 #include "big_tensor.h"
 #include "gtest/gtest.h"
 
+using namespace tfbig;
+
 TEST(BigTensorTest, EncodeDecode) {
   std::string input("2344134134");
   BigTensor b(mpz_class(input, 10));
