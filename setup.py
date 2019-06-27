@@ -14,7 +14,7 @@ setuptools.setup(
         "tensorflow >=1.13.1, <2",
     ],
     extras_require={
-        "tf": ["tensorflow>=1.12.0,<2"],
+        "tf": ["tensorflow>=1.31.1,<2"],
     },
     license="Apache License 2.0",
     url="https://github.com/tf-encrypted/tf-big",
