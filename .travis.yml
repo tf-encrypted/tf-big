@@ -3,15 +3,8 @@ services:
 
 jobs:
   include:
-    - stage: macos-test
-      os: osx
-      before_install: |
-        curl -O https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
-        bash Miniconda3-latest-MacOSX-x86_64.sh -b -f
-        ../miniconda3/bin/conda create -n py35 python=3.5 2> /dev/null || true
-        ../miniconda3/envs/py35/bin/python -m venv venv
-        . venv/bin/activate
-        HOMEBREW_NO_AUTO_UPDATE=1 brew tap bazelbuild/tap
-        HOMEBREW_NO_AUTO_UPDATE=1 brew install gmp bazelbuild/tap/bazel
+    - stage: linux-test
+      before_install:
+        - docker build -t tf-encrypted/tf-big .
       script: |
-        make test
+        docker run -it -v `pwd`:/opt/my-project -w /opt/my-project tf-encrypted/tf-big /bin/bash -c "make test"
