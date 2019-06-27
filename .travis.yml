@@ -12,6 +12,6 @@ jobs:
         ../miniconda3/envs/py35/bin/python -m venv venv
         . venv/bin/activate
         HOMEBREW_NO_AUTO_UPDATE=1 brew tap bazelbuild/tap
-        HOMEBREW_NO_AUTO_UPDATE=1 brew install gmp azelbuild/tap/bazel
+        HOMEBREW_NO_AUTO_UPDATE=1 brew install gmp bazelbuild/tap/bazel
       script: |
         make test
