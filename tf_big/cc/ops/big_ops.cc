@@ -3,13 +3,15 @@
 
 // Input just a string for now, we make this more robust in the future
 REGISTER_OP("BigImport")
-    .Input("in: string")
+    .Attr("dtype: {int32, int64, string}")
+    .Input("in: dtype")
     .Output("val: variant")
     .SetIsStateful();
 
 REGISTER_OP("BigExport")
+    .Attr("dtype: {int32, int64, string}")
     .Input("val: variant")
-    .Output("out: string")
+    .Output("out: dtype")
     .SetIsStateful();
 
 REGISTER_OP("BigAdd")

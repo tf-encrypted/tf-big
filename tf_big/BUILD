@@ -29,7 +29,6 @@ cc_test(
     ],
     deps = [
         "@com_google_googletest//:gtest",
-        "python/ops/_big_ops.so",
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
         "@libgmp//:lib"
