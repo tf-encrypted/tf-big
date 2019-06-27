@@ -11,6 +11,7 @@ jobs:
         ../miniconda3/bin/conda create -n py35 python=3.5 2> /dev/null || true
         ../miniconda3/envs/py35/bin/python -m venv venv
         . venv/bin/activate
-        HOMEBREW_NO_AUTO_UPDATE=1 brew install gmp
+        HOMEBREW_NO_AUTO_UPDATE=1 brew tap bazelbuild/tap
+        HOMEBREW_NO_AUTO_UPDATE=1 brew install gmp azelbuild/tap/bazel
       script: |
         make test
