@@ -35,6 +35,24 @@ class BigTest(test.TestCase):
 
       assert int(output) == expected
 
+  def test_2d_matrix_add(self):
+    with tf.Session() as sess:
+      a = np.array([[b"5", b"5"], [b"5", b"5"]])
+      b = np.array([[b"6", b"6"], [b"6", b"6"]])
+
+      expected = a.astype(np.int32) + b.astype(np.int32)
+
+      a_var = big_import(a)
+      b_var = big_import(b)
+
+      c_var = big_add(a_var, b_var)
+
+      c_str = big_export(c_var)
+
+      output = sess.run(c_str)
+
+      np.testing.assert_equal(output.astype(np.int32), expected)
+
 
 if __name__ == '__main__':
   test.main()

@@ -7,4 +7,4 @@ test: .bazelrc
 fmt:
 	cd tf_big && find . -iname *.h -o -iname *.cc | xargs clang-format -i -style=google
 
-.PHONY: test
+.PHONY: test fmt
