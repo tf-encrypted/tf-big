@@ -56,7 +56,7 @@ class BigTest(test.TestCase):
 
       c_var = big_add(a_var, b_var)
 
-      c_str = big_export(c_var)
+      c_str = big_export(c_var, tf.string)
 
       output = sess.run(c_str)
 
