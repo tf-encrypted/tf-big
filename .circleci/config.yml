@@ -1,0 +1,22 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: circleci/python:3.5-jessie
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - run:
+          name: install gmp deps
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            wget https://gmplib.org/download/gmp/gmp-6.1.2.tar.xz
+            tar -xf gmp-6.1.2.tar.xz
+            cd gmp-6.1.2 && ./configure --with-pic --enable-cxx --enable-static --disable-shared && make && make check && make install
+      - run:
+          name: run tests and build the docs
+          command: |
+            . venv/bin/activate
+            make test
