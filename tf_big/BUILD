@@ -16,8 +16,7 @@ cc_binary(
         "@local_config_tf//:tf_header_lib",
         "@libgmp//:lib"
     ],
-    copts = ["-pthread", "-std=c++11", "-D_GLIBCXX_USE_CXX11_ABI=0"],
-    linkopts = ["-lgmp", "-lgmpxx"]
+    copts = ["-pthread", "-std=c++11", "-D_GLIBCXX_USE_CXX11_ABI=0", "-fPIC"],
 )
 
 cc_test(
@@ -29,13 +28,11 @@ cc_test(
     ],
     deps = [
         "@com_google_googletest//:gtest",
-        "python/ops/_big_ops.so",
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
         "@libgmp//:lib"
     ],
-    copts = ["-pthread", "-std=c++11", "-D_GLIBCXX_USE_CXX11_ABI=0"],
-    linkopts = ["-lgmp", "-lgmpxx"]
+    copts = ["-pthread", "-std=c++11", "-D_GLIBCXX_USE_CXX11_ABI=0", "-fPIC"],
 )
 
 py_library(
