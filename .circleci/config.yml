@@ -10,14 +10,11 @@ jobs:
       - run:
           name: install gmp deps
           command: |
-            python3 -m venv venv
-            . venv/bin/activate
             wget https://gmplib.org/download/gmp/gmp-6.1.2.tar.xz
             tar -xf gmp-6.1.2.tar.xz
             cd gmp-6.1.2 && ./configure --with-pic --enable-cxx --enable-static --disable-shared && make && make check && sudo make install
       - run:
           name: run tests and build the docs
           command: |
-            . venv/bin/activate
             export LD_LIBRARY_PATH=/usr/local
             make test
