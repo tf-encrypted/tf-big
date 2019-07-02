@@ -18,7 +18,7 @@ Status GetBigTensor(OpKernelContext* ctx, int index, const BigTensor** res) {
   // TODO: check scalar type
   const BigTensor* big = input.scalar<Variant>()().get<BigTensor>();
   if (big == nullptr) {
-    return errors::InvalidArgument("Input handle is not a mpz wrapper. Saw: '",
+    return errors::InvalidArgument("Input handle is not a big tensor. Saw: '",
                                    input.scalar<Variant>()().DebugString(),
                                    "'");
   }
@@ -55,7 +55,7 @@ class BigExportOp : public OpKernel {
   void Compute(OpKernelContext* ctx) override {
     const BigTensor* val = nullptr;
     OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 0, &val));
-    auto output_shape = TensorShape{val->value.rows(), val->value.cols()};
+    auto output_shape = TensorShape{val->rows(), val->cols()};
 
     Tensor* str;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(0, output_shape, &str));
@@ -78,11 +78,10 @@ class BigAddOp : public OpKernel {
     Tensor* output;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(0, TensorShape{}, &output));
 
-    auto res = val1->value + val2->value;
-    BigTensor big(res);
+    auto res = *val1 + *val2;
 
     // TODO: free old memory???
-    output->scalar<Variant>()() = std::move(big);
+    output->scalar<Variant>()() = std::move(res);
   }
 };
 

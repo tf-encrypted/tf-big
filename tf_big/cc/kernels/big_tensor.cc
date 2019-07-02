@@ -38,6 +38,10 @@ void BigTensor::Encode(VariantTensorData* data) const {
 }
 
 bool BigTensor::Decode(const VariantTensorData& data) {
+  if(!TensorShapeUtils::IsMatrix(data.tensors()[0].shape())) {
+    return false;
+  }
+
   auto mat = data.tensors()[0].matrix<string>();
 
   auto rows = data.tensors()[0].dim_size(0);

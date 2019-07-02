@@ -15,9 +15,7 @@ TEST(BigTensorTest, EncodeDecode) {
 
   b2.Decode(d);
 
-  std::cout << b2.value << std::endl;
-
-  EXPECT_EQ(b2.value(0, 0).get_str(10), input);
+  EXPECT_EQ(b2(0, 0).get_str(10), input);
 }
 
 // TODO I don't think we need a main function but I couldn't make it work

@@ -15,6 +15,7 @@
 
 using Eigen::Dynamic;
 using Eigen::Matrix;
+using Eigen::Index;
 
 using namespace tensorflow;
 
@@ -43,7 +44,6 @@ struct NumTraits<mpz_class> : GenericNumTraits<mpz_class> {
 typedef Matrix<mpz_class, Dynamic, Dynamic> MatrixXm;
 
 struct BigTensor {
- public:
   BigTensor(){};
   BigTensor(const BigTensor& other);
   BigTensor(mpz_class m);
@@ -86,5 +86,29 @@ struct BigTensor {
     }
   }
 
+  BigTensor& operator+=(const BigTensor& rhs) {
+    this->value += rhs.value;
+    return *this;
+  }
+
+  // friend makes this a non-member
+  friend BigTensor operator+(BigTensor lhs, const BigTensor& rhs) {
+    lhs += rhs;
+    return lhs;
+  }
+
+  mpz_class operator()(Index i, Index j) {
+    return value(i, j);
+  }
+
+  Index rows() const {
+    return value.rows();
+  }
+
+  Index cols() const {
+    return value.cols();
+  }
+
+private:
   MatrixXm value;
 };
