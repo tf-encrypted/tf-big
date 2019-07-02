@@ -1,6 +1,7 @@
-#include "gmp.h"
+#include <gmp.h>
+#include <string>
 
-#include "big_tensor.h"
+#include "tf_big/cc/kernels/big_tensor.h"
 
 namespace tf_big {
 BigTensor::BigTensor(const MatrixXm& mat) { value = mat; }
@@ -24,10 +25,10 @@ void BigTensor::Encode(VariantTensorData* data) const {
     for (int j = 0; j < cols; j++) {
       size_t count_p;
 
-      char* p = (char*)mpz_export(NULL, &count_p, 1, sizeof(signed long), 0, 0,
-                                  value(i, j).get_mpz_t());
+      char* p = reinterpret_cast<char*>(mpz_export(
+          NULL, &count_p, 1, sizeof(int32), 0, 0, value(i, j).get_mpz_t()));
 
-      int total_size = count_p * sizeof(signed long);
+      int total_size = count_p * sizeof(int32);
 
       mat(i, j) = string(p, total_size);
     }
@@ -39,7 +40,7 @@ void BigTensor::Encode(VariantTensorData* data) const {
 }
 
 bool BigTensor::Decode(const VariantTensorData& data) {
-  if(!TensorShapeUtils::IsMatrix(data.tensors()[0].shape())) {
+  if (!TensorShapeUtils::IsMatrix(data.tensors()[0].shape())) {
     return false;
   }
 
@@ -52,7 +53,7 @@ bool BigTensor::Decode(const VariantTensorData& data) {
 
   for (int i = 0; i < rows; i++) {
     for (int j = 0; j < cols; j++) {
-      mpz_import(value(i, j).get_mpz_t(), 1, 1, sizeof(signed long), 0, 0,
+      mpz_import(value(i, j).get_mpz_t(), 1, 1, sizeof(int32), 0, 0,
                  mat(i, j).c_str());
     }
   }
@@ -62,5 +63,4 @@ bool BigTensor::Decode(const VariantTensorData& data) {
 
 const char BigTensor::kTypeName[] = "BigTensor";
 
-}
-
+}  // namespace tf_big

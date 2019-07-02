@@ -82,7 +82,7 @@ class BigTest(test.TestCase):
 
       np.testing.assert_equal(output, expected)
 
-def test_mul(self):
+  def test_mul(self):
     with tf.Session() as sess:
       a = np.array([[5, 5], [5, 5]]).astype(np.int32)
       b = np.array([[6, 6], [6, 6]]).astype(np.int32)
@@ -99,7 +99,6 @@ def test_mul(self):
       output = sess.run(c_str)
 
       np.testing.assert_equal(output, expected)
-      print(output)
 
 
 if __name__ == '__main__':

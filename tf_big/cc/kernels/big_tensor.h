@@ -1,3 +1,11 @@
+#ifndef TF_BIG_CC_KERNELS_BIG_TENSOR_H_
+#define TF_BIG_CC_KERNELS_BIG_TENSOR_H_
+
+#include <gmp.h>
+#include <gmpxx.h>
+
+#include <string>
+
 #include "tensorflow/core/framework/op.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
@@ -10,14 +18,11 @@
 #include "Eigen/Core"
 #include "Eigen/Dense"
 
-#include "gmp.h"
-#include "gmpxx.h"
-
 using Eigen::Dynamic;
-using Eigen::Matrix;
 using Eigen::Index;
+using Eigen::Matrix;
 
-using namespace tensorflow;
+using namespace tensorflow; // NOLINT
 
 namespace Eigen {
 template <>
@@ -46,10 +51,10 @@ typedef Matrix<mpz_class, Dynamic, Dynamic> MatrixXm;
 namespace tf_big {
 
 struct BigTensor {
-  BigTensor(){};
-  BigTensor(const BigTensor& other);
-  BigTensor(mpz_class m);
-  BigTensor(const MatrixXm& mat);
+  BigTensor() {}
+  explicit BigTensor(const BigTensor& other);
+  explicit BigTensor(mpz_class m);
+  explicit BigTensor(const MatrixXm& mat);
 
   static const char kTypeName[];
   string TypeName() const { return kTypeName; }
@@ -74,7 +79,6 @@ struct BigTensor {
       }
     }
   }
-
 
   template <typename T>
   void ToTensor(Tensor* t) const {
@@ -111,23 +115,17 @@ struct BigTensor {
     return lhs;
   }
 
-  mpz_class operator()(Index i, Index j) const {
-    return value(i, j);
-  }
+  mpz_class operator()(Index i, Index j) const { return value(i, j); }
 
   BigTensor cwiseProduct(const BigTensor& rhs) const {
     return BigTensor(this->value.cwiseProduct(rhs.value));
   }
 
-  Index rows() const {
-    return value.rows();
-  }
+  Index rows() const { return value.rows(); }
 
-  Index cols() const {
-    return value.cols();
-  }
+  Index cols() const { return value.cols(); }
 
-private:
+ private:
   MatrixXm value;
 };
 
@@ -159,4 +157,6 @@ inline void BigTensor::FromTensor<string>(const Tensor& t) {
   }
 }
 
-}  // namespace tfbig
+}  // namespace tf_big
+
+#endif  // TF_BIG_CC_KERNELS_BIG_TENSOR_H_
