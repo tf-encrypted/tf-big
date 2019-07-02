@@ -3,20 +3,58 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/python:3.5-jessie
+      - image: tensorflow/tensorflow:custom-op
     working_directory: ~/repo
     steps:
       - checkout
       - run:
           name: install gmp deps
           command: |
-            python3 -m venv venv
-            . venv/bin/activate
             wget https://gmplib.org/download/gmp/gmp-6.1.2.tar.xz
             tar -xf gmp-6.1.2.tar.xz
-            cd gmp-6.1.2 && ./configure --with-pic --enable-cxx --enable-static --disable-shared && make && make check && make install
+            cd gmp-6.1.2 && ./configure --with-pic --enable-cxx --enable-static --disable-shared && make && make check && sudo make install
       - run:
-          name: run tests and build the docs
+          name: run tests
+          command: |
+            export LD_LIBRARY_PATH=/usr/local
+            make test
+  build-macos:
+    macos:
+        xcode: "10.0.0"
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - run:
+          name: install deps
+          command: |
+            curl -O https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+            bash Miniconda3-latest-MacOSX-x86_64.sh -b -f
+            ../miniconda3/bin/conda create -n py35 python=3.5 2> /dev/null || true
+            ../miniconda3/envs/py35/bin/python -m venv venv
+            . venv/bin/activate
+            HOMEBREW_NO_AUTO_UPDATE=1 brew tap bazelbuild/tap
+            HOMEBREW_NO_AUTO_UPDATE=1 brew install gmp bazelbuild/tap/bazel
+      - run:
+          name: run tests
           command: |
             . venv/bin/activate
             make test
+
+workflows:
+  version: 2
+  build-linux-macos:
+    jobs:
+      - build:
+          filters:
+            tags:
+              # In order for the 'deploy' job to run, we must first kick off
+              # the build job on all tags. By default, Circle CI only kicks off
+              # builds on tags if a filter is defined.
+              only: /^(?:[0-9]+)\.(?:[0-9]+)\.(?:[0-9]+)(?:(\-rc[0-9]+)?)$/
+      - build-macos:
+          filters:
+            tags:
+              # In order for the 'deploy' job to run, we must first kick off
+              # the build job on all tags. By default, Circle CI only kicks off
+              # builds on tags if a filter is defined.
+              only: /^(?:[0-9]+)\.(?:[0-9]+)\.(?:[0-9]+)(?:(\-rc[0-9]+)?)$/
