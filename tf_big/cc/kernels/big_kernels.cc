@@ -88,6 +88,48 @@ class BigAddOp : public OpKernel {
   }
 };
 
+class BigMulOp : public OpKernel {
+ public:
+  explicit BigMulOp(OpKernelConstruction* context) : OpKernel(context) {}
+
+  void Compute(OpKernelContext* ctx) override {
+    const BigTensor* val1 = nullptr;
+    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 0, &val1));
+
+    const BigTensor* val2 = nullptr;
+    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 1, &val2));
+
+    Tensor* output;
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, TensorShape{}, &output));
+
+    auto res = (*val1).cwiseProduct(*val2);
+
+    // TODO: free old memory???
+    output->scalar<Variant>()() = std::move(res);
+  }
+};
+
+class BigMatMulOp : public OpKernel {
+ public:
+  explicit BigMatMulOp(OpKernelConstruction* context) : OpKernel(context) {}
+
+  void Compute(OpKernelContext* ctx) override {
+    const BigTensor* val1 = nullptr;
+    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 0, &val1));
+
+    const BigTensor* val2 = nullptr;
+    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 1, &val2));
+
+    Tensor* output;
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, TensorShape{}, &output));
+
+    auto res = *val1 * *val2;
+
+    // TODO: free old memory???
+    output->scalar<Variant>()() = std::move(res);
+  }
+};
+
 // Register the CPU kernels.
 #define REGISTER_CPU(T)                                                \
   REGISTER_KERNEL_BUILDER(                                             \
@@ -110,3 +152,6 @@ REGISTER_CPU(int32);
 REGISTER_UNARY_VARIANT_DECODE_FUNCTION(BigTensor, BigTensor::kTypeName);
 
 REGISTER_KERNEL_BUILDER(Name("BigAdd").Device(DEVICE_CPU), BigAddOp);
+REGISTER_KERNEL_BUILDER(Name("BigMatMul").Device(DEVICE_CPU), BigMatMulOp);
+REGISTER_KERNEL_BUILDER(Name("BigMul").Device(DEVICE_CPU), BigMulOp);
+

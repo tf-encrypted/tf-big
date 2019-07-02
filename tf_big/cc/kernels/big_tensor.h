@@ -100,8 +100,23 @@ struct BigTensor {
     return lhs;
   }
 
-  mpz_class operator()(Index i, Index j) {
+  BigTensor& operator*=(const BigTensor& rhs) {
+    this->value *= rhs.value;
+    return *this;
+  }
+
+  // friend makes this a non-member
+  friend BigTensor operator*(BigTensor lhs, const BigTensor& rhs) {
+    lhs *= rhs;
+    return lhs;
+  }
+
+  mpz_class operator()(Index i, Index j) const {
     return value(i, j);
+  }
+
+  BigTensor cwiseProduct(const BigTensor& rhs) const {
+    return BigTensor(this->value.cwiseProduct(rhs.value));
   }
 
   Index rows() const {

@@ -18,3 +18,15 @@ REGISTER_OP("BigAdd")
     .Input("val2: variant")
     .Output("res: variant")
     .SetIsStateful();
+
+REGISTER_OP("BigMul")
+    .Input("val1: variant")
+    .Input("val2: variant")
+    .Output("res: variant")
+    .SetIsStateful();
+
+REGISTER_OP("BigMatMul")
+    .Input("val1: variant")
+    .Input("val2: variant")
+    .Output("res: variant")
+    .SetIsStateful();
