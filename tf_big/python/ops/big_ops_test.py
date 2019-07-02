@@ -69,7 +69,7 @@ class BigTest(test.TestCase):
       a = np.array([[5, 5], [5, 5]]).astype(np.int32)
       b = np.array([[6, 6], [6, 6]]).astype(np.int32)
 
-      expected = a @ b
+      expected = a.dot(b)
 
       a_var = big_import(a)
       b_var = big_import(b)
