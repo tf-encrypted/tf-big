@@ -2,7 +2,7 @@
 
 #include "big_tensor.h"
 
-namespace tfbig {
+namespace tf_big {
 BigTensor::BigTensor(const MatrixXm& mat) { value = mat; }
 
 BigTensor::BigTensor(const BigTensor& other) { value = other.value; }

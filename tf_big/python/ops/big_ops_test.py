@@ -17,9 +17,9 @@ class BigTest(test.TestCase):
 
       assert sess.run(output) == inp
 
-  def test_export_int32(self):
+  def test_import_export_int32(self):
     with tf.Session() as sess:
-      inp = [[b"43424"]]
+      inp = [[43424]]
       variant = big_import(inp)
       output = big_export(variant, tf.int32)
 

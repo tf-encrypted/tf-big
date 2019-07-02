@@ -11,7 +11,7 @@
 #include "gmp.h"
 
 using namespace tensorflow;
-using namespace tfbig;
+using namespace tf_big;
 
 Status GetBigTensor(OpKernelContext* ctx, int index, const BigTensor** res) {
   const Tensor& input = ctx->input(index);
@@ -34,17 +34,17 @@ class BigImportOp : public OpKernel {
   explicit BigImportOp(OpKernelConstruction* context) : OpKernel(context) {}
 
   void Compute(OpKernelContext* ctx) override {
-    const Tensor& str = ctx->input(0);
+    const Tensor& input = ctx->input(0);
     OP_REQUIRES(
-        ctx, TensorShapeUtils::IsMatrix(str.shape()),
+        ctx, TensorShapeUtils::IsMatrix(input.shape()),
         errors::InvalidArgument("value expected to be a matrix ",
-                                "but got shape: ", str.shape().DebugString()));
+                                "but got shape: ", input.shape().DebugString()));
 
     Tensor* val;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(0, TensorShape{}, &val));
 
     BigTensor big;
-    big.FromTensor<T>(str);
+    big.FromTensor<T>(input);
 
     val->scalar<Variant>()() = std::move(big);
   }
@@ -60,10 +60,10 @@ class BigExportOp : public OpKernel {
     OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 0, &val));
     auto output_shape = TensorShape{val->value.rows(), val->value.cols()};
 
-    Tensor* str;
-    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, output_shape, &str));
+    Tensor* output;
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, output_shape, &output));
 
-    val->ToTensor<T>(str);
+    val->ToTensor<T>(output);
   }
 };
 

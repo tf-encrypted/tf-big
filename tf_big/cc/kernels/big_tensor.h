@@ -42,7 +42,7 @@ struct NumTraits<mpz_class> : GenericNumTraits<mpz_class> {
 
 typedef Matrix<mpz_class, Dynamic, Dynamic> MatrixXm;
 
-namespace tfbig {
+namespace tf_big {
 
 struct BigTensor {
  public:
