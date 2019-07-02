@@ -53,8 +53,8 @@ namespace tf_big {
 struct BigTensor {
   BigTensor() {}
   BigTensor(const BigTensor& other);
-  BigTensor(mpz_class m);
-  BigTensor(const MatrixXm& mat);
+  explicit BigTensor(mpz_class m);
+  explicit BigTensor(const MatrixXm& mat);
 
   static const char kTypeName[];
   string TypeName() const { return kTypeName; }
