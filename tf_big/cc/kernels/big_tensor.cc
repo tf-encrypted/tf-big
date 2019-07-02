@@ -2,7 +2,8 @@
 
 #include "big_tensor.h"
 
-BigTensor::BigTensor(MatrixXm mat) { value = mat; }
+namespace tf_big {
+BigTensor::BigTensor(const MatrixXm& mat) { value = mat; }
 
 BigTensor::BigTensor(const BigTensor& other) { value = other.value; }
 
@@ -23,10 +24,10 @@ void BigTensor::Encode(VariantTensorData* data) const {
     for (int j = 0; j < cols; j++) {
       size_t count_p;
 
-      char* p = (char*)mpz_export(NULL, &count_p, 1, sizeof(unsigned long), 0,
-                                  0, value(i, j).get_mpz_t());
+      char* p = (char*)mpz_export(NULL, &count_p, 1, sizeof(signed long), 0, 0,
+                                  value(i, j).get_mpz_t());
 
-      int total_size = count_p * sizeof(unsigned long);
+      int total_size = count_p * sizeof(signed long);
 
       mat(i, j) = string(p, total_size);
     }
@@ -47,7 +48,7 @@ bool BigTensor::Decode(const VariantTensorData& data) {
 
   for (int i = 0; i < rows; i++) {
     for (int j = 0; j < cols; j++) {
-      mpz_import(value(i, j).get_mpz_t(), 1, 1, sizeof(unsigned long), 0, 0,
+      mpz_import(value(i, j).get_mpz_t(), 1, 1, sizeof(signed long), 0, 0,
                  mat(i, j).c_str());
     }
   }
@@ -56,3 +57,6 @@ bool BigTensor::Decode(const VariantTensorData& data) {
 }
 
 const char BigTensor::kTypeName[] = "BigTensor";
+
+}
+
