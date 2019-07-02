@@ -43,11 +43,13 @@ struct NumTraits<mpz_class> : GenericNumTraits<mpz_class> {
 
 typedef Matrix<mpz_class, Dynamic, Dynamic> MatrixXm;
 
+namespace tf_big {
+
 struct BigTensor {
   BigTensor(){};
   BigTensor(const BigTensor& other);
   BigTensor(mpz_class m);
-  BigTensor(MatrixXm mat);
+  BigTensor(const MatrixXm& mat);
 
   static const char kTypeName[];
   string TypeName() const { return kTypeName; }
@@ -68,10 +70,11 @@ struct BigTensor {
     auto mat = t.matrix<T>();
     for (int i = 0; i < rows; i++) {
       for (int j = 0; j < cols; j++) {
-        value(i, j) = mpz_class(mat(i, j), 10);
+        value(i, j) = mpz_class(mat(i, j));
       }
     }
   }
+
 
   template <typename T>
   void ToTensor(Tensor* t) const {
@@ -112,3 +115,33 @@ struct BigTensor {
 private:
   MatrixXm value;
 };
+
+template <>
+inline void BigTensor::ToTensor<int32>(Tensor* t) const {
+  auto rows = value.rows();
+  auto cols = value.cols();
+
+  auto mat = t->matrix<int32>();
+  for (int i = 0; i < rows; i++) {
+    for (int j = 0; j < cols; j++) {
+      mat(i, j) = value(i, j).get_si();
+    }
+  }
+}
+
+template <>
+inline void BigTensor::FromTensor<string>(const Tensor& t) {
+  auto rows = t.dim_size(0);
+  auto cols = t.dim_size(1);
+
+  value = MatrixXm(rows, cols);
+
+  auto mat = t.matrix<string>();
+  for (int i = 0; i < rows; i++) {
+    for (int j = 0; j < cols; j++) {
+      value(i, j) = mpz_class(mat(i, j), 10);
+    }
+  }
+}
+
+}  // namespace tfbig
