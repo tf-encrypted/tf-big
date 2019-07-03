@@ -1,6 +1,14 @@
 """Installing with setuptools."""
 import setuptools
 
+from setuptools.dist import Distribution
+
+class BinaryDistribution(Distribution):
+  """This class is needed in order to create OS specific wheels."""
+
+  def has_ext_modules(self):
+    return True
+
 with open("README.md", "r") as fh:
   long_description = fh.read()
 
@@ -23,6 +31,9 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     author="The TF Encrypted Authors",
     author_email="tfencrypted@gmail.com",
+    include_package_data=True,
+    zip_safe=False,
+    distclass=BinaryDistribution,
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache Software License",
