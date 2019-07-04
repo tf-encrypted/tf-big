@@ -5,10 +5,10 @@ package(default_visibility = ["//visibility:public"])
 cc_binary(
     name = 'python/ops/_big_ops.so',
     srcs = [
-        "cc/kernels/big_kernels.cc",
-        "cc/kernels/big_tensor.h",
-        "cc/kernels/big_tensor.cc",
+        "cc/big_tensor.h",
+        "cc/big_tensor.cc",
         "cc/ops/big_ops.cc",
+        "cc/kernels/big_kernels.cc",
     ],
     linkshared = 1,
     deps = [
@@ -22,9 +22,9 @@ cc_binary(
 cc_test(
     name = "big_ops_test",
     srcs = [
-        "cc/kernels/big_tensor_test.cc",
-        "cc/kernels/big_tensor.h",
-        "cc/kernels/big_tensor.cc",
+        "cc/big_tensor_test.cc",
+        "cc/big_tensor.h",
+        "cc/big_tensor.cc",
     ],
     deps = [
         "@com_google_googletest//:gtest",

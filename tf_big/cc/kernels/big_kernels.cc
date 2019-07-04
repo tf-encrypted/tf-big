@@ -9,7 +9,7 @@
 #include "tensorflow/core/framework/variant_tensor_data.h"
 #include "tensorflow/core/kernels/bounds_check.h"
 
-#include "tf_big/cc/kernels/big_tensor.h"
+#include "tf_big/cc/big_tensor.h"
 
 using namespace tensorflow;  // NOLINT
 using tf_big::BigTensor;
@@ -148,17 +148,30 @@ class BigMatMulOp : public OpKernel {
   }
 };
 
-// Register the CPU kernels.
-#define REGISTER_CPU(T)                                                \
-  REGISTER_KERNEL_BUILDER(                                             \
-      Name("BigImport").Device(DEVICE_CPU).TypeConstraint<T>("dtype"), \
-      BigImportOp<T>);                                                 \
-  REGISTER_KERNEL_BUILDER(                                             \
-      Name("BigExport").Device(DEVICE_CPU).TypeConstraint<T>("dtype"), \
-      BigExportOp<T>);
+REGISTER_KERNEL_BUILDER(
+  Name("BigImport")
+  .Device(DEVICE_CPU)
+  .TypeConstraint<string>("dtype"),
+  BigImportOp<string>);
 
-REGISTER_CPU(string);
-REGISTER_CPU(int32);
+REGISTER_KERNEL_BUILDER(
+  Name("BigImport")
+  .Device(DEVICE_CPU)
+  .TypeConstraint<int32>("dtype"),
+  BigImportOp<int32>);
+
+REGISTER_KERNEL_BUILDER(
+  Name("BigExport")
+  .Device(DEVICE_CPU)
+  .TypeConstraint<string>("dtype"),
+  BigExportOp<string>);
+
+REGISTER_KERNEL_BUILDER(
+  Name("BigExport")
+  .Device(DEVICE_CPU)
+  .TypeConstraint<int32>("dtype"),
+  BigExportOp<int32>);
+
 
 // TODO(justin1121) there's no simple mpz to int64 convert functions
 // there's a suggestion here (https://stackoverflow.com/a/6248913/1116574) on

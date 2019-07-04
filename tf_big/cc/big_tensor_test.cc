@@ -1,9 +1,9 @@
 #include <string>
 
 #include "tensorflow/core/framework/variant_tensor_data.h"
-
 #include "gtest/gtest.h"
-#include "tf_big/cc/kernels/big_tensor.h"
+
+#include "tf_big/cc/big_tensor.h"
 
 using tf_big::BigTensor;
 
