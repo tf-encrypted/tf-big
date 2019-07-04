@@ -1,3 +1,9 @@
 bazel*
 .bazelrc
 .vscode
+
+**.pyc
+.mypy*
+__pycache__
+
+**.whl
