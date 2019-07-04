@@ -30,7 +30,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="The TF Encrypted Authors",
-    author_email="tfencrypted@gmail.com",
+    author_email="contact@tf-encrypted.io",
     include_package_data=True,
     zip_safe=False,
     distclass=BinaryDistribution,
