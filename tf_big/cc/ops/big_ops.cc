@@ -19,6 +19,12 @@ REGISTER_OP("BigAdd")
     .Output("res: variant")
     .SetIsStateful();
 
+REGISTER_OP("BigSub")
+    .Input("val1: variant")
+    .Input("val2: variant")
+    .Output("res: variant")
+    .SetIsStateful();
+
 REGISTER_OP("BigMul")
     .Input("val1: variant")
     .Input("val2: variant")
