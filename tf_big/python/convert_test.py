@@ -1,68 +1,13 @@
 import numpy as np
 import tensorflow as tf
-from tensorflow.python.keras.utils import tf_utils
 from tensorflow.python.platform import test
 
 from tf_big.python.ops.big_ops import big_import
-<<<<<<< HEAD
-from tf_big.python.tensor import convert_to_tensor
-
-
-class EvaluationTest(test.TestCase):
-=======
 from tf_big.python.convert import convert_to_tensor
 
 
-class RunningTest(test.TestCase):
->>>>>>> sub op
-
-  def test_session_run(self):
-    x_raw = np.array([[123456789123456789123456789, 123456789123456789123456789]])
-    x = convert_to_tensor(x_raw)
-
-    with tf.Session() as sess:
-      res = sess.run(x)
-      np.testing.assert_array_equal(res, x_raw.astype(str))
-
-  def test_eval(self):
-    x_raw = np.array([[123456789123456789123456789, 123456789123456789123456789]])
-    x = convert_to_tensor(x_raw)
-
-    with tf.Session() as sess:
-      res = x.eval(session=sess)
-      np.testing.assert_array_equal(res, x_raw.astype(str))
-
-<<<<<<< HEAD
-
-=======
->>>>>>> sub op
-class ArithmeticTest(test.TestCase):
-
-  def _core_test(self, op):
-    x_raw = np.array([[123456789123456789123456789, 123456789123456789123456789]])
-    y_raw = np.array([[123456789123456789123456789, 123456789123456789123456789]])
-    z_raw = op(x_raw, y_raw)
-
-    x = convert_to_tensor(x_raw)
-    y = convert_to_tensor(y_raw)
-    z = op(x, y)
-
-    with tf.Session() as sess:
-      res = sess.run(z)
-      np.testing.assert_array_equal(res, z_raw.astype(str))
-
-  def test_add(self):
-    self._core_test(lambda x, y: x + y)
-
-  def test_sub(self):
-    self._core_test(lambda x, y: x - y)
-    
-  def test_mul(self):
-    self._core_test(lambda x, y: x * y)
-
-
-<<<<<<< HEAD
-class ConvertTest(test.TestCase):
+class Tests(test.TestCase):
+  """Convertion tests"""
 
   def _core_test(self, in_np, out_np, convert_to_tf_tensor):
     if convert_to_tf_tensor:
@@ -154,27 +99,5 @@ class ConvertTest(test.TestCase):
     assert y.dtype is tf.string
 
 
-class IntegrationTest(test.TestCase):
-=======
-class KerasIntegrationTest(test.TestCase):
-  """Integration tests"""
->>>>>>> sub op
-
-  def test_register_symbolic(self):
-    x = convert_to_tensor(np.array(10))
-    assert tf_utils.is_symbolic_tensor(x)
-
-  # def test_use_in_model(self):
-  #   x = convert_to_tensor(np.array(10))
-  #   model = tf.keras.models.Sequential([
-  #     tf.keras.layers.Dense(10)
-  #   ])
-  #   model(x)
-
-
-<<<<<<< HEAD
-=======
-
->>>>>>> sub op
 if __name__ == '__main__':
   test.main()
