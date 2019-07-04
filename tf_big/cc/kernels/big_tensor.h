@@ -104,6 +104,17 @@ struct BigTensor {
     return lhs;
   }
 
+  BigTensor& operator-=(const BigTensor& rhs) {
+    this->value -= rhs.value;
+    return *this;
+  }
+
+  // friend makes this a non-member
+  friend BigTensor operator-(BigTensor lhs, const BigTensor& rhs) {
+    lhs -= rhs;
+    return lhs;
+  }
+
   BigTensor& operator*=(const BigTensor& rhs) {
     this->value *= rhs.value;
     return *this;
