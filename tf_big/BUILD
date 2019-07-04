@@ -38,6 +38,7 @@ cc_test(
 py_library(
     name = "big_ops_py",
     srcs = ([
+        "python/tensor.py",
         "python/ops/big_ops.py",
     ]),
     data = [
@@ -52,6 +53,18 @@ py_test(
         "python/ops/big_ops_test.py",
     ],
     main = "python/ops/big_ops_test.py",
+    deps = [
+        ":big_ops_py",
+    ],
+    srcs_version = "PY2AND3",
+)
+
+py_test(
+    name = "tensor_test",
+    srcs = [
+        "python/tensor_test.py",
+    ],
+    main = "python/tensor_test.py",
     deps = [
         ":big_ops_py",
     ],
