@@ -1,6 +1,6 @@
+import numpy as np
 import tensorflow as tf
 
-from tf_big.python import convert
 import tf_big.python.ops.big_ops as ops
 
 from tensorflow.python.keras.utils import tf_utils
@@ -8,7 +8,7 @@ from tensorflow.python.client import session as tf_session
 from tensorflow.python.framework import ops as tf_ops
 
 
-class Tensor:
+class Tensor(object):
 
   def __init__(self, value):
     assert isinstance(value, tf.Tensor), type(value)
@@ -25,41 +25,37 @@ class Tensor:
 
   @property
   def dtype(self):
-    return self._raw.dtype
+    return tf.int32
+    # return tf.string
 
-  def eval(self, session=None, dtype=int):
-    if dtype in [tf.int32, tf.string]:
-      res_op = ops.big_export(self._raw, dtype=dtype)
-      return session.run(res_op)
-
-    elif dtype in [int, str]:
-      res_op = ops.big_export(self._raw, dtype=tf.string)
-      res = session.run(res_op)
-      return res.astype(dtype)
-
-    raise ValueError("Don't know how to evaluate to dtype '{}'".format(dtype))
+  def eval(self, session=None, dtype=None):
+    tf_tensor = convert_from_tensor(self, dtype=dtype)
+    evaluated = tf_tensor.eval(session=session)
+    if tf_tensor.dtype is tf.string:
+      return evaluated.astype(str)
+    return evaluated
 
   def __add__(self, other):
     if not isinstance(other, Tensor):
-      other = convert.convert_to_tensor(other)
+      other = convert_to_tensor(other)
     res = ops.big_add(self._raw, other._raw)
     return Tensor(res)
 
   def __sub__(self, other):
     if not isinstance(other, Tensor):
-      other = convert.convert_to_tensor(other)
+      other = convert_to_tensor(other)
     res = ops.big_sub(self._raw, other._raw)
     return Tensor(res)
 
   def __mul__(self, other):
     if not isinstance(other, Tensor):
-      other = convert.convert_to_tensor(other)
+      other = convert_to_tensor(other)
     res = ops.big_mul(self._raw, other._raw)
     return Tensor(res)
 
 
 def _fetch_function(big_tensor):
-  unwrapped = [ops.big_export(big_tensor._raw, dtype=tf.string)]
+  unwrapped = [convert_from_tensor(big_tensor, dtype=tf.string)]
   rewrapper = lambda components_fetched: components_fetched[0].astype(str)
   return unwrapped, rewrapper
 
@@ -82,8 +78,8 @@ tf_session.register_session_run_conversion_functions(
 def _tensor_conversion_function(tensor, dtype=None, name=None, as_ref=False):
   assert name is None, "Not implemented, name='{}'".format(name)
   assert not as_ref, "Not implemented, as_ref={}".format(as_ref)
-  assert dtype in [tf.int32]
-  return convert.convert_from_tensor(tensor, dtype=dtype)
+  assert dtype in [tf.int32, None], dtype
+  return convert_from_tensor(tensor, dtype=dtype)
 
 # TODO(Morten)
 # this allows implicit convertion of tf_big.Tensor to tf.Tensor,
@@ -100,3 +96,76 @@ tf_ops.register_dense_tensor_like_type(Tensor)
 # but seems only truly useful when used in conjunction with
 # `register_tensor_conversion_function`
 tf_utils.register_symbolic_tensor_type(Tensor)
+
+
+def constant(tensor):
+  assert isinstance(tensor, (np.ndarray, list, tuple)), type(tensor)
+  return convert_to_tensor(tensor)
+
+
+def _convert_numpy_tensor(tensor):
+  if len(tensor.shape) > 2:
+    raise ValueError("Only matrices are supported for now.")
+    
+  # make sure we have a full matrix
+  while len(tensor.shape) < 2:
+    tensor = np.expand_dims(tensor, 0)
+
+  if np.issubdtype(tensor.dtype, np.int32) \
+     or np.issubdtype(tensor.dtype, np.string_) \
+     or np.issubdtype(tensor.dtype, np.unicode_):
+    # supported as-is
+    return Tensor(ops.big_import(tensor))
+
+  if np.issubdtype(tensor.dtype, np.int64) \
+     or np.issubdtype(tensor.dtype, np.object_):
+    # supported as strings
+    tensor = tensor.astype(np.string_)
+    return Tensor(ops.big_import(tensor))
+  
+  raise ValueError("Don't know how to convert NumPy tensor with dtype '{}'".format(tensor.dtype))
+
+
+def _convert_tensorflow_tensor(tensor): 
+  if len(tensor.shape) > 2:
+    raise ValueError("Only matrices are supported for now.")
+
+  # make sure we have a full matrix
+  while len(tensor.shape) < 2:
+    tensor = tf.expand_dims(tensor, 0)
+
+  if tensor.dtype in (tf.int32, tf.string):
+    # supported as-is
+    return Tensor(ops.big_import(tensor))
+
+  if tensor.dtype in (tf.int64, ):
+    # supported as strings
+    tensor = tf.as_string(tensor)
+    return Tensor(ops.big_import(tensor))
+
+  raise ValueError("Don't know how to convert TensorFlow tensor with dtype '{}'".format(tensor.dtype))
+
+
+def convert_to_tensor(tensor):
+  if isinstance(tensor, (list, tuple)):
+    tensor = np.array(tensor)
+
+  if isinstance(tensor, np.ndarray):
+    return _convert_numpy_tensor(tensor)
+
+  if isinstance(tensor, tf.Tensor):
+    return _convert_tensorflow_tensor(tensor)
+
+  raise ValueError("Don't know how to convert value of type {}".format(type(tensor)))
+
+
+def convert_from_tensor(value, dtype=None):
+  assert isinstance(value, Tensor), type(value)
+
+  if dtype is None:
+    dtype = tf.string
+
+  if dtype in [tf.int32, tf.string]:
+    return ops.big_export(value._raw, dtype=dtype)
+
+  raise ValueError("Don't know how to evaluate to dtype '{}'".format(dtype))

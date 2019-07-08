@@ -1,8 +1,7 @@
-# from __future__ import absolute_import
 
-from tf_big.python.convert import constant
-from tf_big.python.convert import convert_from_tensor
-from tf_big.python.convert import convert_to_tensor
+from tf_big.python.tensor import constant
+from tf_big.python.tensor import convert_from_tensor
+from tf_big.python.tensor import convert_to_tensor
 from tf_big.python.tensor import Tensor
 
 __all__ = [
