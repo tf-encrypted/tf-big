@@ -38,7 +38,6 @@ cc_test(
 py_library(
     name = "big_ops_py",
     srcs = ([
-        "python/convert.py",
         "python/tensor.py",
         "python/ops/big_ops.py",
     ]),
@@ -54,18 +53,6 @@ py_test(
         "python/ops/big_ops_test.py",
     ],
     main = "python/ops/big_ops_test.py",
-    deps = [
-        ":big_ops_py",
-    ],
-    srcs_version = "PY2AND3",
-)
-
-py_test(
-    name = "convert_test",
-    srcs = [
-        "python/convert_test.py",
-    ],
-    main = "python/convert_test.py",
     deps = [
         ":big_ops_py",
     ],
