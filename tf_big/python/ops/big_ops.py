@@ -10,4 +10,5 @@ big_export = big_ops.big_export
 big_add = big_ops.big_add
 big_sub = big_ops.big_sub
 big_mul = big_ops.big_mul
+big_pow = big_ops.big_pow
 big_matmul = big_ops.big_mat_mul

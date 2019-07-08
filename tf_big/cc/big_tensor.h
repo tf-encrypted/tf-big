@@ -135,9 +135,11 @@ struct BigTensor {
   Index rows() const { return value.rows(); }
 
   Index cols() const { return value.cols(); }
+  
+  MatrixXm value;
 
  private:
-  MatrixXm value;
+
 };
 
 template <>

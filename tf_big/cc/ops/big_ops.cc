@@ -63,6 +63,23 @@ REGISTER_OP("BigMul")
         return ::tensorflow::Status::OK();
     });
 
+REGISTER_OP("BigPow")
+    .Attr("secure: bool")
+    .Input("base: variant")
+    .Input("exponent: variant")
+    .Input("modulus: variant")
+    .Output("res: variant")
+    .SetIsStateful()
+    .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
+        ::tensorflow::shape_inference::ShapeHandle base = c->input(0);
+        // ::tensorflow::shape_inference::ShapeHandle exponent = c->input(1);
+        // ::tensorflow::shape_inference::ShapeHandle modulus = c->input(2);
+        // ::tensorflow::shape_inference::ShapeHandle res;
+        // TODO(Morten) make sure shapes match
+        c->set_output(0, base);
+        return ::tensorflow::Status::OK();
+    });
+
 REGISTER_OP("BigMatMul")
     .Input("val0: variant")
     .Input("val1: variant")

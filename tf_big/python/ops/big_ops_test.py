@@ -7,6 +7,7 @@ from tf_big.python.ops.big_ops import big_export
 from tf_big.python.ops.big_ops import big_add
 from tf_big.python.ops.big_ops import big_matmul
 from tf_big.python.ops.big_ops import big_mul
+from tf_big.python.ops.big_ops import big_pow
 
 class BigTest(test.TestCase):
   """BigTest test"""
@@ -45,6 +46,42 @@ class BigTest(test.TestCase):
       output = sess.run(c_str)
 
       assert int(output) == expected
+
+  def test_pow(self):
+    with tf.Session() as sess:
+      base = "54"
+      exp = "3434"
+      modulus = "34"
+
+      base_var = big_import([[base]])
+      exp_var = big_import([[exp]])
+      mod_var = big_import([[modulus]])
+
+      out = big_pow(base_var, exp_var, mod_var, secure=False)
+
+      out_str = big_export(out, tf.string)
+
+      output = sess.run(out_str)
+
+      assert int(output) == 8
+
+  def test_pow_secure(self):
+    with tf.Session() as sess:
+      base = "54"
+      exp = "3434"
+      modulus = "35"
+
+      base_var = big_import([[base]])
+      exp_var = big_import([[exp]])
+      mod_var = big_import([[modulus]])
+
+      out = big_pow(base_var, exp_var, mod_var, secure=True)
+
+      out_str = big_export(out, tf.string)
+
+      output = sess.run(out_str)
+
+      assert int(output) == 11
 
   def test_2d_matrix_add(self):
     with tf.Session() as sess:

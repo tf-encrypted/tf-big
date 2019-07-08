@@ -1,6 +1,9 @@
 .bazelrc:
 	TF_NEED_CUDA=0 ./configure.sh
 
+clean:
+	bazel clean
+
 test: .bazelrc
 	bazel test ... --test_output=all
 
@@ -10,4 +13,4 @@ fmt:
 lint:
 	cd tf_big && find . -iname *.h -o -iname *.cc | xargs cpplint --filter=-legal/copyright
 
-.PHONY: test fmt
+.PHONY: clean test fmt

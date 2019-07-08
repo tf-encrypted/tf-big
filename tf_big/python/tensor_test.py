@@ -4,17 +4,10 @@ from tensorflow.python.keras.utils import tf_utils
 from tensorflow.python.platform import test
 
 from tf_big.python.ops.big_ops import big_import
-<<<<<<< HEAD
 from tf_big.python.tensor import convert_to_tensor
 
 
 class EvaluationTest(test.TestCase):
-=======
-from tf_big.python.convert import convert_to_tensor
-
-
-class RunningTest(test.TestCase):
->>>>>>> sub op
 
   def test_session_run(self):
     x_raw = np.array([[123456789123456789123456789, 123456789123456789123456789]])
@@ -32,10 +25,7 @@ class RunningTest(test.TestCase):
       res = x.eval(session=sess)
       np.testing.assert_array_equal(res, x_raw.astype(str))
 
-<<<<<<< HEAD
 
-=======
->>>>>>> sub op
 class ArithmeticTest(test.TestCase):
 
   def _core_test(self, op):
@@ -61,7 +51,6 @@ class ArithmeticTest(test.TestCase):
     self._core_test(lambda x, y: x * y)
 
 
-<<<<<<< HEAD
 class ConvertTest(test.TestCase):
 
   def _core_test(self, in_np, out_np, convert_to_tf_tensor):
@@ -155,10 +144,6 @@ class ConvertTest(test.TestCase):
 
 
 class IntegrationTest(test.TestCase):
-=======
-class KerasIntegrationTest(test.TestCase):
-  """Integration tests"""
->>>>>>> sub op
 
   def test_register_symbolic(self):
     x = convert_to_tensor(np.array(10))
@@ -172,9 +157,5 @@ class KerasIntegrationTest(test.TestCase):
   #   model(x)
 
 
-<<<<<<< HEAD
-=======
-
->>>>>>> sub op
 if __name__ == '__main__':
   test.main()
