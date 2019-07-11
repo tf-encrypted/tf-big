@@ -73,16 +73,16 @@ class BigAddOp : public OpKernel {
   explicit BigAddOp(OpKernelConstruction* context) : OpKernel(context) {}
 
   void Compute(OpKernelContext* ctx) override {
-    const BigTensor* val1 = nullptr;
-    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 0, &val1));
+    const BigTensor* val0 = nullptr;
+    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 0, &val0));
 
-    const BigTensor* val2 = nullptr;
-    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 1, &val2));
+    const BigTensor* val1 = nullptr;
+    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 1, &val1));
 
     Tensor* output;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(0, TensorShape{}, &output));
 
-    auto res = *val1 + *val2;
+    auto res = *val0 + *val1;
 
     output->scalar<Variant>()() = std::move(res);
   }
@@ -93,16 +93,16 @@ class BigSubOp : public OpKernel {
   explicit BigSubOp(OpKernelConstruction* context) : OpKernel(context) {}
 
   void Compute(OpKernelContext* ctx) override {
-    const BigTensor* val1 = nullptr;
-    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 0, &val1));
+    const BigTensor* val0 = nullptr;
+    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 0, &val0));
 
-    const BigTensor* val2 = nullptr;
-    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 1, &val2));
+    const BigTensor* val1 = nullptr;
+    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 1, &val1));
 
     Tensor* output;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(0, TensorShape{}, &output));
 
-    auto res = *val1 - *val2;
+    auto res = *val0 - *val1;
 
     output->scalar<Variant>()() = std::move(res);
   }
@@ -113,19 +113,81 @@ class BigMulOp : public OpKernel {
   explicit BigMulOp(OpKernelConstruction* context) : OpKernel(context) {}
 
   void Compute(OpKernelContext* ctx) override {
-    const BigTensor* val1 = nullptr;
-    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 0, &val1));
+    const BigTensor* val0 = nullptr;
+    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 0, &val0));
 
-    const BigTensor* val2 = nullptr;
-    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 1, &val2));
+    const BigTensor* val1 = nullptr;
+    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 1, &val1));
 
     Tensor* output;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(0, TensorShape{}, &output));
 
-    auto res = (*val1).cwiseProduct(*val2);
+    auto res = (*val0).cwiseProduct(*val1);
 
     output->scalar<Variant>()() = std::move(res);
   }
+};
+
+class BigPowOp : public OpKernel {
+ public:
+  explicit BigPowOp(OpKernelConstruction* ctx) : OpKernel(ctx) {
+    OP_REQUIRES_OK(ctx, ctx->GetAttr("secure", &secure));
+  }
+
+  void Compute(OpKernelContext* ctx) override {
+    const BigTensor* base = nullptr;
+    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 0, &base));
+
+    const BigTensor* exponent_t = nullptr;
+    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 1, &exponent_t));
+
+    // TODO(Morten) modulus should be optional
+    const BigTensor* modulus_t = nullptr;
+    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 2, &modulus_t));
+
+    Tensor* output;
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, TensorShape{}, &output));
+
+    auto exponent = exponent_t->value(0, 0);
+    auto modulus = modulus_t->value(0, 0);
+
+    MatrixXm res(base->rows(), base->cols());
+    auto v = base->value.data();
+    auto size = base->value.size();
+
+    if (secure) {
+      for (int i = 0; i < size; i++) {
+        mpz_t ans;
+        mpz_init(ans);
+
+        mpz_powm_sec(
+            ans,
+            v[i].get_mpz_t(),
+            exponent.get_mpz_t(),
+            modulus.get_mpz_t());
+
+        res.data()[i] = mpz_class(ans);
+      }
+    } else {
+      for (int i = 0; i < size; i++) {
+        mpz_t ans;
+        mpz_init(ans);
+
+        mpz_powm(
+            ans,
+            v[i].get_mpz_t(),
+            exponent.get_mpz_t(),
+            modulus.get_mpz_t());
+
+        res.data()[i] = mpz_class(ans);
+      }
+    }
+
+    output->scalar<Variant>()() = BigTensor(res);
+  }
+
+ private:
+  bool secure = false;
 };
 
 class BigMatMulOp : public OpKernel {
@@ -185,4 +247,5 @@ REGISTER_UNARY_VARIANT_DECODE_FUNCTION(BigTensor, BigTensor::kTypeName);
 REGISTER_KERNEL_BUILDER(Name("BigAdd").Device(DEVICE_CPU), BigAddOp);
 REGISTER_KERNEL_BUILDER(Name("BigSub").Device(DEVICE_CPU), BigSubOp);
 REGISTER_KERNEL_BUILDER(Name("BigMul").Device(DEVICE_CPU), BigMulOp);
+REGISTER_KERNEL_BUILDER(Name("BigPow").Device(DEVICE_CPU), BigPowOp);
 REGISTER_KERNEL_BUILDER(Name("BigMatMul").Device(DEVICE_CPU), BigMatMulOp);

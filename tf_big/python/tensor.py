@@ -36,22 +36,31 @@ class Tensor(object):
     return evaluated
 
   def __add__(self, other):
-    if not isinstance(other, Tensor):
-      other = convert_to_tensor(other)
+    other = convert_to_tensor(other)
     res = ops.big_add(self._raw, other._raw)
     return Tensor(res)
 
   def __sub__(self, other):
-    if not isinstance(other, Tensor):
-      other = convert_to_tensor(other)
+    other = convert_to_tensor(other)
     res = ops.big_sub(self._raw, other._raw)
     return Tensor(res)
 
   def __mul__(self, other):
-    if not isinstance(other, Tensor):
-      other = convert_to_tensor(other)
+    other = convert_to_tensor(other)
     res = ops.big_mul(self._raw, other._raw)
     return Tensor(res)
+
+  def pow(self, exponent, modulus=None, secure=None):
+    exponent = convert_to_tensor(exponent)
+    modulus = convert_to_tensor(modulus)
+    res = ops.big_pow(base=self._raw,
+                      exponent=exponent._raw,
+                      modulus=modulus._raw if modulus else None,
+                      secure=secure if secure is not None else get_secure_default())
+    return Tensor(res)
+
+  def __pow__(self, exponent):
+    return self.pow(exponent)
 
 
 def _fetch_function(big_tensor):
@@ -147,8 +156,17 @@ def _convert_tensorflow_tensor(tensor):
 
 
 def convert_to_tensor(tensor):
+  if isinstance(tensor, Tensor):
+    return tensor
+
+  if tensor is None:
+    return None
+
+  if isinstance(tensor, (int, str)):
+    return _convert_numpy_tensor(np.array([tensor]))
+
   if isinstance(tensor, (list, tuple)):
-    tensor = np.array(tensor)
+    return _convert_numpy_tensor(np.array(tensor))
 
   if isinstance(tensor, np.ndarray):
     return _convert_numpy_tensor(tensor)
@@ -169,3 +187,37 @@ def convert_from_tensor(value, dtype=None):
     return ops.big_export(value._raw, dtype=dtype)
 
   raise ValueError("Don't know how to evaluate to dtype '{}'".format(dtype))
+
+
+_SECURE = False
+
+def set_secure_default(value):
+  global _SECURE
+  _SECURE = value
+
+def get_secure_default():
+  return _SECURE
+
+
+def add(x, y):
+  # TODO(Morten) lifting etc
+  return x + y
+
+def sub(x, y):
+  # TODO(Morten) lifting etc
+  return x - y
+
+def mul(x, y):
+  # TODO(Morten) lifting etc
+  return x * y
+
+def pow(base, exponent, modulus=None, secure=None):
+  # TODO(Morten) lifting etc
+  assert isinstance(base, Tensor)
+  return base.pow(exponent=exponent,
+                  modulus=modulus,
+                  secure=secure)
+
+def matmul(x, y):
+  # TODO(Morten) lifting etc
+  return x.matmul(y)

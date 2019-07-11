@@ -1,5 +1,5 @@
-#ifndef TF_BIG_CC_KERNELS_BIG_TENSOR_H_
-#define TF_BIG_CC_KERNELS_BIG_TENSOR_H_
+#ifndef TF_BIG_CC_BIG_TENSOR_H_
+#define TF_BIG_CC_BIG_TENSOR_H_
 
 #include <gmp.h>
 #include <gmpxx.h>
@@ -136,7 +136,6 @@ struct BigTensor {
 
   Index cols() const { return value.cols(); }
 
- private:
   MatrixXm value;
 };
 
@@ -170,4 +169,4 @@ inline void BigTensor::FromTensor<string>(const Tensor& t) {
 
 }  // namespace tf_big
 
-#endif  // TF_BIG_CC_KERNELS_BIG_TENSOR_H_
+#endif  // TF_BIG_CC_BIG_TENSOR_H_
