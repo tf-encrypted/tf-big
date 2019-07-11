@@ -155,26 +155,37 @@ class BigPowOp : public OpKernel {
     auto v = base->value.data();
     auto size = base->value.size();
 
-    if(secure){
-      for(int i = 0; i < size; i++) {
+    if (secure) {
+      for (int i = 0; i < size; i++) {
         mpz_t ans;
         mpz_init(ans);
 
-        mpz_powm_sec(ans, v[i].get_mpz_t(), exponent.get_mpz_t(), modulus.get_mpz_t());
+        mpz_powm_sec(
+            ans,
+            v[i].get_mpz_t(),
+            exponent.get_mpz_t(),
+            modulus.get_mpz_t());
+
         res.data()[i] = mpz_class(ans);
       }
     } else {
-      for(int i = 0; i < size; i++) {
+      for (int i = 0; i < size; i++) {
         mpz_t ans;
         mpz_init(ans);
 
-        mpz_powm(ans, v[i].get_mpz_t(), exponent.get_mpz_t(), modulus.get_mpz_t());
+        mpz_powm(
+            ans,
+            v[i].get_mpz_t(),
+            exponent.get_mpz_t(),
+            modulus.get_mpz_t());
+
         res.data()[i] = mpz_class(ans);
       }
     }
 
     output->scalar<Variant>()() = BigTensor(res);
   }
+
  private:
   bool secure = false;
 };
