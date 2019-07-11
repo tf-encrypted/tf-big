@@ -138,8 +138,6 @@ struct BigTensor {
   
   MatrixXm value;
 
- private:
-
 };
 
 template <>
