@@ -6,4 +6,4 @@ bazel*
 .mypy*
 __pycache__
 
-**.whl
+artifacts/*
