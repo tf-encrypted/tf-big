@@ -1,7 +1,6 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-
-load("//tf:tf_configure.bzl", "tf_configure")
+load("//third_party/tf:tf_configure.bzl", "tf_configure")
 
 http_archive(
     name = "com_google_googletest",
@@ -15,5 +14,5 @@ tf_configure(name = "local_config_tf")
 new_local_repository(
     name = "libgmp",
     path = "/usr/local/",
-    build_file = "external/libgmp.BUILD"
+    build_file = "third_party/gmp/libgmp.BUILD"
 )
