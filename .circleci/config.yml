@@ -1,7 +1,7 @@
 version: 2
 
 jobs:
-  build:
+  build-linux:
     docker:
       - image: tensorflow/tensorflow:custom-op
     working_directory: ~/repo
@@ -17,6 +17,7 @@ jobs:
           name: run tests
           command: |
             export LD_LIBRARY_PATH=/usr/local
+            make clean
             make test
   build-macos:
     macos:
@@ -33,18 +34,21 @@ jobs:
             ../miniconda3/envs/py35/bin/python -m venv venv
             . venv/bin/activate
             HOMEBREW_NO_AUTO_UPDATE=1 brew tap bazelbuild/tap
-            HOMEBREW_NO_AUTO_UPDATE=1 brew install gmp bazelbuild/tap/bazel
+            HOMEBREW_NO_AUTO_UPDATE=1 brew install bazelbuild/tap/bazel
+            HOMEBREW_NO_AUTO_UPDATE=1 brew install gmp
+            pip install -r requirements-dev.txt
       - run:
           name: run tests
           command: |
             . venv/bin/activate
+            make clean
             make test
 
 workflows:
   version: 2
   build-linux-macos:
     jobs:
-      - build:
+      - build-linux:
           filters:
             tags:
               # In order for the 'deploy' job to run, we must first kick off

@@ -3,6 +3,7 @@
 
 clean:
 	bazel clean
+	rm .bazelrc || true
 
 test: .bazelrc
 	bazel test ... --test_output=all
