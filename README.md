@@ -1,65 +1,75 @@
-## TF Big
+# TF Big
 
-TF Big provides some basic operations for big integers. TF Big uses libgmp for its optimized big integer routines.
+TF Big adds big number support to TensorFlow, allowing computaitons to be performed on arbitrary precision integers. Internally these are represented as variant tensors of [GMP](https://gmplib.org/) values, exposed in Python through the `tf_big.Tensor` wrapper for convenience. For importing and exporting, numbers are typically expressed as strings.
 
-## Developer Requirements
+[![PyPI](https://img.shields.io/pypi/v/tf-big.svg)](https://pypi.org/project/tf-big/)
 
-**Ubuntu**
+## Usage
 
-The only requirement for Ubuntu is to have docker installed. This is the recommended way to build custom operations for tensorflow. Please see the documentation [here](https://github.com/tensorflow/custom-op). We provide a custom development container for TF Big which contains the libgmp dependency already installed.
+```python
+import tensorflow as tf
+import tf_big
 
-The documentation for installing docker on Ubuntu can be found [here](https://docs.docker.com/install/linux/docker-ce/ubuntu/).
+# load large values as strings
+x = tf_big.constant(["100000000000000000000", "200000000000000000000"])
 
-**MacOS**
+# load ordinary TensorFlow tensors
+y = tf_big.convert_to_tensor(tf.constant([3, 4]))
 
-TODO simplify this, add a bootstrap script to Makefile
+# perform computation as usual
+z = x * y
 
-Since we can't use a MacOS docker container, setting up a development environment is a little more involved. We need four things:
-
-- Python 3.5 or 3.6
-- Homebrew
-- Bazel 0.15.0
-- libgmp
-- Tensorflow 1.13.1 **TODO** support 1.14, might be a little involved
-
-We recommend using [Anaconda](https://www.anaconda.com/distribution/) to set up a Python 3.5 or 3.6 environment. Once Anaconda is installed this can be done with:
-
-```
-$ conda create -n py36 python=3.6
-$ source activate py36
+# use TensorFlow sessions to evalutate the results
+with tf.Session() as sess:
+  res = sess.run(z)
+  print(res)
 ```
 
-We recommed using [Homebrew](https://brew.sh/) to install the next couple of dependencies. This can be installed easily with:
+## Installation
+
+Python 3 packages are available from [PyPI](https://pypi.org/project/tf-big/):
 
 ```
-$ /usr/bin/ruby -e "$(curl -fsSL \
-    https://raw.githubusercontent.com/Homebrew/install/master/install)"
+pip3 install tf-big
 ```
 
-Bazel recommends installing with their binary installed. The documentation for this can be found [here](https://docs.bazel.build/versions/master/install-os-x.html#install-with-installer-mac-os-x). But if you have Homebrew already installed you can install bazel with a couple of simple commands:
+See below for further instructions for setting up a development environment.
+
+## Development
+
+### Requirements
+
+#### Ubuntu
+
+The only requirement for Ubuntu is to have [docker installed](https://docs.docker.com/install/linux/docker-ce/ubuntu/). This is the recommended way to [build custom operations for TensorFlow](https://github.com/tensorflow/custom-op). We provide a custom development container for TF Big with all dependencies already installed.
+
+#### macOS
+
+Setting up a development environment on macOS is a little more involved since we cannot use a docker container. We need four things:
+
+- Python (>= 3.5)
+- [Bazel](https://www.bazel.build/) (>= 0.15.0)
+- [GMP](https://gmplib.org/) (>= 6.1.2)
+- [TensorFlow](https://www.tensorflow.org/) (== 1.13.1)
+
+Using [Homebrew](https://brew.sh/) we first make sure that both [Bazel](https://docs.bazel.build/versions/master/install-os-x.html#install-with-installer-mac-os-x) and GMP are installed:
 
 ```
-$ brew tap bazelbuild/tap
-$ brew install bazelbuild/tap/bazel
-```
-
-Next, we can install libgmp with Homebrew:
-
-```
+brew tap bazelbuild/tap
+brew install bazelbuild/tap/bazel
 brew install gmp
 ```
 
-Tensorflow will be installed automatically when using the Makefile so no need to install it manually but it can be done before hand by using pip:
+We furthermore recommend using [Anaconda](https://www.anaconda.com/distribution/) to set up a Python 3.5 or 3.6 environment:
 
 ```
-pip install tensorflow==1.13.1
+conda create -n tfbig-dev python=3.6
+source activate tfbig-dev
 ```
 
-## Building
+### Testing
 
-### Tests
-
-**Ubuntu**
+#### Ubuntu
 
 Run the tests on Ubuntu by running the `make test` command inside of a docker container. Right now, the docker container doesn't exist on docker hub yet so we must first build it:
 
@@ -70,21 +80,25 @@ docker build -t tf-encrypted/tf-big:0.1.0 .
 Then we can run `make test`:
 
 ```
-sudo docker run -it -v `pwd`:/opt/my-project \
-  -w /opt/my-project \
+sudo docker run -it \
+  -v `pwd`:/opt/my-project -w /opt/my-project \
   tf-encrypted/tf-big:0.1.0 /bin/bash -c "make test"
 ```
 
-**MacOS**
+#### macOS
 
-Once the environment is set up we can simply run:
+Once the development environment is set up we can simply run:
 
 ```
 make test
 ```
 
-This will install Tensorflow if not previously installed and build and run the tests.
+This will install TensorFlow if not previously installed and build and run the tests.
 
-### Pip Package
+### Building pip package
 
-TODO
+#### macOS
+
+```
+make build
+```
