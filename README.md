@@ -30,7 +30,7 @@ with tf.Session() as sess:
 Python 3 packages are available from [PyPI](https://pypi.org/project/tf-big/):
 
 ```
-pip3 install tf-big
+pip install tf-big
 ```
 
 See below for further instructions for setting up a development environment.
@@ -38,6 +38,13 @@ See below for further instructions for setting up a development environment.
 ## Development
 
 ### Requirements
+
+We recommend using [Miniconda](https://docs.conda.io/en/latest/miniconda.html) or [Anaconda](https://www.anaconda.com/distribution/) to set up and use a Python 3.5 or 3.6 environment for all instructions below:
+
+```
+conda create -n tfbig-dev python=3.6
+source activate tfbig-dev
+```
 
 #### Ubuntu
 
@@ -60,11 +67,10 @@ brew install bazelbuild/tap/bazel
 brew install gmp
 ```
 
-We furthermore recommend using [Anaconda](https://www.anaconda.com/distribution/) to set up a Python 3.5 or 3.6 environment:
+The remaining PyPI packages can then be installed using:
 
 ```
-conda create -n tfbig-dev python=3.6
-source activate tfbig-dev
+pip install -r requirements-dev.txt
 ```
 
 ### Testing
