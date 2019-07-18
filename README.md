@@ -30,7 +30,7 @@ with tf.Session() as sess:
 Python 3 packages are available from [PyPI](https://pypi.org/project/tf-big/):
 
 ```
-pip3 install tf-big
+pip install tf-big
 ```
 
 See below for further instructions for setting up a development environment.
