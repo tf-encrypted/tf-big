@@ -60,7 +60,7 @@ brew install bazelbuild/tap/bazel
 brew install gmp
 ```
 
-We furthermore recommend using [Anaconda](https://www.anaconda.com/distribution/) to set up a Python 3.5 or 3.6 environment:
+We furthermore recommend using [Miniconda](https://docs.conda.io/en/latest/miniconda.html) or [Anaconda](https://www.anaconda.com/distribution/) to set up a Python 3.5 or 3.6 environment:
 
 ```
 conda create -n tfbig-dev python=3.6
