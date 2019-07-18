@@ -39,6 +39,13 @@ See below for further instructions for setting up a development environment.
 
 ### Requirements
 
+We recommend using [Miniconda](https://docs.conda.io/en/latest/miniconda.html) or [Anaconda](https://www.anaconda.com/distribution/) to set up and use a Python 3.5 or 3.6 environment for all instructions below:
+
+```
+conda create -n tfbig-dev python=3.6
+source activate tfbig-dev
+```
+
 #### Ubuntu
 
 The only requirement for Ubuntu is to have [docker installed](https://docs.docker.com/install/linux/docker-ce/ubuntu/). This is the recommended way to [build custom operations for TensorFlow](https://github.com/tensorflow/custom-op). We provide a custom development container for TF Big with all dependencies already installed.
@@ -60,11 +67,10 @@ brew install bazelbuild/tap/bazel
 brew install gmp
 ```
 
-We furthermore recommend using [Miniconda](https://docs.conda.io/en/latest/miniconda.html) or [Anaconda](https://www.anaconda.com/distribution/) to set up a Python 3.5 or 3.6 environment:
+The remaining PyPI packages can then be installed using:
 
 ```
-conda create -n tfbig-dev python=3.6
-source activate tfbig-dev
+pip install -r requirements-dev.txt
 ```
 
 ### Testing
