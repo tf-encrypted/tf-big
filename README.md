@@ -97,8 +97,25 @@ This will install TensorFlow if not previously installed and build and run the t
 
 ### Building pip package
 
+We currently build pip packages for python 3.5 and 3.6. Running the below scripts assumes you have conda environments created called `py35` and `py36`.
+
 #### macOS
 
 ```
-make build
+./build_all_pip_pkg.sh
+```
+
+#### Ubuntu
+
+If not already done so build the tf-big image:
+
+```
+docker build -t tf-encrypted/tf-big:0.1.0 .
+```
+
+Then build the pip packages:
+
+```
+sudo docker run -it -v `pwd`:/opt/my-project -w /opt/my-project \
+    tf-encrypted/tf-big:0.1.0 /bin/bash -c "./build_all_pip_pkg.sh"
 ```
