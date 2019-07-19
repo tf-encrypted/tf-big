@@ -31,8 +31,10 @@ jobs:
             curl -O https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
             bash Miniconda3-latest-MacOSX-x86_64.sh -b -f
             ../miniconda3/bin/conda create -n py35 python=3.5 2> /dev/null || true
-            ../miniconda3/envs/py35/bin/python -m venv venv
-            . venv/bin/activate
+            ../miniconda3/envs/py35/bin/python -m venv venv-py35
+            ../miniconda3/bin/conda create -n py36 python=3.6 2> /dev/null || true
+            ../miniconda3/envs/py36/bin/python -m venv venv-py36
+            . venv-py35/bin/activate
             HOMEBREW_NO_AUTO_UPDATE=1 brew tap bazelbuild/tap
             HOMEBREW_NO_AUTO_UPDATE=1 brew install bazelbuild/tap/bazel
             HOMEBREW_NO_AUTO_UPDATE=1 brew install gmp
@@ -40,9 +42,21 @@ jobs:
       - run:
           name: run tests
           command: |
-            . venv/bin/activate
+            . venv-py35/bin/activate
             make clean
             make test
+      - run:
+          name: build pip
+          command: |
+            . venv-py35/bin/activate
+            make clean
+            make build
+            . venv-py36/bin/activate
+            make clean
+            make build
+      - store_artifacts:
+          path: artifacts
+
 
 workflows:
   version: 2
