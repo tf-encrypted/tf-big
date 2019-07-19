@@ -108,3 +108,37 @@ This will install TensorFlow if not previously installed and build and run the t
 ```
 make build
 ```
+
+#### Dump
+
+TODO polish this up, just raw dump here
+
+```
+brew install mmv
+```
+
+In TF Big root directory:
+
+```
+rm -rf pip-package
+mkdir -p pip-package
+cp setup.py pip-package/
+cp README.md pip-package/
+cp MAINFEST.in pip-package/
+```
+
+For each version of TensorFlow:
+
+```
+make clean
+pip install tensorflow==$TF_VERSION
+TF_NEED_CUDA=0 ./configure.sh
+# bazel test '...' --test_output=all
+# bazel build //tf_big:tf_big_py
+bazel build build_so_files
+
+pushd bazel-bin/build_pip_pkg.runfiles/__main__/
+mmv ";*.so" "#1#2_ft{$TF_VERSION}.so"
+popd
+rsync -avm -L --exclude='*_test.py' bazel-bin/build_pip_pkg.runfiles/__main__/tf_big pip-package
+```
