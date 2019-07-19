@@ -3,22 +3,27 @@ version: 2
 jobs:
   build-linux:
     docker:
-      - image: tensorflow/tensorflow:custom-op
-    working_directory: ~/repo
+      - image: tfencrypted/tf-big:0.1.0
+    working_directory: /root
     steps:
       - checkout
-      - run:
-          name: install gmp deps
-          command: |
-            wget https://gmplib.org/download/gmp/gmp-6.1.2.tar.xz
-            tar -xf gmp-6.1.2.tar.xz
-            cd gmp-6.1.2 && ./configure --with-pic --enable-cxx --enable-static --disable-shared && make && make check && sudo make install
+      - setup_remote_docker:
+         docker_layer_caching: true
       - run:
           name: run tests
           command: |
             export LD_LIBRARY_PATH=/usr/local
             make clean
             make test
+      - run:
+          name: build pip
+          command: |
+            . venv-py35/bin/activate
+            make clean
+            make build
+            . venv-py36/bin/activate
+            make clean
+            make build
   build-macos:
     macos:
         xcode: "10.0.0"
