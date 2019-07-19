@@ -23,7 +23,10 @@ jobs:
             . /venv-py36/bin/activate
             make clean
             make build
-            auditwheel repair artifacts/*
+
+            for filename in artifacts/*; do
+              auditwheel repair $filename
+            done
       - store_artifacts:
           path: wheelhouse
   build-macos:
