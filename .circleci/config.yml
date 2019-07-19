@@ -7,21 +7,20 @@ jobs:
     working_directory: ~/repo
     steps:
       - checkout
-      - setup_remote_docker:
-         docker_layer_caching: true
       - run:
           name: run tests
           command: |
+            /venv-py35/bin/activate
             export LD_LIBRARY_PATH=/usr/local
             make clean
             make test
       - run:
           name: build pip
           command: |
-            . ../venv-py35/bin/activate
+            /venv-py35/bin/activate
             make clean
             make build
-            . ../venv-py36/bin/activate
+            /venv-py36/bin/activate
             make clean
             make build
   build-macos:
