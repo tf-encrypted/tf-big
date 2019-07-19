@@ -4,7 +4,7 @@ jobs:
   build-linux:
     docker:
       - image: tfencrypted/tf-big:0.1.0
-    working_directory: /root
+    working_directory: ~/repo
     steps:
       - checkout
       - setup_remote_docker:
@@ -18,10 +18,10 @@ jobs:
       - run:
           name: build pip
           command: |
-            . venv-py35/bin/activate
+            . ../venv-py35/bin/activate
             make clean
             make build
-            . venv-py36/bin/activate
+            . ../venv-py36/bin/activate
             make clean
             make build
   build-macos:
