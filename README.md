@@ -141,5 +141,5 @@ bazel build build_so_files
 pushd bazel-bin/build_so_files.runfiles/__main__/tf_big
 mmv ";*.so" "#1#2_${TF_VERSION}.so"
 popd
-rsync -avm -L --exclude='*_test.py' bazel-bin/build_so_files.runfiles/__main__/tf_big pip-package
+rsync -avm -L bazel-bin/build_so_files.runfiles/__main__/tf_big pip-package
 ```
