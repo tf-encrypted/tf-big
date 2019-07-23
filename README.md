@@ -106,18 +106,6 @@ This will install TensorFlow if not previously installed and build and run the t
 
 #### macOS
 
-In TF Big root directory:
-
 ```
-rm -rf ./pip-package
-mkdir -p ./pip-package
-cp setup.py pip-package/
-cp README.md pip-package/
-cp MAINFEST.in pip-package/
-```
-
-For each version of TensorFlow:
-
-```
-./build_so_files.sh pip-package
+make build
 ```
