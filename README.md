@@ -65,6 +65,7 @@ Using [Homebrew](https://brew.sh/) we first make sure that both [Bazel](https://
 brew tap bazelbuild/tap
 brew install bazelbuild/tap/bazel
 brew install gmp
+brew install mmv
 ```
 
 The remaining PyPI packages can then be installed using:
@@ -105,23 +106,11 @@ This will install TensorFlow if not previously installed and build and run the t
 
 #### macOS
 
-```
-make build
-```
-
-#### Dump
-
-TODO polish this up, just raw dump here
-
-```
-brew install mmv
-```
-
 In TF Big root directory:
 
 ```
-rm -rf pip-package
-mkdir -p pip-package
+rm -rf ./pip-package
+mkdir -p ./pip-package
 cp setup.py pip-package/
 cp README.md pip-package/
 cp MAINFEST.in pip-package/
@@ -130,16 +119,5 @@ cp MAINFEST.in pip-package/
 For each version of TensorFlow:
 
 ```
-make clean
-
-export TF_VERSION=1.13.1
-pip install tensorflow==$TF_VERSION
-TF_NEED_CUDA=0 ./configure.sh
-bazel test '...' --test_output=all
-bazel build build_so_files
-
-pushd bazel-bin/build_so_files.runfiles/__main__/tf_big
-mmv ";*.so" "#1#2_${TF_VERSION}.so"
-popd
-rsync -avm -L bazel-bin/build_so_files.runfiles/__main__/tf_big pip-package
+./build_so_files.sh pip-package
 ```
