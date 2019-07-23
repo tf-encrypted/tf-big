@@ -1,5 +1,10 @@
+if [[ -z ${1} ]]; then
+  echo "No destination directory provided"
+  exit 1
+fi
+
+DESTINATION=${1}
 TF_VERSION=`python -c "import tensorflow; print(tensorflow.__version__)"`
-DESTINATION="pip-package"
 
 set -e
 set -x
