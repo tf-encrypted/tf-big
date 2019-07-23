@@ -122,9 +122,9 @@ In TF Big root directory:
 ```
 rm -rf pip-package
 mkdir -p pip-package
-# cp setup.py pip-package/
-# cp README.md pip-package/
-# cp MAINFEST.in pip-package/
+cp setup.py pip-package/
+cp README.md pip-package/
+cp MAINFEST.in pip-package/
 ```
 
 For each version of TensorFlow:
