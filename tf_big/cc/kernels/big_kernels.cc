@@ -7,7 +7,6 @@
 #include "tensorflow/core/framework/variant_encode_decode.h"
 #include "tensorflow/core/framework/variant_op_registry.h"
 #include "tensorflow/core/framework/variant_tensor_data.h"
-#include "tensorflow/core/kernels/bounds_check.h"
 
 #include "tf_big/cc/big_tensor.h"
 
