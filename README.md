@@ -122,23 +122,24 @@ In TF Big root directory:
 ```
 rm -rf pip-package
 mkdir -p pip-package
-cp setup.py pip-package/
-cp README.md pip-package/
-cp MAINFEST.in pip-package/
+# cp setup.py pip-package/
+# cp README.md pip-package/
+# cp MAINFEST.in pip-package/
 ```
 
 For each version of TensorFlow:
 
 ```
 make clean
+
+export TF_VERSION=1.13.1
 pip install tensorflow==$TF_VERSION
 TF_NEED_CUDA=0 ./configure.sh
-# bazel test '...' --test_output=all
-# bazel build //tf_big:tf_big_py
+bazel test '...' --test_output=all
 bazel build build_so_files
 
-pushd bazel-bin/build_pip_pkg.runfiles/__main__/
-mmv ";*.so" "#1#2_ft{$TF_VERSION}.so"
+pushd bazel-bin/build_so_files.runfiles/__main__/tf_big
+mmv ";*.so" "#1#2_${TF_VERSION}.so"
 popd
-rsync -avm -L --exclude='*_test.py' bazel-bin/build_pip_pkg.runfiles/__main__/tf_big pip-package
+rsync -avm -L --exclude='*_test.py' bazel-bin/build_so_files.runfiles/__main__/tf_big pip-package
 ```
