@@ -122,9 +122,9 @@ In TF Big root directory:
 ```
 rm -rf pip-package
 mkdir -p pip-package
-# cp setup.py pip-package/
-# cp README.md pip-package/
-# cp MAINFEST.in pip-package/
+cp setup.py pip-package/
+cp README.md pip-package/
+cp MAINFEST.in pip-package/
 ```
 
 For each version of TensorFlow:
@@ -141,5 +141,5 @@ bazel build build_so_files
 pushd bazel-bin/build_so_files.runfiles/__main__/tf_big
 mmv ";*.so" "#1#2_${TF_VERSION}.so"
 popd
-rsync -avm -L --exclude='*_test.py' bazel-bin/build_so_files.runfiles/__main__/tf_big pip-package
+rsync -avm -L bazel-bin/build_so_files.runfiles/__main__/tf_big pip-package
 ```
