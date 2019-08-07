@@ -8,8 +8,11 @@ clean:
 test: .bazelrc
 	bazel test ... --test_output=all
 
-build: .bazelrc
-	bazel build build_so_files
+bazel-bin/build_pip_pkg:
+	bazel build build_pip_pkg
+
+build: .bazelrc bazel-bin/build_pip_pkg
+	./bazel-bin/build_pip_pkg `pwd`/artifacts
 
 fmt:
 	cd tf_big && find . -iname *.h -o -iname *.cc | xargs clang-format -i -style=google

@@ -104,8 +104,4 @@ This will install TensorFlow if not previously installed and build and run the t
 
 ### Building pip package
 
-#### macOS
-
-```
-make build
-```
+CircleCI currently builds the pip packages for us. If you have a need to do it on your own you can just run `make build`. For linux, doing it inside the tensorflow/tensorflow:custom-op container is recommended.
