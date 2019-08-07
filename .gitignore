@@ -7,3 +7,4 @@ bazel*
 __pycache__
 
 artifacts/*
+wheelhouse/*
