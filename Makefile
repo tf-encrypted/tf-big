@@ -13,6 +13,8 @@ build: .bazelrc
 	bazel build //tf_big:tf_big_py
 
 package-build: .bazelrc
+	rm -rf ./wheelhouse
+	mkdir -p ./wheelhouse
 	./package_build.sh ./wheelhouse
 
 package-test: .bazelrc
