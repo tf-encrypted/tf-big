@@ -22,8 +22,7 @@ mkdir -p ${OUT}
 mkdir -p ${TMP}
 
 # manually copy all needed files that reside *outside* tf_big subdirectory
-cp setup.py ${TMP}
-cp README.md ${TMP}
+./build_metadata.sh ${TMP}
 
 # launch builds
 pip install -U tensorflow==1.13.1 && ./build_so_files.sh ${TMP}

@@ -1,4 +1,4 @@
-# 
+# This script copies all needed files *outside* the `tf_big` subdirectory.
 
 set -e
 set -x
@@ -12,6 +12,5 @@ TMP=${1}
 # make sure directories exist
 mkdir -p ${TMP}
 
-# manually copy all needed files that reside *outside* tf_big subdirectory
 cp setup.py ${TMP}
 cp README.md ${TMP}
