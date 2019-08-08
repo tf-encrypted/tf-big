@@ -3,13 +3,14 @@
 
 clean:
 	bazel clean
-	rm .bazelrc || true
+	rm -f .bazelrc
+	rm -rf ./wheelshouse
 
 test: .bazelrc
 	bazel test ... --test_output=all
 
 build: .bazelrc
-	./build.sh
+	./build.sh ./wheelhouse
 
 fmt:
 	cd tf_big && find . -iname *.h -o -iname *.cc | xargs clang-format -i -style=google

@@ -21,16 +21,16 @@ fi
 mkdir -p ${OUT}
 mkdir -p ${TMP}
 
-# manually copy all needed files that reside *outside* tf_big subdirectory
+# manually needed metadata files
 ./build_metadata.sh ${TMP}
 
-# launch builds
+# performs builds
 pip install -U tensorflow==1.13.1 && ./build_so_files.sh ${TMP}
 pip install -U tensorflow==1.13.2 && ./build_so_files.sh ${TMP}
 pip install -U tensorflow==1.14.0 && ./build_so_files.sh ${TMP}
 
 # bundle up everything into wheel
-./bundle_pip_package.sh ${TMP} ${OUT}
+./build_bundle.sh ${TMP} ${OUT}
 
 if [[ -z ${2} ]]; then
   # clean up
