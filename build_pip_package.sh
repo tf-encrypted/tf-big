@@ -1,20 +1,39 @@
-TEMP=./pip-package
-OUTPUT=./dist
+# This is the script overall responsible for building the pip package with
+# multiple versions of the .so files.
 
 set -e
 set -x
 
-rm -rf $TEMP
-mkdir -p $TEMP
-cp setup.py $TEMP
-cp README.md $TEMP
-# cp MAINFEST.in $TEMP
+if [[ -z ${1} ]]; then
+  echo "No output directory provided"
+  exit 1
+fi
+OUT=${1}
 
-pip install tensorflow==1.13.1 && ./build_so_files.sh $TEMP
-pip install tensorflow==1.13.2 && ./build_so_files.sh $TEMP
-# pip install tensorflow==1.14.0 && ./build_so_files.sh $TEMP
+if [[ -z ${2} ]]; then
+  echo "No temporary directory provided, creating new"
+  TMP=$(mktemp -d -t tfbig-XXXXXXX)
+else
+  TMP=${2}
+fi
 
-mkdir -p $OUTPUT
-./bundle_pip_package.sh $TEMP $OUTPUT
+# make sure directories exist
+mkdir -p ${OUT}
+mkdir -p ${TMP}
 
-# rm -rf $TEMP
+# manually copy all needed files that reside *outside* tf_big subdirectory
+cp setup.py ${TMP}
+cp README.md ${TMP}
+
+# launch builds
+pip install -U tensorflow==1.13.1 && ./build_so_files.sh ${TMP}
+pip install -U tensorflow==1.13.2 && ./build_so_files.sh ${TMP}
+pip install -U tensorflow==1.14.0 && ./build_so_files.sh ${TMP}
+
+# bundle up everything into wheel
+./bundle_pip_package.sh ${TMP} ${OUT}
+
+if [[ -z ${2} ]]; then
+  # clean up
+  rm -rf ${TMP}
+fi

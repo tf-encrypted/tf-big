@@ -24,12 +24,14 @@ def try_load_library(base_filename):
     return None
 
   # try version specific file
-  big_ops = try_load("{}_tf{}.so".format(base_filename, tensorflow.__version__))
+  big_ops = try_load("{}_{}.so".format(base_filename, tensorflow.__version__))
   if big_ops is not None:
       return big_ops
 
+  logger.warn(("Could not load version specific .so file for '{}', "
+               "trying version neutral .so file").format(base_filename))
+
   # try version neutral file
-  logger.warn("Could not load version specific .so file, trying version neutral .so file")
   big_ops = try_load("{}.so".format(base_filename))
   if big_ops is not None:
       return big_ops
