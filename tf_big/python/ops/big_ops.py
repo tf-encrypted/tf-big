@@ -28,8 +28,8 @@ def try_load_library(base_filename):
   if big_ops is not None:
       return big_ops
 
-  logger.warn(("Could not load version specific .so file for '{}', "
-               "trying version neutral .so file").format(base_filename))
+  logger.warning(("Could not load version specific .so file for '{}', "
+                  "trying version neutral .so file").format(base_filename))
 
   # try version neutral file
   big_ops = try_load("{}.so".format(base_filename))
