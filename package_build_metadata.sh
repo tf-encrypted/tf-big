@@ -14,3 +14,4 @@ mkdir -p ${TMP}
 
 cp setup.py ${TMP}
 cp README.md ${TMP}
+cp MANIFEST.in ${TMP}

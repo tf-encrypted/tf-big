@@ -16,14 +16,14 @@ bazel clean
 rm -f .bazelrc
 TF_NEED_CUDA=0 ./configure.sh
 
-# build all files via `build_so_files` Bazel target
-bazel build :build_so_files
+# build all files via `package_build_tagged` Bazel target
+bazel build :package_build_tagged
 
 # tag .so files in build with current TensorFlow version
 TF_VERSION=`python -c "import tensorflow; print(tensorflow.__version__)"`
-pushd ./bazel-bin/build_so_files.runfiles/__main__/tf_big
+pushd ./bazel-bin/package_build_tagged.runfiles/__main__/tf_big
 mmv ";*.so" "#1#2_${TF_VERSION}.so"
 popd
 
 # copy out files to destination
-rsync -avm -L ./bazel-bin/build_so_files.runfiles/__main__/tf_big ${OUT}
+rsync -avm -L ./bazel-bin/package_build_tagged.runfiles/__main__/tf_big ${OUT}

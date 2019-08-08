@@ -1,6 +1,6 @@
 sh_binary(
-    name = "build_so_files",
-    srcs = ["build_so_files.sh"],
+    name = "package_build_tagged",
+    srcs = ["package_build_tagged.sh"],
     data = [
         "README.md",
         "MANIFEST.in",

@@ -1,5 +1,5 @@
-# This is the script overall responsible for building the pip package with
-# multiple versions of the .so files.
+# This is the script overall responsible for building the pip package for
+# multiple versions of TensorFlow.
 
 set -e
 set -x
@@ -22,15 +22,15 @@ mkdir -p ${OUT}
 mkdir -p ${TMP}
 
 # manually needed metadata files
-./build_metadata.sh ${TMP}
+./package_build_metadata.sh ${TMP}
 
 # performs builds
-pip install -U tensorflow==1.13.1 && ./build_so_files.sh ${TMP}
-pip install -U tensorflow==1.13.2 && ./build_so_files.sh ${TMP}
-pip install -U tensorflow==1.14.0 && ./build_so_files.sh ${TMP}
+pip install -U tensorflow==1.13.1 && ./package_build_tagged.sh ${TMP}
+pip install -U tensorflow==1.13.2 && ./package_build_tagged.sh ${TMP}
+pip install -U tensorflow==1.14.0 && ./package_build_tagged.sh ${TMP}
 
 # bundle up everything into wheel
-./build_bundle.sh ${TMP} ${OUT}
+./package_build_bundle.sh ${TMP} ${OUT}
 
 if [[ -z ${2} ]]; then
   # clean up

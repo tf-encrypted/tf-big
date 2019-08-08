@@ -10,7 +10,10 @@ test: .bazelrc
 	bazel test ... --test_output=all
 
 build: .bazelrc
-	./build.sh ./wheelhouse
+	bazel build //tf_big:tf_big_py
+
+package-build: .bazelrc
+	./package_build.sh ./wheelhouse
 
 fmt:
 	cd tf_big && find . -iname *.h -o -iname *.cc | xargs clang-format -i -style=google
