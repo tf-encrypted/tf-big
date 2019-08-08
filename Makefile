@@ -15,10 +15,13 @@ build: .bazelrc
 package-build: .bazelrc
 	./package_build.sh ./wheelhouse
 
+package-test: .bazelrc
+	./package_test.sh
+
 fmt:
 	cd tf_big && find . -iname *.h -o -iname *.cc | xargs clang-format -i -style=google
 
 lint:
 	cd tf_big && find . -iname *.h -o -iname *.cc | xargs cpplint --filter=-legal/copyright
 
-.PHONY: clean test build fmt lint
+.PHONY: clean test build package-build package-test fmt lint
