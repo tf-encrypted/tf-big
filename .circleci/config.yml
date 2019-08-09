@@ -82,107 +82,134 @@ jobs:
   #           done
   #     - store_artifacts:
   #         path: wheelhouse
-  test-macos-py35:
+
+  test-macos:
     macos:
         xcode: "10.0.0"
+    parameters:
+      pyenv-activate-cmd:
+        type: string
+      tensorflow-version:
+        type: string
     working_directory: ~/repo
     steps:
       - checkout
       - *bootstrap-macos
       - *bootstrap-venv-py35
-      - run:
-          name: Run Bazel tests
-          command: |
-            . venv-py35/bin/activate
-            make clean
-            make test
-
-  test-macos-py36:
-    macos:
-        xcode: "10.0.0"
-    working_directory: ~/repo
-    steps:
-      - checkout
-      - *bootstrap-macos
       - *bootstrap-venv-py36
       - run:
           name: Run Bazel tests
           command: |
-            . venv-py36/bin/activate
+            . << parameters.pyenv-activate-cmd >>
+            pip install -U tensorflow==<< parameters.tensorflow-version >>
             make clean
             make test
 
-  build-package-macos-py35:
-    macos:
-        xcode: "10.0.0"
-    working_directory: ~/repo
-    steps:
-      - checkout
-      - *bootstrap-macos
-      - *bootstrap-venv-py35
-      - run:
-          name: Build package
-          command: |
-            . venv-py35/bin/activate
-            make clean
-            make package-build
-      - persist_to_workspace:
-          root: wheelhouse
-          paths:
-            - "*.whl"
+  # test-macos-py35:
+  #   macos:
+  #       xcode: "10.0.0"
+  #   working_directory: ~/repo
+  #   steps:
+  #     - checkout
+  #     - *bootstrap-macos
+  #     - *bootstrap-venv-py35
+  #     - run:
+  #         name: Run Bazel tests
+  #         command: |
+  #           . venv-py35/bin/activate
+  #           pip install -U tensorflow==1.13.1
+  #           make clean
+  #           make test
 
-  build-package-macos-py36:
-    macos:
-        xcode: "10.0.0"
-    working_directory: ~/repo
-    steps:
-      - checkout
-      - *bootstrap-macos
-      - *bootstrap-venv-py36
-      - run:
-          name: build package
-          command: |
-            . venv-py36/bin/activate
-            make clean
-            make package-build
-      - persist_to_workspace:
-          root: wheelhouse
-          paths:
-            - "*.whl"
+  # test-macos-py36:
+  #   macos:
+  #       xcode: "10.0.0"
+  #   working_directory: ~/repo
+  #   steps:
+  #     - checkout
+  #     - *bootstrap-macos
+  #     - *bootstrap-venv-py36
+  #     - run:
+  #         name: Run Bazel tests
+  #         command: |
+  #           . venv-py36/bin/activate
+  #           make clean
+  #           make test
 
-  test-package-macos-py35:
-    macos:
-        xcode: "10.0.0"
-    working_directory: ~/repo
-    steps:
-      - checkout
-      - *bootstrap-macos
-      - *bootstrap-venv-py35
-      - attach_workspace:
-          at: wheelhouse
-      - run:
-          name: Test package
-          command: |
-            . venv-py35/bin/activate
-            make clean
-            make package-test
+  # build-package-macos-py35:
+  #   macos:
+  #       xcode: "10.0.0"
+  #   working_directory: ~/repo
+  #   parameters:
+  #     pyenv-activate-cmd:
+  #       type: string
+  #   steps:
+  #     - checkout
+  #     - *bootstrap-macos
+  #     - *bootstrap-venv-py35
+  #     - run:
+  #         name: Build package
+  #         command: |
+  #           . << parameters.pyenv-activate-cmd >>
+  #           make clean
+  #           make package-build
+  #     - persist_to_workspace:
+  #         root: wheelhouse
+  #         paths:
+  #           - "*.whl"
 
-  test-package-macos-py36:
-    macos:
-        xcode: "10.0.0"
-    working_directory: ~/repo
-    steps:
-      - checkout
-      - *bootstrap-macos
-      - *bootstrap-venv-py36
-      - attach_workspace:
-          at: wheelhouse
-      - run:
-          name: Test package
-          command: |
-            . venv-py36/bin/activate
-            make clean
-            make package-test
+  # build-package-macos-py36:
+  #   macos:
+  #       xcode: "10.0.0"
+  #   working_directory: ~/repo
+  #   steps:
+  #     - checkout
+  #     - *bootstrap-macos
+  #     - *bootstrap-venv-py36
+  #     - run:
+  #         name: build package
+  #         command: |
+  #           . venv-py36/bin/activate
+  #           make clean
+  #           make package-build
+  #     - persist_to_workspace:
+  #         root: wheelhouse
+  #         paths:
+  #           - "*.whl"
+
+  # test-package-macos-py35:
+  #   macos:
+  #       xcode: "10.0.0"
+  #   working_directory: ~/repo
+  #   steps:
+  #     - checkout
+  #     - *bootstrap-macos
+  #     - *bootstrap-venv-py35
+  #     - attach_workspace:
+  #         at: wheelhouse
+  #     - run:
+  #         name: Test package
+  #         command: |
+  #           . venv-py35/bin/activate
+  #           make clean
+  #           make package-test
+
+  # test-package-macos-py36:
+  #   macos:
+  #       xcode: "10.0.0"
+  #   working_directory: ~/repo
+  #   steps:
+  #     - checkout
+  #     - *bootstrap-macos
+  #     - *bootstrap-venv-py36
+  #     - attach_workspace:
+  #         at: wheelhouse
+  #     - run:
+  #         name: Test package
+  #         command: |
+  #           . venv-py36/bin/activate
+  #           make clean
+  #           make package-test
 
   # test-package-linux:
   #   docker:
@@ -203,19 +230,26 @@ workflows:
   version: 2
   build-package-py35:
     jobs:
-      - test-macos-py35
-      - build-package-macos-py35:
-          requires:
-            - test-macos-py35
-      - test-package-macos-py35:
-          requires:
-            - build-package-macos-py35
+      - test-macos:
+        pyenv-activate-cmd: venv-py35/bin/activate
+        tensorflow-version: 1.13.1
+      # - test-macos-py35
+      # - build-package-macos-py35:
+      #     requires:
+      #       - test-macos-py35
+      # - test-package-macos-py35:
+      #     requires:
+      #       - build-package-macos-py35
   build-package-py36:
     jobs:
-      - test-macos-py36
-      - build-package-macos-py36:
-          requires:
-            - test-macos-py36
-      - test-package-macos-py36:
-          requires:
-            - build-package-macos-py36
+      - test-macos:
+        pyenv-activate-cmd: venv-py36/bin/activate
+        tensorflow-version: 1.13.1
+
+      # - test-macos-py36
+      # - build-package-macos-py36:
+      #     requires:
+      #       - test-macos-py36
+      # - test-package-macos-py36:
+      #     requires:
+      #       - build-package-macos-py36
