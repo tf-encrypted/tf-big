@@ -1,88 +1,153 @@
 version: 2
 
-jobs:
-  build-linux:
-    docker:
-      - image: tfencrypted/tf-big:0.1.0
-    working_directory: ~/repo
-    steps:
-      - checkout
-      - run:
-          name: run tests
-          command: |
-            . /venv-py35/bin/activate
-            export LD_LIBRARY_PATH=/usr/local
-            make clean
-            make test
-      - run:
-          name: build pip
-          command: |
-            . /venv-py35/bin/activate
-            make clean
-            make build
-            . /venv-py36/bin/activate
-            make clean
-            make build
+variables:
 
-            for filename in artifacts/*; do
-              auditwheel repair $filename
-            done
-      - store_artifacts:
-          path: wheelhouse
-  build-macos:
+  bootstrap-linux: &bootstrap-linux
+    run:
+      name: bootstrap linux
+      command: |
+        apt update
+        apt install -y pkg-config zip g++ zlib1g-dev unzip python3 cmake curl git rsync
+
+        curl -OL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+        bash Miniconda3-latest-Linux-x86_64.sh -b -f
+
+        ../miniconda3/bin/conda create -n py35 python=3.5 2> /dev/null || true
+        ../miniconda3/envs/py35/bin/python -m venv venv-py35
+        . venv-py35/bin/activate
+        pip install -r requirements-dev.txt
+
+        ../miniconda3/bin/conda create -n py36 python=3.6 2> /dev/null || true
+        ../miniconda3/envs/py36/bin/python -m venv venv-py36
+        . venv-py36/bin/activate
+        pip install -r requirements-dev.txt
+
+  bootstrap-macos: &bootstrap-macos
+    run:
+      name: bootstrap macos
+      command: |
+        HOMEBREW_NO_AUTO_UPDATE=1 brew tap bazelbuild/tap
+        HOMEBREW_NO_AUTO_UPDATE=1 brew install bazelbuild/tap/bazel
+        HOMEBREW_NO_AUTO_UPDATE=1 brew install gmp
+
+        curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+        bash Miniconda3-latest-MacOSX-x86_64.sh -b -f
+
+        ../miniconda3/bin/conda create -n py35 python=3.5 2> /dev/null || true
+        ../miniconda3/envs/py35/bin/python -m venv venv-py35
+        . venv-py35/bin/activate
+        pip install -r requirements-dev.txt
+
+        ../miniconda3/bin/conda create -n py36 python=3.6 2> /dev/null || true
+        ../miniconda3/envs/py36/bin/python -m venv venv-py36
+        . venv-py36/bin/activate
+        pip install -r requirements-dev.txt
+
+jobs:
+
+  # build-linux:
+  #   docker:
+  #     - image: tfencrypted/tf-big:0.1.0
+  #   working_directory: ~/repo
+  #   steps:
+  #     - checkout
+  #     - run:
+  #         name: run tests
+  #         command: |
+  #           . /venv-py35/bin/activate
+  #           export LD_LIBRARY_PATH=/usr/local
+  #           make clean
+  #           make test
+  #     - run:
+  #         name: build pip
+  #         command: |
+  #           . /venv-py35/bin/activate
+  #           make clean
+  #           make build
+  #           . /venv-py36/bin/activate
+  #           make clean
+  #           make build
+
+  #           for filename in artifacts/*; do
+  #             auditwheel repair $filename
+  #           done
+  #     - store_artifacts:
+  #         path: wheelhouse
+  test-macos-py35:
     macos:
         xcode: "10.0.0"
     working_directory: ~/repo
     steps:
       - checkout
-      - run:
-          name: install deps
-          command: |
-            curl -O https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
-            bash Miniconda3-latest-MacOSX-x86_64.sh -b -f
-            ../miniconda3/bin/conda create -n py35 python=3.5 2> /dev/null || true
-            ../miniconda3/envs/py35/bin/python -m venv venv-py35
-            ../miniconda3/bin/conda create -n py36 python=3.6 2> /dev/null || true
-            ../miniconda3/envs/py36/bin/python -m venv venv-py36
-            . venv-py35/bin/activate
-            HOMEBREW_NO_AUTO_UPDATE=1 brew tap bazelbuild/tap
-            HOMEBREW_NO_AUTO_UPDATE=1 brew install bazelbuild/tap/bazel
-            HOMEBREW_NO_AUTO_UPDATE=1 brew install gmp
-            pip install -r requirements-dev.txt
+      - *bootstrap-macos
       - run:
           name: run tests
           command: |
             . venv-py35/bin/activate
             make clean
             make test
+
+  test-macos-py36:
+    macos:
+        xcode: "10.0.0"
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - *bootstrap-macos
       - run:
-          name: build pip
+          name: run tests
+          command: |
+            . venv-py36/bin/activate
+            make clean
+            make test
+
+  build-package-macos-py35:
+    macos:
+        xcode: "10.0.0"
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - *bootstrap-macos
+      - run:
+          name: build package
           command: |
             . venv-py35/bin/activate
             make clean
-            make build
+            make package-build
+
+  build-package-macos-py36:
+    macos:
+        xcode: "10.0.0"
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - *bootstrap-macos
+      - run:
+          name: build package
+          command: |
             . venv-py36/bin/activate
             make clean
-            make build
-      - store_artifacts:
-          path: artifacts
+            make package-build
 
+  # test-package-linux:
+  #   docker:
+  #     - image: ubuntu:19.04
+  #   working_directory: ~/repo
+  #   steps:
+  #     - run:
+  #         name: certs
+  #         command: |
+  #           apt update
+  #           apt install -y ca-certificates
+  #     - checkout
+  #     - attach_workspace:
+  #         at: artifacts
+  #     - *bootstrap
 
 workflows:
   version: 2
-  build-linux-macos:
+
+  build-package:
     jobs:
-      - build-linux:
-          filters:
-            tags:
-              # In order for the 'deploy' job to run, we must first kick off
-              # the build job on all tags. By default, Circle CI only kicks off
-              # builds on tags if a filter is defined.
-              only: /^(?:[0-9]+)\.(?:[0-9]+)\.(?:[0-9]+)(?:(\-rc[0-9]+)?)$/
-      - build-macos:
-          filters:
-            tags:
-              # In order for the 'deploy' job to run, we must first kick off
-              # the build job on all tags. By default, Circle CI only kicks off
-              # builds on tags if a filter is defined.
-              only: /^(?:[0-9]+)\.(?:[0-9]+)\.(?:[0-9]+)(?:(\-rc[0-9]+)?)$/
+      - build-package-macos-py35
+      - build-package-macos-py36
