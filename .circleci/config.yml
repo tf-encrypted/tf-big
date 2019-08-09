@@ -273,47 +273,19 @@ jobs:
 
 workflows:
   version: 2
-  test-py35:
+  test:
     jobs:
       - test-macos:
-          name: test-macos-1.13.1
-          pyenv-activate-cmd: "venv-py35/bin/activate"
-          tensorflow-version: "1.13.1"
-      - test-macos:
-          name: test-macos-1.13.2
-          pyenv-activate-cmd: "venv-py35/bin/activate"
-          tensorflow-version: "1.13.2"
-      - test-macos:
-          name: test-macos-1.14.0
-          pyenv-activate-cmd: "venv-py35/bin/activate"
-          tensorflow-version: "1.14.0"
-  test-py36:
-    jobs:
-      - test-macos:
-          name: test-macos-1.13.1
+          name: test-macos-36-1.13.1
           pyenv-activate-cmd: "venv-py36/bin/activate"
           tensorflow-version: "1.13.1"
       - test-macos:
-          name: test-macos-1.13.2
+          name: test-macos-36-1.13.2
           pyenv-activate-cmd: "venv-py36/bin/activate"
           tensorflow-version: "1.13.2"
       - test-macos:
-          name: test-macos-1.14.0
+          name: test-macos-36-1.14.0
           pyenv-activate-cmd: "venv-py36/bin/activate"
-          tensorflow-version: "1.14.0"
-  test-py37:
-    jobs:
-      - test-macos:
-          name: test-macos-1.13.1
-          pyenv-activate-cmd: "venv-py37/bin/activate"
-          tensorflow-version: "1.13.1"
-      - test-macos:
-          name: test-macos-1.13.2
-          pyenv-activate-cmd: "venv-py37/bin/activate"
-          tensorflow-version: "1.13.2"
-      - test-macos:
-          name: test-macos-1.14.0
-          pyenv-activate-cmd: "venv-py37/bin/activate"
           tensorflow-version: "1.14.0"
   # build:
   #   jobs:
