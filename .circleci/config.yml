@@ -212,7 +212,7 @@ workflows:
             - build-package-macos-py35
   build-package-py36:
     jobs:
-      - test-macos-py35
+      - test-macos-py36
       - build-package-macos-py36:
           requires:
             - test-macos-py36
