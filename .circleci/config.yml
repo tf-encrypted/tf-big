@@ -2,32 +2,32 @@ version: 2.1
 
 variables:
 
-  bootstrap-venv-py35: &bootstrap-venv-py35
-    run:
-      name: Create Python environment
-      command: |
-        ../miniconda3/bin/conda create -n py35 python=3.5 2> /dev/null || true
-        ../miniconda3/envs/py35/bin/python -m venv venv-py35
-        . venv-py35/bin/activate
-        pip install -q -r requirements-dev.txt
+  # bootstrap-venv-py35: &bootstrap-venv-py35
+  #   run:
+  #     name: Create Python environment
+  #     command: |
+  #       ../miniconda3/bin/conda create -n py3.5 python=3.5 2> /dev/null || true
+  #       ../miniconda3/envs/py35/bin/python -m venv venv-py35
+  #       . venv-py35/bin/activate
+  #       pip install -q -r requirements-dev.txt
 
-  bootstrap-venv-py36: &bootstrap-venv-py36
-    run:
-      name: Create Python environment
-      command: |
-        ../miniconda3/bin/conda create -n py36 python=3.6 2> /dev/null || true
-        ../miniconda3/envs/py36/bin/python -m venv venv-py36
-        . venv-py36/bin/activate
-        pip install -q -r requirements-dev.txt
+  # bootstrap-venv-py36: &bootstrap-venv-py36
+  #   run:
+  #     name: Create Python environment
+  #     command: |
+  #       ../miniconda3/bin/conda create -n py36 python=3.6 2> /dev/null || true
+  #       ../miniconda3/envs/py36/bin/python -m venv venv-py36
+  #       . venv-py36/bin/activate
+  #       pip install -q -r requirements-dev.txt
 
-  bootstrap-venv-py37: &bootstrap-venv-py37
-    run:
-      name: Create Python environment
-      command: |
-        ../miniconda3/bin/conda create -n py37 python=3.7 2> /dev/null || true
-        ../miniconda3/envs/py37/bin/python -m venv venv-py37
-        . venv-py37/bin/activate
-        pip install -q -r requirements-dev.txt
+  # bootstrap-venv-py37: &bootstrap-venv-py37
+  #   run:
+  #     name: Create Python environment
+  #     command: |
+  #       ../miniconda3/bin/conda create -n py37 python=3.7 2> /dev/null || true
+  #       ../miniconda3/envs/py37/bin/python -m venv venv-py37
+  #       . venv-py37/bin/activate
+  #       pip install -q -r requirements-dev.txt
 
   bootstrap-linux: &bootstrap-linux
     run:
@@ -60,6 +60,20 @@ variables:
 
         curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh --silent
         bash Miniconda3-latest-MacOSX-x86_64.sh -b -f >> build.log
+
+commands:
+
+  bootstrap-pyenv:
+    parameters:
+      python-version:
+        type: string
+    steps:
+      - run: command |
+          ../miniconda3/bin/conda create -n py<< parameters.python-version >> python=<< parameters.python-version>> 2> /dev/null || true
+          ../miniconda3/envs/py<< parameters.python-version >>/bin/python -m venv venv-py<< parameters.python.version >>
+          . venv-py<< parameters.python-version >>/bin/activate
+          pip install -q -r requirements-dev.txt
+w
 
 jobs:
 
@@ -94,35 +108,57 @@ jobs:
 
   test-macos:
     parameters:
-      pyenv-activate-cmd:
-        # default: venv-py36/bin/activate
+      python-version:
         type: string
       tensorflow-version:
-        # default: 1.14.0
         type: string
     macos:
-        xcode: "10.0.0"
+      xcode: "10.0.0"
     working_directory: ~/repo
     steps:
       - checkout
       - *bootstrap-macos
-      - *bootstrap-venv-py35
-      - *bootstrap-venv-py36
-      - *bootstrap-venv-py37
+      - bootstrap-pyenv:
+          python-version: << parameters.python-version >>
       - run:
           name: Configure test environment
           command: |
-            . << parameters.pyenv-activate-cmd >>
+            . venv-py<< parameters.python-version >>/bin/activate
             make clean
             pip install -q -U tensorflow==<< parameters.tensorflow-version >>
             make .bazelrc
+            # reduce Bazel output to logs
             echo 'test --noshow_progress --noshow_loading_progress' >> .bazelrc
+            echo 'build --noshow_progress --noshow_loading_progress' >> .bazelrc
       - run:
           name: Run tests
           command: |
-            . << parameters.pyenv-activate-cmd >>
+            . venv-py<< parameters.python-version >>/bin/activate
             pip freeze
             make test
+
+  build-macos:
+    macos:
+      xcode: "10.0.0"
+    working_directory: ~/repo
+    steps:
+      - run:
+          name: Prepare intermediate output directory
+          command: |
+            rm -rf ./tagged
+      - run:
+          name: Configure build environment
+          command: |
+            . venv-py36/bin/activate
+            make clean
+            pip install -q -U tensorflow==1.14.0
+            make .bazelrc
+      - run:
+          name: Build tagged
+          command: |
+            . venv-py36/bin/activate
+            pip freeze
+            make build-tagged
 
   # test-build-macos:
   #   parameters:
@@ -273,20 +309,22 @@ jobs:
 
 workflows:
   version: 2
-  test:
+  quicktest:
     jobs:
-      - test-macos:
-          name: test-macos-36-1.13.1
-          pyenv-activate-cmd: "venv-py36/bin/activate"
-          tensorflow-version: "1.13.1"
+      # this workflow runs on every push to the repository and performs only
+      # a few tests against latest versions of TensorFlow; build workflows
+      # will perform more through testing later
       - test-macos:
           name: test-macos-36-1.13.2
-          pyenv-activate-cmd: "venv-py36/bin/activate"
+          python-version: "3.6"
           tensorflow-version: "1.13.2"
       - test-macos:
           name: test-macos-36-1.14.0
-          pyenv-activate-cmd: "venv-py36/bin/activate"
+          python-version: "3.6"
           tensorflow-version: "1.14.0"
+  build:
+    jobs:
+
   # build:
   #   jobs:
   #     - build-macos:
