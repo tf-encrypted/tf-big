@@ -4,13 +4,16 @@
 clean:
 	bazel clean
 	rm -f .bazelrc
-	rm -rf ./wheelshouse
 
 test: .bazelrc
 	bazel test ... --test_output=all
 
 build: .bazelrc
 	bazel build //tf_big:tf_big_py
+
+build-tagged: .bazelrc
+	mkdir -p ./tagged
+	./build_tagged.sh ./tagged
 
 package-build: .bazelrc
 	rm -rf ./wheelhouse

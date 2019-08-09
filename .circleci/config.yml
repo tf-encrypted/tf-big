@@ -100,12 +100,47 @@ jobs:
       - *bootstrap-venv-py35
       # - *bootstrap-venv-py36
       - run:
-          name: Run Bazel tests
+          name: Configure
           command: |
             . << parameters.pyenv-activate-cmd >>
             pip install -U tensorflow==<< parameters.tensorflow-version >>
+      - run:
+          name: Run tests
+          command: |
             make clean
             make test
+
+  # test-build-macos:
+  #   parameters:
+  #     pyenv-activate-cmd:
+  #       # default: venv-py36/bin/activate
+  #       type: string
+  #     tensorflow-version:
+  #       # default: 1.14.0
+  #       type: string
+  #   macos:
+  #       xcode: "10.0.0"
+  #   working_directory: ~/repo
+  #   steps:
+  #     - checkout
+  #     - *bootstrap-macos
+  #     - *bootstrap-venv-py35
+  #     # - *bootstrap-venv-py36
+  #     - run:
+  #         name: Configure
+  #         command: |
+  #           . << parameters.pyenv-activate-cmd >>
+  #           pip install -U tensorflow==<< parameters.tensorflow-version >>
+  #     - run:
+  #         name: Run tests
+  #         command: |
+  #           make clean
+  #           make test
+  #     - run:
+  #         name: Build tagged files
+  #         command: |
+  #           make clean
+  #           make build-tagged
 
   # test-macos-py35:
   #   macos:
@@ -255,7 +290,7 @@ jobs:
 
 workflows:
   version: 2
-  build-package-py35:
+  test:
     jobs:
       - test-macos:
           name: test-macos-1.13.1
@@ -269,12 +304,27 @@ workflows:
           name: test-macos-1.14.0
           pyenv-activate-cmd: "venv-py35/bin/activate"
           tensorflow-version: "1.14.0"
-      - build-package-macos:
-          pyenv-activate-cmd: "venv-py35/bin/activate"
-          requires:
-            - test-macos-1.13.1
-            - test-macos-1.13.2
-            - test-macos-1.14.0
+  # build:
+  #   jobs:
+  #     - build-macos:
+  #         ame: build-macos-1.13.1
+  #         pyenv-activate-cmd: "venv-py35/bin/activate"
+  #         tensorflow-version: "1.13.1"
+  #     - build-macos:
+  #         ame: build-macos-1.13.2
+  #         pyenv-activate-cmd: "venv-py35/bin/activate"
+  #         tensorflow-version: "1.13.2"
+  #     - build-macos:
+  #         ame: build-macos-1.14.0
+  #         pyenv-activate-cmd: "venv-py35/bin/activate"
+  #         tensorflow-version: "1.14.0"
+
+  #     - build-package-macos:
+  #         pyenv-activate-cmd: "venv-py35/bin/activate"
+  #         requires:
+  #           - test-macos-1.13.1
+  #           - test-macos-1.13.2
+  #           - test-macos-1.14.0
       # - test-package-macos-py35:
       #     requires:
       #       - build-package-macos-py35
