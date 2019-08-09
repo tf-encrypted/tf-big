@@ -44,12 +44,12 @@ variables:
     run:
       name: Bootstrap macOS
       command: |
-        HOMEBREW_NO_AUTO_UPDATE=1 brew tap bazelbuild/tap
+        HOMEBREW_NO_AUTO_UPDATE=1 brew tap bazelbuild/tap >> build.log
         HOMEBREW_NO_AUTO_UPDATE=1 brew install bazelbuild/tap/bazel
         HOMEBREW_NO_AUTO_UPDATE=1 brew install gmp
         HOMEBREW_NO_AUTO_UPDATE=1 brew install mmv
 
-        curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+        curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh --silent
         bash Miniconda3-latest-MacOSX-x86_64.sh -b -f
 
 jobs:
@@ -100,16 +100,17 @@ jobs:
       - *bootstrap-venv-py35
       # - *bootstrap-venv-py36
       - run:
-          name: Configure
+          name: Configure Python environment
           command: |
             . << parameters.pyenv-activate-cmd >>
             pip install -q -U tensorflow==<< parameters.tensorflow-version >>
-            make clean
-            make .bazelrc
-            echo 'test --noshow_progress --noshow_loading_progress' >> .bazelrc
+            # make clean
+            # make .bazelrc
+            # echo 'test --noshow_progress --noshow_loading_progress' >> .bazelrc
       - run:
           name: Run tests
           command: |
+            make clean
             make test
 
   # test-build-macos:
