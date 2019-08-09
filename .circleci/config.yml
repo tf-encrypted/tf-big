@@ -9,7 +9,7 @@ variables:
         ../miniconda3/bin/conda create -n py35 python=3.5 2> /dev/null || true
         ../miniconda3/envs/py35/bin/python -m venv venv-py35
         . venv-py35/bin/activate
-        pip install -q -r requirements-dev.txt
+        pip install -r requirements-dev.txt
 
   bootstrap-venv-py36: &bootstrap-venv-py36
     run:
@@ -18,7 +18,7 @@ variables:
         ../miniconda3/bin/conda create -n py36 python=3.6 2> /dev/null || true
         ../miniconda3/envs/py36/bin/python -m venv venv-py36
         . venv-py36/bin/activate
-        pip install -q -r requirements-dev.txt
+        pip install -r requirements-dev.txt
 
   bootstrap-linux: &bootstrap-linux
     run:
@@ -103,13 +103,15 @@ jobs:
           name: Configure Python environment
           command: |
             . << parameters.pyenv-activate-cmd >>
-            pip install -q -U tensorflow==<< parameters.tensorflow-version >>
+            pip install -U tensorflow==<< parameters.tensorflow-version >>
             # make clean
             # make .bazelrc
             # echo 'test --noshow_progress --noshow_loading_progress' >> .bazelrc
+            pip list
       - run:
           name: Run tests
           command: |
+            pip list
             make clean
             make test
 
