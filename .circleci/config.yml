@@ -73,7 +73,6 @@ commands:
           ../miniconda3/envs/py<< parameters.python-version >>/bin/python -m venv venv-py<< parameters.python.version >>
           . venv-py<< parameters.python-version >>/bin/activate
           pip install -q -r requirements-dev.txt
-w
 
 jobs:
 
