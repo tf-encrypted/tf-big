@@ -86,10 +86,10 @@ jobs:
   test-macos:
     parameters:
       pyenv-activate-cmd:
-        default: venv-py36/bin/activate
+        # default: venv-py36/bin/activate
         type: string
       tensorflow-version:
-        default: 1.14.0
+        # default: 1.14.0
         type: string
     macos:
         xcode: "10.0.0"
@@ -98,7 +98,7 @@ jobs:
       - checkout
       - *bootstrap-macos
       - *bootstrap-venv-py35
-      - *bootstrap-venv-py36
+      # - *bootstrap-venv-py36
       - run:
           name: Run Bazel tests
           command: |
@@ -137,6 +137,31 @@ jobs:
   #           . venv-py36/bin/activate
   #           make clean
   #           make test
+
+  build-package-macos:
+    parameters:
+      pyenv-activate-cmd:
+        type: string
+      # tensorflow-version:
+      #   type: string
+    macos:
+        xcode: "10.0.0"
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - *bootstrap-macos
+      - *bootstrap-venv-py35
+      # - *bootstrap-venv-py36
+      - run:
+          name: Build package
+          command: |
+            . << parameters.pyenv-activate-cmd >>
+            make clean
+            make package-build
+      - persist_to_workspace:
+          root: wheelhouse
+          paths:
+            - "*.whl"
 
   # build-package-macos-py35:
   #   macos:
@@ -244,7 +269,8 @@ workflows:
           name: test-macos-1.14.0
           pyenv-activate-cmd: "venv-py35/bin/activate"
           tensorflow-version: "1.14.0"
-      - build-package-macos-py35:
+      - build-package-macos:
+          pyenv-activate-cmd: "venv-py35/bin/activate"
           requires:
             - test-macos-1.13.1
             - test-macos-1.13.2
