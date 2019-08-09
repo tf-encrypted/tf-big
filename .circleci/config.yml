@@ -9,7 +9,7 @@ variables:
         ../miniconda3/bin/conda create -n py35 python=3.5 2> /dev/null || true
         ../miniconda3/envs/py35/bin/python -m venv venv-py35
         . venv-py35/bin/activate
-        pip install -r requirements-dev.txt
+        pip install -q -r requirements-dev.txt
 
   bootstrap-venv-py36: &bootstrap-venv-py36
     run:
@@ -18,7 +18,7 @@ variables:
         ../miniconda3/bin/conda create -n py36 python=3.6 2> /dev/null || true
         ../miniconda3/envs/py36/bin/python -m venv venv-py36
         . venv-py36/bin/activate
-        pip install -r requirements-dev.txt
+        pip install -q -r requirements-dev.txt
 
   bootstrap-linux: &bootstrap-linux
     run:
@@ -45,12 +45,12 @@ variables:
       name: Bootstrap macOS
       command: |
         HOMEBREW_NO_AUTO_UPDATE=1 brew tap bazelbuild/tap >> build.log
-        HOMEBREW_NO_AUTO_UPDATE=1 brew install bazelbuild/tap/bazel
-        HOMEBREW_NO_AUTO_UPDATE=1 brew install gmp
-        HOMEBREW_NO_AUTO_UPDATE=1 brew install mmv
+        HOMEBREW_NO_AUTO_UPDATE=1 brew install bazelbuild/tap/bazel >> build.log
+        HOMEBREW_NO_AUTO_UPDATE=1 brew install gmp >> build.log
+        HOMEBREW_NO_AUTO_UPDATE=1 brew install mmv >> build.log
 
         curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh --silent
-        bash Miniconda3-latest-MacOSX-x86_64.sh -b -f
+        bash Miniconda3-latest-MacOSX-x86_64.sh -b -f >> build.log
 
 jobs:
 
@@ -103,8 +103,8 @@ jobs:
           name: Configure test environment
           command: |
             . << parameters.pyenv-activate-cmd >>
-            pip install -U tensorflow==<< parameters.tensorflow-version >>
             make clean
+            pip install -q -U tensorflow==<< parameters.tensorflow-version >>
             make .bazelrc
             echo 'test --noshow_progress --noshow_loading_progress' >> .bazelrc
       - run:
@@ -296,14 +296,14 @@ workflows:
   version: 2
   test:
     jobs:
-      # - test-macos:
-      #     name: test-macos-1.13.1
-      #     pyenv-activate-cmd: "venv-py35/bin/activate"
-      #     tensorflow-version: "1.13.1"
-      # - test-macos:
-      #     name: test-macos-1.13.2
-      #     pyenv-activate-cmd: "venv-py35/bin/activate"
-      #     tensorflow-version: "1.13.2"
+      - test-macos:
+          name: test-macos-1.13.1
+          pyenv-activate-cmd: "venv-py35/bin/activate"
+          tensorflow-version: "1.13.1"
+      - test-macos:
+          name: test-macos-1.13.2
+          pyenv-activate-cmd: "venv-py35/bin/activate"
+          tensorflow-version: "1.13.2"
       - test-macos:
           name: test-macos-1.14.0
           pyenv-activate-cmd: "venv-py35/bin/activate"
