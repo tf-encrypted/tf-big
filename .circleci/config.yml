@@ -297,14 +297,14 @@ workflows:
   version: 2
   test:
     jobs:
-      - test-macos:
-          name: test-macos-1.13.1
-          pyenv-activate-cmd: "venv-py35/bin/activate"
-          tensorflow-version: "1.13.1"
-      - test-macos:
-          name: test-macos-1.13.2
-          pyenv-activate-cmd: "venv-py35/bin/activate"
-          tensorflow-version: "1.13.2"
+      # - test-macos:
+      #     name: test-macos-1.13.1
+      #     pyenv-activate-cmd: "venv-py35/bin/activate"
+      #     tensorflow-version: "1.13.1"
+      # - test-macos:
+      #     name: test-macos-1.13.2
+      #     pyenv-activate-cmd: "venv-py35/bin/activate"
+      #     tensorflow-version: "1.13.2"
       - test-macos:
           name: test-macos-1.14.0
           pyenv-activate-cmd: "venv-py35/bin/activate"
