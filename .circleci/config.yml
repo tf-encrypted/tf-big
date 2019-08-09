@@ -20,6 +20,15 @@ variables:
         . venv-py36/bin/activate
         pip install -q -r requirements-dev.txt
 
+  bootstrap-venv-py37: &bootstrap-venv-py37
+    run:
+      name: Create Python environment
+      command: |
+        ../miniconda3/bin/conda create -n py37 python=3.7 2> /dev/null || true
+        ../miniconda3/envs/py37/bin/python -m venv venv-py37
+        . venv-py37/bin/activate
+        pip install -q -r requirements-dev.txt
+
   bootstrap-linux: &bootstrap-linux
     run:
       name: bootstrap linux
@@ -98,7 +107,8 @@ jobs:
       - checkout
       - *bootstrap-macos
       - *bootstrap-venv-py35
-      # - *bootstrap-venv-py36
+      - *bootstrap-venv-py36
+      - *bootstrap-venv-py37
       - run:
           name: Configure test environment
           command: |
@@ -111,7 +121,7 @@ jobs:
           name: Run tests
           command: |
             . << parameters.pyenv-activate-cmd >>
-            pip list
+            pip freeze
             make test
 
   # test-build-macos:
@@ -145,37 +155,6 @@ jobs:
   #         command: |
   #           make clean
   #           make build-tagged
-
-  # test-macos-py35:
-  #   macos:
-  #       xcode: "10.0.0"
-  #   working_directory: ~/repo
-  #   steps:
-  #     - checkout
-  #     - *bootstrap-macos
-  #     - *bootstrap-venv-py35
-  #     - run:
-  #         name: Run Bazel tests
-  #         command: |
-  #           . venv-py35/bin/activate
-  #           pip install -U tensorflow==1.13.1
-  #           make clean
-  #           make test
-
-  # test-macos-py36:
-  #   macos:
-  #       xcode: "10.0.0"
-  #   working_directory: ~/repo
-  #   steps:
-  #     - checkout
-  #     - *bootstrap-macos
-  #     - *bootstrap-venv-py36
-  #     - run:
-  #         name: Run Bazel tests
-  #         command: |
-  #           . venv-py36/bin/activate
-  #           make clean
-  #           make test
 
   # build-package-macos:
   #   parameters:
@@ -294,7 +273,7 @@ jobs:
 
 workflows:
   version: 2
-  test:
+  test-py35:
     jobs:
       - test-macos:
           name: test-macos-1.13.1
@@ -307,6 +286,32 @@ workflows:
       - test-macos:
           name: test-macos-1.14.0
           pyenv-activate-cmd: "venv-py35/bin/activate"
+          tensorflow-version: "1.14.0"
+  test-py36:
+      - test-macos:
+          name: test-macos-1.13.1
+          pyenv-activate-cmd: "venv-py36/bin/activate"
+          tensorflow-version: "1.13.1"
+      - test-macos:
+          name: test-macos-1.13.2
+          pyenv-activate-cmd: "venv-py36/bin/activate"
+          tensorflow-version: "1.13.2"
+      - test-macos:
+          name: test-macos-1.14.0
+          pyenv-activate-cmd: "venv-py36/bin/activate"
+          tensorflow-version: "1.14.0"
+  test-py37:
+      - test-macos:
+          name: test-macos-1.13.1
+          pyenv-activate-cmd: "venv-py37/bin/activate"
+          tensorflow-version: "1.13.1"
+      - test-macos:
+          name: test-macos-1.13.2
+          pyenv-activate-cmd: "venv-py37/bin/activate"
+          tensorflow-version: "1.13.2"
+      - test-macos:
+          name: test-macos-1.14.0
+          pyenv-activate-cmd: "venv-py37/bin/activate"
           tensorflow-version: "1.14.0"
   # build:
   #   jobs:
