@@ -231,8 +231,8 @@ workflows:
   build-package-py35:
     jobs:
       - test-macos:
-        pyenv-activate-cmd: venv-py35/bin/activate
-        tensorflow-version: 1.13.1
+          pyenv-activate-cmd: venv-py35/bin/activate
+          tensorflow-version: 1.13.1
       # - test-macos-py35
       # - build-package-macos-py35:
       #     requires:
@@ -243,8 +243,8 @@ workflows:
   build-package-py36:
     jobs:
       - test-macos:
-        pyenv-activate-cmd: venv-py36/bin/activate
-        tensorflow-version: 1.13.1
+          pyenv-activate-cmd: venv-py36/bin/activate
+          tensorflow-version: 1.13.1
 
       # - test-macos-py36
       # - build-package-macos-py36:
