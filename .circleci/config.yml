@@ -99,18 +99,20 @@ jobs:
       - *bootstrap-macos
       - *bootstrap-venv-py35
       # - *bootstrap-venv-py36
-      - run:
-          name: Configure Python environment
-          command: |
-            . << parameters.pyenv-activate-cmd >>
-            pip install -U tensorflow==<< parameters.tensorflow-version >>
-            # make clean
-            # make .bazelrc
-            # echo 'test --noshow_progress --noshow_loading_progress' >> .bazelrc
-            pip list
+      # - run:
+      #     name: Configure Python environment
+      #     command: |
+      #       . << parameters.pyenv-activate-cmd >>
+      #       pip install -U tensorflow==<< parameters.tensorflow-version >>
+      #       # make clean
+      #       # make .bazelrc
+      #       # echo 'test --noshow_progress --noshow_loading_progress' >> .bazelrc
+      #       pip list
       - run:
           name: Run tests
           command: |
+            . << parameters.pyenv-activate-cmd >>
+            pip install -U tensorflow==<< parameters.tensorflow-version >>
             pip list
             make clean
             make test
