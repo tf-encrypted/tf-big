@@ -112,7 +112,7 @@ jobs:
           name: Run tests
           command: |
             . << parameters.pyenv-activate-cmd >>
-            pip install -U tensorflow==<< parameters.tensorflow-version >>
+            pip install -q -U tensorflow==<< parameters.tensorflow-version >>
             pip list
             make clean
             make test
