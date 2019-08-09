@@ -2,6 +2,24 @@ version: 2
 
 variables:
 
+  bootstrap-venv-py35: &bootstrap-venv-py35
+    run:
+      name: Create Python environment
+      command: |
+        ../miniconda3/bin/conda create -n py35 python=3.5 2> /dev/null || true
+        ../miniconda3/envs/py35/bin/python -m venv venv-py35
+        . venv-py35/bin/activate
+        pip install -r requirements-dev.txt
+
+  bootstrap-venv-py36: &bootstrap-venv-py36
+    run:
+      name: Create Python environment
+      command: |
+        ../miniconda3/bin/conda create -n py36 python=3.6 2> /dev/null || true
+        ../miniconda3/envs/py36/bin/python -m venv venv-py36
+        . venv-py36/bin/activate
+        pip install -r requirements-dev.txt
+
   bootstrap-linux: &bootstrap-linux
     run:
       name: bootstrap linux
@@ -24,24 +42,15 @@ variables:
 
   bootstrap-macos: &bootstrap-macos
     run:
-      name: bootstrap macos
+      name: Bootstrap macOS
       command: |
         HOMEBREW_NO_AUTO_UPDATE=1 brew tap bazelbuild/tap
         HOMEBREW_NO_AUTO_UPDATE=1 brew install bazelbuild/tap/bazel
         HOMEBREW_NO_AUTO_UPDATE=1 brew install gmp
+        HOMEBREW_NO_AUTO_UPDATE=1 brew install mmv
 
         curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
         bash Miniconda3-latest-MacOSX-x86_64.sh -b -f
-
-        ../miniconda3/bin/conda create -n py35 python=3.5 2> /dev/null || true
-        ../miniconda3/envs/py35/bin/python -m venv venv-py35
-        . venv-py35/bin/activate
-        pip install -r requirements-dev.txt
-
-        ../miniconda3/bin/conda create -n py36 python=3.6 2> /dev/null || true
-        ../miniconda3/envs/py36/bin/python -m venv venv-py36
-        . venv-py36/bin/activate
-        pip install -r requirements-dev.txt
 
 jobs:
 
@@ -80,6 +89,7 @@ jobs:
     steps:
       - checkout
       - *bootstrap-macos
+      - *bootstrap-venv-py35
       - run:
           name: run tests
           command: |
@@ -94,6 +104,7 @@ jobs:
     steps:
       - checkout
       - *bootstrap-macos
+      - *bootstrap-venv-py36
       - run:
           name: run tests
           command: |
@@ -108,8 +119,9 @@ jobs:
     steps:
       - checkout
       - *bootstrap-macos
+      - *bootstrap-venv-py35
       - run:
-          name: build package
+          name: Build package
           command: |
             . venv-py35/bin/activate
             make clean
@@ -122,6 +134,7 @@ jobs:
     steps:
       - checkout
       - *bootstrap-macos
+      - *bootstrap-venv-py36
       - run:
           name: build package
           command: |
@@ -149,5 +162,11 @@ workflows:
 
   build-package:
     jobs:
-      - build-package-macos-py35
-      - build-package-macos-py36
+      - test-macos-py35
+      - test-macos-py36
+      - build-package-macos-py35:
+          requires:
+            - test-macos-py35
+      - build-package-macos-py36:
+          requires:
+            - test-macos-py36
