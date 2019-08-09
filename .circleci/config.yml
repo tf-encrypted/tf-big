@@ -86,10 +86,10 @@ jobs:
   test-macos:
     parameters:
       pyenv-activate-cmd:
-        default: venv-py35/bin/activate
+        default: venv-py36/bin/activate
         type: string
       tensorflow-version:
-        default: 1.13.1
+        default: 1.14.0
         type: string
     macos:
         xcode: "10.0.0"
@@ -233,20 +233,30 @@ workflows:
   build-package-py35:
     jobs:
       - test-macos:
+          name: test-macos-1.13.1
           pyenv-activate-cmd: "venv-py35/bin/activate"
           tensorflow-version: "1.13.1"
-      # - test-macos-py35
-      # - build-package-macos-py35:
-      #     requires:
-      #       - test-macos-py35
+      - test-macos:
+          name: test-macos-1.13.2
+          pyenv-activate-cmd: "venv-py35/bin/activate"
+          tensorflow-version: "1.13.2"
+      - test-macos:
+          name: test-macos-1.14.0
+          pyenv-activate-cmd: "venv-py35/bin/activate"
+          tensorflow-version: "1.14.0"
+      - build-package-macos-py35:
+          requires:
+            - test-macos-1.13.1
+            - test-macos-1.13.2
+            - test-macos-1.14.0
       # - test-package-macos-py35:
       #     requires:
       #       - build-package-macos-py35
-  build-package-py36:
-    jobs:
-      - test-macos:
-          pyenv-activate-cmd: "venv-py36/bin/activate"
-          tensorflow-version: "1.13.1"
+  # build-package-py36:
+  #   jobs:
+  #     - test-macos:
+  #         pyenv-activate-cmd: "venv-py36/bin/activate"
+  #         tensorflow-version: "1.13.1"
 
       # - test-macos-py36
       # - build-package-macos-py36:
