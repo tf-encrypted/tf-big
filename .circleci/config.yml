@@ -7,14 +7,14 @@ commands:
       - run:
           name: Bootstrap Linux
           command: |
-            apt update >> build.log
-            apt install -y pkg-config g++ cmake >> build.log
-            apt install -y zip unzip zlib1g-dev >> build.log
-            apt install -y curl git rsync >> build.log
-            apt install -y python3 >> build.log
+            apt update
+            apt install -y pkg-config g++ cmake
+            apt install -y zip unzip zlib1g-dev
+            apt install -y curl git rsync
+            apt install -y python3
 
             curl -OL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh --silent
-            bash Miniconda3-latest-Linux-x86_64.sh -b -f >> build.log
+            bash Miniconda3-latest-Linux-x86_64.sh -b -f
 
   bootstrap-macos:
     steps:
@@ -317,19 +317,19 @@ workflows:
       # a few tests against latest versions of TensorFlow; build workflows
       # will perform more through testing later
       - test-macos:
-          name: test-macos-36-1.13.2
+          name: test-macos-3.6-1.13.2
           python-version: "3.6"
           tensorflow-version: "1.13.2"
       - test-macos:
-          name: test-macos-36-1.14.0
+          name: test-macos-3.6-1.14.0
           python-version: "3.6"
           tensorflow-version: "1.14.0"
       - test-linux:
-          name: test-linux-36-1.13.2
+          name: test-linux-3.6-1.13.2
           python-version: "3.6"
           tensorflow-version: "1.13.2"
       - test-linux:
-          name: test-linux-36-1.14.0
+          name: test-linux-3.6-1.14.0
           python-version: "3.6"
           tensorflow-version: "1.14.0"
   # build:
