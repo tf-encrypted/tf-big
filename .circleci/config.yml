@@ -319,7 +319,6 @@ workflows:
       - package-test-macos:
           name: package-test-macos-py3.5
           python-version: "3.5"
-          python
           requires:
             - package-build-macos-py3.5
       # # macOS, Python 3.6
