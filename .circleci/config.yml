@@ -36,7 +36,6 @@ commands:
         type: string
       python-environment:
         type: string
-        default: tfbig-build-py<< parameters.python-version >>
     steps:
       - run:
           name: Create Python << parameters.python-version >> build environment '<< parameters.python-environment >>'
@@ -53,7 +52,6 @@ commands:
         type: string
       python-environment:
         type: string
-        default: tfbig-test-py<< parameters.python-version >>
     steps:
       - run:
           name: Create Python << parameters.python-version >> test environment '<< parameters.python-environment >>'
@@ -79,6 +77,26 @@ commands:
             # reduce Bazel output to logs
             echo 'test --noshow_progress --noshow_loading_progress' >> .bazelrc
             echo 'build --noshow_progress --noshow_loading_progress' >> .bazelrc
+
+  test:
+    parameters:
+      python-version:
+        type: string
+      python-environment:
+        type: string
+    steps:
+      - create-pyenv-build:
+          python-version: << parameters.python-version >>
+          python-environment: << parameters.python-environment >>
+      - configure-pyenv:
+          tensorflow-version: << parameters.tensorflow-version >>
+          python-environment: << parameters.python-environment >>
+      - run:
+          name: Run tests
+          command: |
+            . venv-<< parameters.python-environment >>/bin/activate
+            pip freeze
+            make test
 
   build-tagged:
     parameters:
@@ -115,6 +133,66 @@ commands:
             pip freeze
             DIR_TAGGED=<< parameters.tagged-directory >> DIR_WHEEL=<< parameters.wheel-directory >> make package-bundle
 
+  package-build:
+    parameters:
+      python-version:
+        type: string
+      python-environment:
+        type: string
+      wheel-directory:
+        type: string
+      tagged-directory:
+        type: string
+        default: ./tagged
+    steps:
+      - create-pyenv-build:
+          python-version: << parameters.python-version >>
+          python-environment: << parameters.python-environment >>
+      - run:
+          name: Clear intermediate directories
+          command: |
+            rm -rf << parameters.tagged-directory >>
+            rm -rf << parameters.wheel-directory >>
+      # build all tagged versions
+      - build-tagged:
+          python-environment: << parameters.python-environment >>
+          tensorflow-version: "1.13.1"
+          tagged-directory: << parameters.tagged-directory >>
+      - build-tagged:
+          python-environment: << parameters.python-environment >>
+          tensorflow-version: "1.13.2"
+          tagged-directory: << parameters.tagged-directory >>
+      - build-tagged:
+          python-environment: << parameters.python-environment >>
+          tensorflow-version: "1.14.0"
+          tagged-directory: << parameters.tagged-directory >>
+      # bundle up into wheel
+      - package-bundle:
+          python-environment: << parameters.python-environment >>
+          tagged-directory: << parameters.tagged-directory >>
+          wheel-directory: << parameters.wheel-directory >>
+
+  package-test:
+    parameters:
+      python-version:
+        type: string
+      python-environment:
+        type: string
+      wheel-directory:
+        type: string
+    steps:
+      - create-pyenv-test:
+          python-version: << parameters.python-version >>
+          python-environment: << parameters.python-environment >>
+      - run:
+          name: Test package
+          command: |
+            . venv-<< parameters.python-environment >>/bin/activate
+            pushd << parameters.wheel-directory >>
+            pip install -U /*.whl
+            popd
+            make package-test
+
 jobs:
 
   test-linux:
@@ -123,27 +201,15 @@ jobs:
         type: string
       tensorflow-version:
         type: string
-      python-environment:
-        type: string
-        default: tfbig-build-py<< parameters.python-version >>
     docker:
       - image: tfencrypted/tf-big:0.1.0
     working_directory: ~/repo
     steps:
       - checkout
       - bootstrap-linux
-      - create-pyenv-build:
+      - test:
           python-version: << parameters.python-version >>
-          python-environment: << parameters.python-environment >>
-      - configure-pyenv:
-          tensorflow-version: << parameters.tensorflow-version >>
-          python-environment: << parameters.python-environment >>
-      - run:
-          name: Run tests
-          command: |
-            . venv-<< parameters.python-environment >>/bin/activate
-            pip freeze
-            make test
+          python-environment: build-py<< parameters.python-version >>
 
   test-macos:
     parameters:
@@ -151,129 +217,74 @@ jobs:
         type: string
       tensorflow-version:
         type: string
-      python-environment:
-        type: string
-        default: tfbig-build-py<< parameters.python-version >>
     macos:
       xcode: "10.0.0"
     working_directory: ~/repo
     steps:
       - checkout
       - bootstrap-macos
-      - create-pyenv-build:
+      - test:
           python-version: << parameters.python-version >>
-          python-environment: << parameters.python-environment >>
-      - configure-pyenv:
-          tensorflow-version: << parameters.tensorflow-version >>
-          python-environment: << parameters.python-environment >>
-      - run:
-          name: Run tests
-          command: |
-            . venv-<< parameters.python-environment >>/bin/activate
-            pip freeze
-            make test
+          python-environment: build-py<< parameters.python-version >>
 
-  package-build-macos:
+  package-build-linux:
     parameters:
       python-version:
         type: string
-      python-environment:
-        type: string
-        default: tfbig-build-py<< parameters.python-version >>
-    macos:
-      xcode: "10.0.0"
+    docker:
+      - image: tfencrypted/tf-big:0.1.0
     working_directory: ~/repo
     steps:
       - checkout
       - bootstrap-macos
-      - create-pyenv-build:
+      - package-build:
           python-version: << parameters.python-version >>
-          python-environment: << parameters.python-environment >>
-      - run:
-          name: Clear intermediate directories
-          command: |
-            rm -rf ./tagged
-            rm -rf ./wheelhouse
-      # build all tagged versions
-      - build-tagged:
-          python-environment: << parameters.python-environment >>
-          tensorflow-version: "1.13.1"
-          tagged-directory: ./tagged
-      - build-tagged:
-          python-environment: << parameters.python-environment >>
-          tensorflow-version: "1.13.2"
-          tagged-directory: ./tagged
-      - build-tagged:
-          python-environment: << parameters.python-environment >>
-          tensorflow-version: "1.14.0"
-          tagged-directory: ./tagged
-      # bundle up into wheel
-      - package-bundle:
-          python-environment: << parameters.python-environment >>
-          tagged-directory: ./tagged
+          python-environment: tfbig-build-py<< parameters.python-version >>
           wheel-directory: ./wheelhouse
-      # save for test and deployment
       - persist_to_workspace:
           root: ./wheelhouse
           paths:
             - "*.whl"
 
+  package-build-macos:
+    parameters:
+      python-version:
+        type: string
+    macos:
+      xcode: "10.0.0"
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - bootstrap-macos
+      - package-build:
+          python-version: << parameters.python-version >>
+          python-environment: tfbig-build-py<< parameters.python-version >>
+          wheel-directory: ./wheelhouse
+      - persist_to_workspace:
+          root: ./wheelhouse
+          paths:
+            - "*.whl"
+
+  # package-test-linux:
+  #   docker:
+  #     - image: ubuntu:19.04
+
   package-test-macos:
     parameters:
       python-version:
         type: string
-      python-environment:
-        type: string
-        default: tfbig-test-py<< parameters.python-version >>
     macos:
         xcode: "10.0.0"
     working_directory: ~/repo
     steps:
       - checkout
       - bootstrap-macos
-      - create-pyenv-test:
-          python-version: << parameters.python-version >>
-          python-environment: << parameters.python-environment >>
       - attach_workspace:
-          at: wheelhouse
-      - run:
-          name: Test package
-          command: |
-            . venv-<< parameters.python-environment >>/bin/activate
-            pip install -U ./wheelhouse/*.whl
-            make package-test
-
-  # test-package-macos-py36:
-  #   macos:
-  #       xcode: "10.0.0"
-  #   working_directory: ~/repo
-  #   steps:
-  #     - checkout
-  #     - *bootstrap-macos
-  #     - *bootstrap-venv-py36
-  #     - attach_workspace:
-  #         at: wheelhouse
-  #     - run:
-  #         name: Test package
-  #         command: |
-  #           . venv-py36/bin/activate
-  #           make clean
-  #           make package-test
-
-  # test-package-linux:
-  #   docker:
-  #     - image: ubuntu:19.04
-  #   working_directory: ~/repo
-  #   steps:
-  #     - run:
-  #         name: certs
-  #         command: |
-  #           apt update
-  #           apt install -y ca-certificates
-  #     - checkout
-  #     - attach_workspace:
-  #         at: artifacts
-  #     - *bootstrap
+          at: ./wheelhouse
+      - package-test:
+          python-version: << parameters.python-version >>
+          python-environment: tfbig-test-py<< parameters.python-version >>
+          wheel-directory: ./wheelhouse
 
 workflows:
   version: 2
@@ -308,6 +319,7 @@ workflows:
       - package-test-macos:
           name: package-test-macos-py3.5
           python-version: "3.5"
+          python
           requires:
             - package-build-macos-py3.5
       # # macOS, Python 3.6
