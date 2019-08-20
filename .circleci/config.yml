@@ -25,6 +25,7 @@ commands:
             HOMEBREW_NO_AUTO_UPDATE=1 brew install bazelbuild/tap/bazel >> build.log
             HOMEBREW_NO_AUTO_UPDATE=1 brew install gmp >> build.log
             HOMEBREW_NO_AUTO_UPDATE=1 brew install mmv >> build.log
+            HOMEBREW_NO_AUTO_UPDATE=1 brew install tree >> build.log
 
             curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh --silent
             bash Miniconda3-latest-MacOSX-x86_64.sh -b -f >> build.log
@@ -38,7 +39,7 @@ commands:
         type: string
     steps:
       - run:
-          name: Create Python << parameters.python-version >> build environment '<< parameters.python-environment >>'
+          name: Create build environment '<< parameters.python-environment >>' using Python << parameters.python-version >>
           command: |
             ../miniconda3/bin/conda create -n << parameters.python-environment >> python=<< parameters.python-version >> 2> /dev/null || true
             ../miniconda3/envs/<< parameters.python-environment >>/bin/python -m venv venv-<< parameters.python-environment >>
@@ -54,7 +55,7 @@ commands:
         type: string
     steps:
       - run:
-          name: Create Python << parameters.python-version >> test environment '<< parameters.python-environment >>'
+          name: Create test environment '<< parameters.python-environment >>' using Python << parameters.python-version >>
           command: |
             ../miniconda3/bin/conda create -n << parameters.python-environment >> python=<< parameters.python-version >> 2> /dev/null || true
             ../miniconda3/envs/<< parameters.python-environment >>/bin/python -m venv venv-<< parameters.python-environment >>
@@ -97,6 +98,7 @@ commands:
           name: Run tests
           command: |
             . venv-<< parameters.python-environment >>/bin/activate
+            python --version
             pip freeze
             make test
 
@@ -116,6 +118,7 @@ commands:
           name: Build for TensorFlow << parameters.tensorflow-version >> using '<< parameters.python-environment >>'
           command: |
             . venv-<< parameters.python-environment >>/bin/activate
+            python --version
             pip freeze
             DIR_TAGGED=<< parameters.tagged-directory >> make build-tagged
   
@@ -132,7 +135,9 @@ commands:
           name: Bundle package using '<< parameters.python-environment >>'
           command: |
             . venv-<< parameters.python-environment >>/bin/activate
+            python --version
             pip freeze
+            tree << parameters.tagged-directory >>
             DIR_TAGGED=<< parameters.tagged-directory >> DIR_WHEEL=<< parameters.wheel-directory >> make package-bundle
 
   package-build:
