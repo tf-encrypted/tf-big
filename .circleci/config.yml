@@ -210,6 +210,7 @@ jobs:
       - test:
           python-version: << parameters.python-version >>
           python-environment: build-py<< parameters.python-version >>
+          tensorflow-version: << parameters.tensorflow-version >>
 
   test-macos:
     parameters:
@@ -226,6 +227,7 @@ jobs:
       - test:
           python-version: << parameters.python-version >>
           python-environment: build-py<< parameters.python-version >>
+          tensorflow-version: << parameters.tensorflow-version >>
 
   package-build-linux:
     parameters:
@@ -310,7 +312,7 @@ workflows:
           python-version: "3.6"
           tensorflow-version: "1.14.0"
   
-  test:
+  build-and-test:
     jobs:
       # macOS, Python 3.5
       - package-build-macos:
