@@ -118,7 +118,7 @@ jobs:
     steps:
       - checkout
       - *bootstrap-macos
-      - *bootstrap-pyenv:
+      - bootstrap-pyenv:
           python-version: << parameters.python-version >>
       - run:
           name: Configure test environment
