@@ -277,9 +277,22 @@ jobs:
           paths:
             - "*.whl"
 
-  # package-test-linux:
-  #   docker:
-  #     - image: ubuntu:19.04
+  package-test-linux:
+    parameters:
+      python-version:
+        type: string
+    docker:
+      - image: ubuntu:19.04
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - bootstrap-linux
+      - attach_workspace:
+          at: ./wheelhouse
+      - package-test:
+          python-version: << parameters.python-version >>
+          python-environment: tfbig-test-py<< parameters.python-version >>
+          wheel-directory: ./wheelhouse
 
   package-test-macos:
     parameters:
