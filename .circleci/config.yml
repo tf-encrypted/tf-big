@@ -248,7 +248,7 @@ jobs:
     working_directory: ~/repo
     steps:
       - checkout
-      - bootstrap-macos
+      - bootstrap-linux
       - package-build:
           python-version: << parameters.python-version >>
           python-environment: tfbig-build-py<< parameters.python-version >>
