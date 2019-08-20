@@ -44,7 +44,6 @@ commands:
             ../miniconda3/bin/conda create -n << parameters.python-environment >> python=<< parameters.python-version >> 2> /dev/null || true
             ../miniconda3/envs/<< parameters.python-environment >>/bin/python -m venv venv-<< parameters.python-environment >>
             . venv-<< parameters.python-environment >>/bin/activate
-            pip install -U pip
             pip install -q -r requirements-dev.txt
 
   create-pyenv-test:
@@ -61,7 +60,6 @@ commands:
             ../miniconda3/bin/conda create -n << parameters.python-environment >> python=<< parameters.python-version >> 2> /dev/null || true
             ../miniconda3/envs/<< parameters.python-environment >>/bin/python -m venv venv-<< parameters.python-environment >>
             . venv-<< parameters.python-environment >>/bin/activate
-            pip install -U pip
 
   configure-pyenv:
     parameters:
@@ -321,17 +319,10 @@ workflows:
     # a few tests against latest versions of TensorFlow; build workflows
     # will perform more through testing later
     jobs:
-      # NOTE(Morten) 
-      # - only run one test on macOS since it's sequential
-      # - run a few on Linux since it's running in parallel
       - test-macos:
           name: test-macos-py3.6-tf1.14.0
           python-version: "3.6"
           tensorflow-version: "1.14.0"
-      - test-linux:
-          name: test-linux-py3.6-tf1.13.2
-          python-version: "3.6"
-          tensorflow-version: "1.13.2"
       - test-linux:
           name: test-linux-py3.6-tf1.14.0
           python-version: "3.6"
@@ -368,7 +359,7 @@ workflows:
           python-version: "3.5"
           requires:
             - package-build-linux-py3.5
-      # Linux, Python 3.5
+      # Linux, Python 3.6
       - package-build-linux:
           name: package-build-linux-py3.6
           python-version: "3.6"
