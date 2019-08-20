@@ -29,13 +29,13 @@ commands:
             curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh --silent
             bash Miniconda3-latest-MacOSX-x86_64.sh -b -f >> build.log
 
-  bootstrap-pyenv:
+  create-pyenv:
     parameters:
       python-version:
         type: string
     steps:
       - run:
-          name: Bootstrap Python << parameters.python-version >>
+          name: Create Python << parameters.python-version >> environment
           command: |
             ../miniconda3/bin/conda create -n py<< parameters.python-version >> python=<< parameters.python-version >> 2> /dev/null || true
             ../miniconda3/envs/py<< parameters.python-version >>/bin/python -m venv venv-py<< parameters.python-version >>
@@ -103,7 +103,7 @@ jobs:
     steps:
       - checkout
       - bootstrap-linux
-      - bootstrap-pyenv:
+      - create-pyenv:
           python-version: << parameters.python-version >>
       - configure-pyenv:
           python-version: << parameters.python-version >>
@@ -127,7 +127,7 @@ jobs:
     steps:
       - checkout
       - bootstrap-macos
-      - bootstrap-pyenv:
+      - create-pyenv:
           python-version: << parameters.python-version >>
       - configure-pyenv:
           python-version: << parameters.python-version >>
