@@ -84,6 +84,8 @@ commands:
         type: string
       python-environment:
         type: string
+      tensorflow-version:
+        type: string
     steps:
       - create-pyenv-build:
           python-version: << parameters.python-version >>
