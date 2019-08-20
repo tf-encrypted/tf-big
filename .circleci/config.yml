@@ -320,52 +320,52 @@ workflows:
     # will perform more through testing later
     jobs:
       - test-macos:
-          name: test-macos-py3.6-tf1.14.0
+          name: macos-py3.6-tf1.14.0
           python-version: "3.6"
           tensorflow-version: "1.14.0"
       - test-linux:
-          name: test-linux-py3.6-tf1.14.0
+          name: linux-py3.6-tf1.14.0
           python-version: "3.6"
           tensorflow-version: "1.14.0"
   
-  build-and-test:
+  package:
     # This workflow builds a package and runs all tests against it in
     # a fresh environment
     jobs:
       # macOS, Python 3.5
       - package-build-macos:
-          name: package-build-macos-py3.5
+          name: build-macos-py3.5
           python-version: "3.5"
       - package-test-macos:
-          name: package-test-macos-py3.5
+          name: test-macos-py3.5
           python-version: "3.5"
           requires:
-            - package-build-macos-py3.5
+            - build-macos-py3.5
       # macOS, Python 3.6
       - package-build-macos:
-          name: package-build-macos-py3.6
+          name: build-macos-py3.6
           python-version: "3.6"
       - package-test-macos:
-          name: package-test-macos-py3.6
+          name: test-macos-py3.6
           python-version: "3.6"
           requires:
-            - package-build-macos-py3.6
+            - build-macos-py3.6
       # Linux, Python 3.5
       - package-build-linux:
-          name: package-build-linux-py3.5
+          name: build-linux-py3.5
           python-version: "3.5"
       - package-test-linux:
-          name: package-test-linux-py3.5
+          name: test-linux-py3.5
           python-version: "3.5"
           requires:
-            - package-build-linux-py3.5
+            - build-linux-py3.5
       # Linux, Python 3.6
       - package-build-linux:
-          name: package-build-linux-py3.6
+          name: build-linux-py3.6
           python-version: "3.6"
       - package-test-linux:
-          name: package-test-linux-py3.6
+          name: test-linux-py3.6
           python-version: "3.6"
           requires:
-            - package-build-linux-py3.6
+            - build-linux-py3.6
       
