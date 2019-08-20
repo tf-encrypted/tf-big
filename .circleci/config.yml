@@ -11,14 +11,14 @@ variables:
   #       . venv-py35/bin/activate
   #       pip install -q -r requirements-dev.txt
 
-  bootstrap-pyenv: &bootstrap-pyenv
-    run:
-      name: Create Python environment
-      command: |
-        ../miniconda3/bin/conda create -n py<< parameters.python-version >> python=<< parameters.python-version >> 2> /dev/null || true
-        ../miniconda3/envs/py<< parameters.python-version >>/bin/python -m venv venv-py<< parameters.python-version >>
-        . venv-py<< parameters.python-version >>/bin/activate
-        pip install -q -r requirements-dev.txt
+  # bootstrap-pyenv: &bootstrap-pyenv
+  #   run:
+  #     name: Create Python environment
+  #     command: |
+  #       ../miniconda3/bin/conda create -n py<< parameters.python-version >> python=<< parameters.python-version >> 2> /dev/null || true
+  #       ../miniconda3/envs/py<< parameters.python-version >>/bin/python -m venv venv-py<< parameters.python-version >>
+  #       . venv-py<< parameters.python-version >>/bin/activate
+  #       pip install -q -r requirements-dev.txt
 
   # bootstrap-venv-py37: &bootstrap-venv-py37
   #   run:
@@ -61,19 +61,19 @@ variables:
         curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh --silent
         bash Miniconda3-latest-MacOSX-x86_64.sh -b -f >> build.log
 
-# commands:
+commands:
 
-#   bootstrap-pyenv:
-#     description: Bootstrap Python environment
-#     parameters:
-#       python-version:
-#         type: string
-#     steps:
-#       - run: command |
-#           ../miniconda3/bin/conda create -n py<< parameters.python-version >> python=<< parameters.python-version >> 2> /dev/null || true
-#           ../miniconda3/envs/py<< parameters.python-version >>/bin/python -m venv venv-py<< parameters.python-version >>
-#           . venv-py<< parameters.python-version >>/bin/activate
-#           pip install -q -r requirements-dev.txt
+  bootstrap-pyenv:
+    description: Bootstrap Python environment
+    parameters:
+      python-version:
+        type: string
+    steps:
+      - run: command |
+          ../miniconda3/bin/conda create -n py<< parameters.python-version >> python=<< parameters.python-version >> 2> /dev/null || true
+          ../miniconda3/envs/py<< parameters.python-version >>/bin/python -m venv venv-py<< parameters.python-version >>
+          . venv-py<< parameters.python-version >>/bin/activate
+          pip install -q -r requirements-dev.txt
 
 jobs:
 
