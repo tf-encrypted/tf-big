@@ -115,7 +115,14 @@ commands:
           python-environment: << parameters.python-environment >>
           tensorflow-version: << parameters.tensorflow-version >>
       - run:
-          name: Build for TensorFlow << parameters.tensorflow-version >> using '<< parameters.python-environment >>'
+          name: Test using '<< parameters.python-environment >>' and TensorFlow << parameters.tensorflow-version >>
+          command: |
+            . venv-<< parameters.python-environment >>/bin/activate
+            python --version
+            pip freeze
+            make test
+      - run:
+          name: Build using '<< parameters.python-environment >>' and TensorFlow << parameters.tensorflow-version >>
           command: |
             . venv-<< parameters.python-environment >>/bin/activate
             python --version
