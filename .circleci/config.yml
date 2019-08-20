@@ -7,21 +7,11 @@ commands:
       - run:
           name: Bootstrap Linux
           command: |
-            apt update
-            apt install -y pkg-config zip g++ zlib1g-dev unzip python3 cmake curl git rsync
+            apt update >> build.log
+            apt install -y pkg-config zip g++ zlib1g-dev unzip python3 cmake curl git rsync >> build.log
 
-            curl -OL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-            bash Miniconda3-latest-Linux-x86_64.sh -b -f
-
-            ../miniconda3/bin/conda create -n py35 python=3.5 2> /dev/null || true
-            ../miniconda3/envs/py35/bin/python -m venv venv-py35
-            . venv-py35/bin/activate
-            pip install -r requirements-dev.txt
-
-            ../miniconda3/bin/conda create -n py36 python=3.6 2> /dev/null || true
-            ../miniconda3/envs/py36/bin/python -m venv venv-py36
-            . venv-py36/bin/activate
-            pip install -r requirements-dev.txt
+            curl -OL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh --silent
+            bash Miniconda3-latest-Linux-x86_64.sh -b -f >> build.log
 
   bootstrap-macos:
     steps:
@@ -57,7 +47,7 @@ commands:
         type: string
     steps:
       - run:
-          name: Configure test environment
+          name: Configure Python << parameters.python-version>> to use TensorFlow << parameters.tensorflow-version >>
           command: |
             . venv-py<< parameters.python-version >>/bin/activate
             make clean
