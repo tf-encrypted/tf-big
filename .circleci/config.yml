@@ -189,22 +189,22 @@ jobs:
           paths:
             - "*.whl"
 
-  test-package-macos-py35:
-    macos:
-        xcode: "10.0.0"
-    working_directory: ~/repo
-    steps:
-      - checkout
-      - *bootstrap-macos
-      - *bootstrap-venv-py35
-      - attach_workspace:
-          at: wheelhouse
-      - run:
-          name: Test package
-          command: |
-            . venv-py35/bin/activate
-            make clean
-            make package-test
+  # test-package-macos-py35:
+  #   macos:
+  #       xcode: "10.0.0"
+  #   working_directory: ~/repo
+  #   steps:
+  #     - checkout
+  #     - *bootstrap-macos
+  #     - *bootstrap-venv-py35
+  #     - attach_workspace:
+  #         at: wheelhouse
+  #     - run:
+  #         name: Test package
+  #         command: |
+  #           . venv-py35/bin/activate
+  #           make clean
+  #           make package-test
 
   # test-package-macos-py36:
   #   macos:
