@@ -196,10 +196,10 @@ commands:
           command: |
             . venv-<< parameters.python-environment >>/bin/activate
             # install dependencies by installing the package
-            pip install -U tf-big --progress-bar off --find-links << parameters.wheel-directory >>
+            pip install -q -U tf-big --find-links << parameters.wheel-directory >>
             # re-install package using only the wheel directory
             pip uninstall tf-big -y
-            pip install tf-big --progress-bar off --no-cache-dir --no-index --find-links << parameters.wheel-directory >>
+            pip install -q tf-big --no-cache-dir --no-index --find-links << parameters.wheel-directory >>
             # run tests
             make package-test
 
