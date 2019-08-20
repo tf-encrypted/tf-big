@@ -66,6 +66,8 @@ commands:
         type: string
       tensorflow-version:
         type: string
+      tagged-directory:
+        type: string
     steps:
       - configure-pyenv:
           python-version: << parameters.python-version >>
@@ -75,38 +77,28 @@ commands:
           command: |
             . venv-py<< parameters.python-version >>/bin/activate
             pip freeze
-            make build-tagged
+            DIR_TAGGED=<< parameters.tagged-directory >> make build-tagged
+  
+  package-bundle:
+    parameters:
+      python-version:
+        type: string
+      tagged-directory:
+        type: string
+      wheel-directory:
+        type: string
+    steps:
+      - configure-pyenv:
+          python-version: << parameters.python-version >>
+          tensorflow-version: << parameters.tensorflow-version >>
+      - run:
+          name: Bundle package for Python << parameters.python-version >>
+          command: |
+            . venv-py<< parameters.python-version >>/bin/activate
+            pip freeze
+            DIR_TAGGED=<< parameters.tagged-directory >> DIR_WHEEL=<< parameters.wheel-directory >> make package-bundle
 
 jobs:
-
-  # build-linux:
-  #   docker:
-  #     - image: tfencrypted/tf-big:0.1.0
-  #   working_directory: ~/repo
-  #   steps:
-  #     - checkout
-  #     - run:
-  #         name: run tests
-  #         command: |
-  #           . /venv-py35/bin/activate
-  #           export LD_LIBRARY_PATH=/usr/local
-  #           make clean
-  #           make test
-  #     - run:
-  #         name: build pip
-  #         command: |
-  #           . /venv-py35/bin/activate
-  #           make clean
-  #           make build
-  #           . /venv-py36/bin/activate
-  #           make clean
-  #           make build
-
-  #           for filename in artifacts/*; do
-  #             auditwheel repair $filename
-  #           done
-  #     - store_artifacts:
-  #         path: wheelhouse
 
   test-linux:
     parameters:
@@ -156,7 +148,7 @@ jobs:
             pip freeze
             make test
 
-  build-macos:
+  package-build-macos:
     parameters:
       python-version:
         type: string
@@ -169,132 +161,50 @@ jobs:
       - create-pyenv:
           python-version: << parameters.python-version >>
       - run:
-          name: Clear intermediate directory
-          command: rm -rf ./tagged
+          name: Clear intermediate directories
+          command: |
+            rm -rf ./tagged
+            rm -rf ./wheelhouse
+      # build all tagged versions
       - build-tagged:
           python-version: << parameters.python-version >>
           tensorflow-version: "1.13.1"
+          tagged-directory: ./tagged
       - build-tagged:
           python-version: << parameters.python-version >>
           tensorflow-version: "1.13.2"
+          tagged-directory: ./tagged
       - build-tagged:
           python-version: << parameters.python-version >>
           tensorflow-version: "1.14.0"
+          tagged-directory: ./tagged
+      # bundle up into wheel
+      - package-bundle:
+          python-version: << parameters.python-version >>
+          tagged-directory: ./tagged
+          wheel-directory: ./wheelhouse
+      # save for test and deployment
+      - persist_to_workspace:
+          root: ./wheelhouse
+          paths:
+            - "*.whl"
 
-  # test-build-macos:
-  #   parameters:
-  #     pyenv-activate-cmd:
-  #       # default: venv-py36/bin/activate
-  #       type: string
-  #     tensorflow-version:
-  #       # default: 1.14.0
-  #       type: string
-  #   macos:
-  #       xcode: "10.0.0"
-  #   working_directory: ~/repo
-  #   steps:
-  #     - checkout
-  #     - *bootstrap-macos
-  #     - *bootstrap-venv-py35
-  #     # - *bootstrap-venv-py36
-  #     - run:
-  #         name: Configure
-  #         command: |
-  #           . << parameters.pyenv-activate-cmd >>
-  #           pip install -U tensorflow==<< parameters.tensorflow-version >>
-  #     - run:
-  #         name: Run tests
-  #         command: |
-  #           make clean
-  #           make test
-  #     - run:
-  #         name: Build tagged files
-  #         command: |
-  #           make clean
-  #           make build-tagged
-
-  # build-package-macos:
-  #   parameters:
-  #     pyenv-activate-cmd:
-  #       type: string
-  #     # tensorflow-version:
-  #     #   type: string
-  #   macos:
-  #       xcode: "10.0.0"
-  #   working_directory: ~/repo
-  #   steps:
-  #     - checkout
-  #     - *bootstrap-macos
-  #     - *bootstrap-venv-py35
-  #     # - *bootstrap-venv-py36
-  #     - run:
-  #         name: Build package
-  #         command: |
-  #           . << parameters.pyenv-activate-cmd >>
-  #           make clean
-  #           make package-build
-  #     - persist_to_workspace:
-  #         root: wheelhouse
-  #         paths:
-  #           - "*.whl"
-
-  # build-package-macos-py35:
-  #   macos:
-  #       xcode: "10.0.0"
-  #   working_directory: ~/repo
-  #   parameters:
-  #     pyenv-activate-cmd:
-  #       type: string
-  #   steps:
-  #     - checkout
-  #     - *bootstrap-macos
-  #     - *bootstrap-venv-py35
-  #     - run:
-  #         name: Build package
-  #         command: |
-  #           . << parameters.pyenv-activate-cmd >>
-  #           make clean
-  #           make package-build
-  #     - persist_to_workspace:
-  #         root: wheelhouse
-  #         paths:
-  #           - "*.whl"
-
-  # build-package-macos-py36:
-  #   macos:
-  #       xcode: "10.0.0"
-  #   working_directory: ~/repo
-  #   steps:
-  #     - checkout
-  #     - *bootstrap-macos
-  #     - *bootstrap-venv-py36
-  #     - run:
-  #         name: build package
-  #         command: |
-  #           . venv-py36/bin/activate
-  #           make clean
-  #           make package-build
-  #     - persist_to_workspace:
-  #         root: wheelhouse
-  #         paths:
-  #           - "*.whl"
-
-  # test-package-macos-py35:
-  #   macos:
-  #       xcode: "10.0.0"
-  #   working_directory: ~/repo
-  #   steps:
-  #     - checkout
-  #     - *bootstrap-macos
-  #     - *bootstrap-venv-py35
-  #     - attach_workspace:
-  #         at: wheelhouse
-  #     - run:
-  #         name: Test package
-  #         command: |
-  #           . venv-py35/bin/activate
-  #           make clean
-  #           make package-test
+  test-package-macos-py35:
+    macos:
+        xcode: "10.0.0"
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - *bootstrap-macos
+      - *bootstrap-venv-py35
+      - attach_workspace:
+          at: wheelhouse
+      - run:
+          name: Test package
+          command: |
+            . venv-py35/bin/activate
+            make clean
+            make package-test
 
   # test-package-macos-py36:
   #   macos:
@@ -337,47 +247,37 @@ workflows:
     # will perform more through testing later
     jobs:
       - test-macos:
-          name: test-macos-3.6-1.13.2
+          name: test-macos-py3.6-tf1.13.2
           python-version: "3.6"
           tensorflow-version: "1.13.2"
       - test-macos:
-          name: test-macos-3.6-1.14.0
+          name: test-macos-py3.6-tf1.14.0
           python-version: "3.6"
           tensorflow-version: "1.14.0"
       - test-linux:
-          name: test-linux-3.6-1.13.2
+          name: test-linux-py3.6-tf1.13.2
           python-version: "3.6"
           tensorflow-version: "1.13.2"
       - test-linux:
-          name: test-linux-3.6-1.14.0
+          name: test-linux-py3.6-tf1.14.0
           python-version: "3.6"
           tensorflow-version: "1.14.0"
   
-  build:
+  test:
     jobs:
-      - build-macos:
-          name: build-macos-3.5
+      # macOS, Python 3.5
+      - package-build-macos:
+          name: package-build-macos-py3.5
           python-version: "3.5"
-
-  #     - build-package-macos:
-  #         pyenv-activate-cmd: "venv-py35/bin/activate"
-  #         requires:
-  #           - test-macos-1.13.1
-  #           - test-macos-1.13.2
-  #           - test-macos-1.14.0
-      # - test-package-macos-py35:
+      # - test-package-macos:
+      #     name: test-package-macos-py3.5
       #     requires:
-      #       - build-package-macos-py35
-  # build-package-py36:
-  #   jobs:
-  #     - test-macos:
-  #         pyenv-activate-cmd: "venv-py36/bin/activate"
-  #         tensorflow-version: "1.13.1"
-
-      # - test-macos-py36
-      # - build-package-macos-py36:
+      #       - build-package-macos-py3.5
+      # # macOS, Python 3.6
+      # - build-package-macos:
+      #     name: build-package-macos-py3.6
+      #     python-version: "3.6"
+      # - test-package-macos:
+      #     name: test-package-macos-py3.6
       #     requires:
-      #       - test-macos-py36
-      # - test-package-macos-py36:
-      #     requires:
-      #       - build-package-macos-py36
+      #       - build-package-macos-py3.6

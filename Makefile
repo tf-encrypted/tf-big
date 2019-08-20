@@ -11,14 +11,15 @@ test: .bazelrc
 build: .bazelrc
 	bazel build //tf_big:tf_big_py
 
+DIR_TAGGED ?= ./tagged
 build-tagged: .bazelrc
-	mkdir -p ./tagged
-	./build_tagged.sh ./tagged
+	mkdir -p $(DIR_TAGGED)
+	./build_tagged.sh $(DIR_TAGGED)
 
-package-build: .bazelrc
-	rm -rf ./wheelhouse
-	mkdir -p ./wheelhouse
-	./package_build.sh ./wheelhouse
+DIR_WHEEL ?= ./wheelhouse
+package-bundle: .bazelrc
+	mkdir -p $(DIR_WHEEL)
+	./package_bundle.sh $(DIR_TAGGED) $(DIR_WHEEL)
 
 package-test: .bazelrc
 	./package_test.sh
