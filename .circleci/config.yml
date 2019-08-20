@@ -1,67 +1,40 @@
 version: 2.1
 
-variables:
-
-  # bootstrap-venv-py35: &bootstrap-venv-py35
-  #   run:
-  #     name: Create Python environment
-  #     command: |
-  #       ../miniconda3/bin/conda create -n py3.5 python=3.5 2> /dev/null || true
-  #       ../miniconda3/envs/py35/bin/python -m venv venv-py35
-  #       . venv-py35/bin/activate
-  #       pip install -q -r requirements-dev.txt
-
-  # bootstrap-pyenv: &bootstrap-pyenv
-  #   run:
-  #     name: Create Python environment
-  #     command: |
-  #       ../miniconda3/bin/conda create -n py<< parameters.python-version >> python=<< parameters.python-version >> 2> /dev/null || true
-  #       ../miniconda3/envs/py<< parameters.python-version >>/bin/python -m venv venv-py<< parameters.python-version >>
-  #       . venv-py<< parameters.python-version >>/bin/activate
-  #       pip install -q -r requirements-dev.txt
-
-  # bootstrap-venv-py37: &bootstrap-venv-py37
-  #   run:
-  #     name: Create Python environment
-  #     command: |
-  #       ../miniconda3/bin/conda create -n py37 python=3.7 2> /dev/null || true
-  #       ../miniconda3/envs/py37/bin/python -m venv venv-py37
-  #       . venv-py37/bin/activate
-  #       pip install -q -r requirements-dev.txt
-
-  bootstrap-linux: &bootstrap-linux
-    run:
-      name: bootstrap linux
-      command: |
-        apt update
-        apt install -y pkg-config zip g++ zlib1g-dev unzip python3 cmake curl git rsync
-
-        curl -OL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-        bash Miniconda3-latest-Linux-x86_64.sh -b -f
-
-        ../miniconda3/bin/conda create -n py35 python=3.5 2> /dev/null || true
-        ../miniconda3/envs/py35/bin/python -m venv venv-py35
-        . venv-py35/bin/activate
-        pip install -r requirements-dev.txt
-
-        ../miniconda3/bin/conda create -n py36 python=3.6 2> /dev/null || true
-        ../miniconda3/envs/py36/bin/python -m venv venv-py36
-        . venv-py36/bin/activate
-        pip install -r requirements-dev.txt
-
-  bootstrap-macos: &bootstrap-macos
-    run:
-      name: Bootstrap macOS
-      command: |
-        HOMEBREW_NO_AUTO_UPDATE=1 brew tap bazelbuild/tap >> build.log
-        HOMEBREW_NO_AUTO_UPDATE=1 brew install bazelbuild/tap/bazel >> build.log
-        HOMEBREW_NO_AUTO_UPDATE=1 brew install gmp >> build.log
-        HOMEBREW_NO_AUTO_UPDATE=1 brew install mmv >> build.log
-
-        curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh --silent
-        bash Miniconda3-latest-MacOSX-x86_64.sh -b -f >> build.log
-
 commands:
+
+  bootstrap-linux:
+    steps:
+      - run:
+          name: Bootstrap Linux
+          command: |
+            apt update
+            apt install -y pkg-config zip g++ zlib1g-dev unzip python3 cmake curl git rsync
+
+            curl -OL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+            bash Miniconda3-latest-Linux-x86_64.sh -b -f
+
+            ../miniconda3/bin/conda create -n py35 python=3.5 2> /dev/null || true
+            ../miniconda3/envs/py35/bin/python -m venv venv-py35
+            . venv-py35/bin/activate
+            pip install -r requirements-dev.txt
+
+            ../miniconda3/bin/conda create -n py36 python=3.6 2> /dev/null || true
+            ../miniconda3/envs/py36/bin/python -m venv venv-py36
+            . venv-py36/bin/activate
+            pip install -r requirements-dev.txt
+
+  bootstrap-macos:
+    steps:
+      - run:
+          name: Bootstrap macOS
+          command: |
+            HOMEBREW_NO_AUTO_UPDATE=1 brew tap bazelbuild/tap >> build.log
+            HOMEBREW_NO_AUTO_UPDATE=1 brew install bazelbuild/tap/bazel >> build.log
+            HOMEBREW_NO_AUTO_UPDATE=1 brew install gmp >> build.log
+            HOMEBREW_NO_AUTO_UPDATE=1 brew install mmv >> build.log
+
+            curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh --silent
+            bash Miniconda3-latest-MacOSX-x86_64.sh -b -f >> build.log
 
   bootstrap-pyenv:
     parameters:
@@ -75,10 +48,24 @@ commands:
             ../miniconda3/envs/py<< parameters.python-version >>/bin/python -m venv venv-py<< parameters.python-version >>
             . venv-py<< parameters.python-version >>/bin/activate
             pip install -q -r requirements-dev.txt
-      # - run: ../miniconda3/bin/conda create -n py<< parameters.python-version >> python=<< parameters.python-version >> 2> /dev/null || true
-      # - run: ../miniconda3/envs/py<< parameters.python-version >>/bin/python -m venv venv-py<< parameters.python-version >>
-      # - run: . venv-py<< parameters.python-version >>/bin/activate
-      # - run: pip install -q -r requirements-dev.txt
+
+  configure-pyenv:
+    parameters:
+      python-version:
+        type: string
+      tensorflow-version:
+        type: string
+    steps:
+      - run:
+          name: Configure test environment
+          command: |
+            . venv-py<< parameters.python-version >>/bin/activate
+            make clean
+            pip install -q -U tensorflow==<< parameters.tensorflow-version >>
+            make .bazelrc
+            # reduce Bazel output to logs
+            echo 'test --noshow_progress --noshow_loading_progress' >> .bazelrc
+            echo 'build --noshow_progress --noshow_loading_progress' >> .bazelrc
 
 jobs:
 
@@ -111,6 +98,30 @@ jobs:
   #     - store_artifacts:
   #         path: wheelhouse
 
+  test-linux:
+    parameters:
+      python-version:
+        type: string
+      tensorflow-version:
+        type: string
+    docker:
+      - image: tfencrypted/tf-big:0.1.0
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - bootstrap-linux
+      - bootstrap-pyenv:
+          python-version: << parameters.python-version >>
+      - configure-pyenv:
+          python-version: << parameters.python-version >>
+          tensorflow-version: << parameters.tensorflow-version >>
+      - run:
+          name: Run tests
+          command: |
+            . venv-py<< parameters.python-version >>/bin/activate
+            pip freeze
+            make test
+
   test-macos:
     parameters:
       python-version:
@@ -122,19 +133,12 @@ jobs:
     working_directory: ~/repo
     steps:
       - checkout
-      - *bootstrap-macos
+      - bootstrap-macos
       - bootstrap-pyenv:
           python-version: << parameters.python-version >>
-      - run:
-          name: Configure test environment
-          command: |
-            . venv-py<< parameters.python-version >>/bin/activate
-            make clean
-            pip install -q -U tensorflow==<< parameters.tensorflow-version >>
-            make .bazelrc
-            # reduce Bazel output to logs
-            echo 'test --noshow_progress --noshow_loading_progress' >> .bazelrc
-            echo 'build --noshow_progress --noshow_loading_progress' >> .bazelrc
+      - configure-pyenv:
+          python-version: << parameters.python-version >>
+          tensorflow-version: << parameters.tensorflow-version >>
       - run:
           name: Run tests
           command: |
@@ -325,6 +329,14 @@ workflows:
           tensorflow-version: "1.13.2"
       - test-macos:
           name: test-macos-36-1.14.0
+          python-version: "3.6"
+          tensorflow-version: "1.14.0"
+      - test-linux:
+          name: test-linux-36-1.13.2
+          python-version: "3.6"
+          tensorflow-version: "1.13.2"
+      - test-linux:
+          name: test-linux-36-1.14.0
           python-version: "3.6"
           tensorflow-version: "1.14.0"
   # build:
