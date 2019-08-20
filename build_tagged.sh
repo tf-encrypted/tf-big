@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # This script builds all .so files using the currently installed version of
 # TensorFlow and tags these accordingly using pattern '<raw name>_<tf version>.so'.
 # The resulting package is copied to '${1}', ie including Python files.

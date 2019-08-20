@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # This script runs alls tests and examples against the currently
 # installed version of TensorFlow.
 

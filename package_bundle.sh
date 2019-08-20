@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # This script bundles up all files into a pip package, including the
 # various versions of the .so files.
 
