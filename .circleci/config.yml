@@ -335,6 +335,15 @@ workflows:
           python-version: "3.5"
           requires:
             - package-build-macos-py3.5
+      # Linux, Python 3.5
+      - package-build-linux:
+          name: package-build-linux-py3.5
+          python-version: "3.5"
+      - package-test-linux:
+          name: package-test-linux-py3.5
+          python-version: "3.5"
+          requires:
+            - package-build-linux-py3.5
       # # macOS, Python 3.6
       # - build-package-macos:
       #     name: build-package-macos-py3.6
