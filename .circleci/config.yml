@@ -95,7 +95,7 @@ commands:
           tensorflow-version: << parameters.tensorflow-version >>
           python-environment: << parameters.python-environment >>
       - run:
-          name: Run tests
+          name: Run tests using '<< parameters.python-environment >>'
           command: |
             . venv-<< parameters.python-environment >>/bin/activate
             python --version
@@ -195,9 +195,12 @@ commands:
           name: Test package
           command: |
             . venv-<< parameters.python-environment >>/bin/activate
-            pushd << parameters.wheel-directory >>
-            pip install -U /*.whl
-            popd
+            # install dependencies by installing the package
+            pip install -U tf-big --find-links << parameters.wheel-directory >>
+            # re-install package using only the wheel directory
+            pip uninstall tf-big -y
+            pip install tf-big --no-cache-dir --no-index --find-links << parameters.wheel-directory >>
+            # run tests
             make package-test
 
 jobs:
@@ -299,7 +302,7 @@ workflows:
   version: 2
 
   quicktest:
-    # this workflow runs on every push to the repository and performs only
+    # This workflow runs on every push to the repository and performs only
     # a few tests against latest versions of TensorFlow; build workflows
     # will perform more through testing later
     jobs:
@@ -320,6 +323,8 @@ workflows:
           tensorflow-version: "1.14.0"
   
   build-and-test:
+    # This workflow builds a package and runs all tests against it in
+    # a fresh environment
     jobs:
       # macOS, Python 3.5
       - package-build-macos:
