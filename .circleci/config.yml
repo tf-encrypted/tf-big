@@ -62,7 +62,7 @@ commands:
             ../miniconda3/envs/<< parameters.python-environment >>/bin/python -m venv venv-<< parameters.python-environment >>
             . venv-<< parameters.python-environment >>/bin/activate
 
-  configure-tensorflow:
+  configure-pyenv:
     parameters:
       python-environment:
         type: string
@@ -89,7 +89,7 @@ commands:
       tagged-directory:
         type: string
     steps:
-      - configure-tensorflow:
+      - configure-pyenv:
           python-environment: << parameters.python-environment >>
           tensorflow-version: << parameters.tensorflow-version >>
       - run:
@@ -163,7 +163,7 @@ jobs:
       - create-pyenv-build:
           python-version: << parameters.python-version >>
           python-environment: << parameters.python-environment >>
-      - configure-tensorflow:
+      - configure-pyenv:
           tensorflow-version: << parameters.tensorflow-version >>
           python-environment: << parameters.python-environment >>
       - run:
