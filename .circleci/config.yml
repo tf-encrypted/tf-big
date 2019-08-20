@@ -88,9 +88,6 @@ commands:
       wheel-directory:
         type: string
     steps:
-      - configure-pyenv:
-          python-version: << parameters.python-version >>
-          tensorflow-version: << parameters.tensorflow-version >>
       - run:
           name: Bundle package for Python << parameters.python-version >>
           command: |
