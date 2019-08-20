@@ -8,9 +8,9 @@ commands:
           name: Bootstrap Linux
           command: |
             apt update
-            apt install -y pkg-config g++ cmake mmv
+            apt install -y pkg-config g++ cmake
             apt install -y zip unzip zlib1g-dev
-            apt install -y curl git rsync tree
+            apt install -y curl git rsync tree mmv
             apt install -y python3
 
             curl -OL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh --silent
@@ -44,6 +44,7 @@ commands:
             ../miniconda3/bin/conda create -n << parameters.python-environment >> python=<< parameters.python-version >> 2> /dev/null || true
             ../miniconda3/envs/<< parameters.python-environment >>/bin/python -m venv venv-<< parameters.python-environment >>
             . venv-<< parameters.python-environment >>/bin/activate
+            pip install -U pip
             pip install -q -r requirements-dev.txt
 
   create-pyenv-test:
@@ -60,6 +61,7 @@ commands:
             ../miniconda3/bin/conda create -n << parameters.python-environment >> python=<< parameters.python-version >> 2> /dev/null || true
             ../miniconda3/envs/<< parameters.python-environment >>/bin/python -m venv venv-<< parameters.python-environment >>
             . venv-<< parameters.python-environment >>/bin/activate
+            pip install -U pip
 
   configure-pyenv:
     parameters:
@@ -196,10 +198,10 @@ commands:
           command: |
             . venv-<< parameters.python-environment >>/bin/activate
             # install dependencies by installing the package
-            pip install -U tf-big --find-links << parameters.wheel-directory >>
+            pip install -U tf-big --progress-bar off --find-links << parameters.wheel-directory >>
             # re-install package using only the wheel directory
             pip uninstall tf-big -y
-            pip install tf-big --no-cache-dir --no-index --find-links << parameters.wheel-directory >>
+            pip install tf-big --progress-bar off --no-cache-dir --no-index --find-links << parameters.wheel-directory >>
             # run tests
             make package-test
 
@@ -348,6 +350,15 @@ workflows:
           python-version: "3.5"
           requires:
             - package-build-macos-py3.5
+      # macOS, Python 3.6
+      - package-build-macos:
+          name: package-build-macos-py3.6
+          python-version: "3.6"
+      - package-test-macos:
+          name: package-test-macos-py3.6
+          python-version: "3.6"
+          requires:
+            - package-build-macos-py3.6
       # Linux, Python 3.5
       - package-build-linux:
           name: package-build-linux-py3.5
@@ -357,11 +368,13 @@ workflows:
           python-version: "3.5"
           requires:
             - package-build-linux-py3.5
-      # # macOS, Python 3.6
-      # - build-package-macos:
-      #     name: build-package-macos-py3.6
-      #     python-version: "3.6"
-      # - test-package-macos:
-      #     name: test-package-macos-py3.6
-      #     requires:
-      #       - build-package-macos-py3.6
+      # Linux, Python 3.5
+      - package-build-linux:
+          name: package-build-linux-py3.6
+          python-version: "3.6"
+      - package-test-linux:
+          name: package-test-linux-py3.6
+          python-version: "3.6"
+          requires:
+            - package-build-linux-py3.6
+      
