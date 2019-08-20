@@ -21,7 +21,7 @@ package-bundle: .bazelrc
 	mkdir -p $(DIR_WHEEL)
 	./package_bundle.sh $(DIR_TAGGED) $(DIR_WHEEL)
 
-package-test: .bazelrc
+package-test:
 	./package_test.sh
 
 fmt:

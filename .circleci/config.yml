@@ -29,30 +29,50 @@ commands:
             curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh --silent
             bash Miniconda3-latest-MacOSX-x86_64.sh -b -f >> build.log
 
-  create-pyenv:
+  create-pyenv-build:
+    # Create new Python virtual environment with requirements-dev.txt installed
     parameters:
       python-version:
         type: string
+      python-environment:
+        type: string
+        default: tfbig-build-py<< parameters.python-version >>
     steps:
       - run:
-          name: Create Python << parameters.python-version >> environment
+          name: Create Python << parameters.python-version >> build environment '<< parameters.python-environment >>'
           command: |
-            ../miniconda3/bin/conda create -n py<< parameters.python-version >> python=<< parameters.python-version >> 2> /dev/null || true
-            ../miniconda3/envs/py<< parameters.python-version >>/bin/python -m venv venv-py<< parameters.python-version >>
-            . venv-py<< parameters.python-version >>/bin/activate
+            ../miniconda3/bin/conda create -n << parameters.python-environment >> python=<< parameters.python-version >> 2> /dev/null || true
+            ../miniconda3/envs/<< parameters.python-environment >>/bin/python -m venv venv-<< parameters.python-environment >>
+            . venv-<< parameters.python-environment >>/bin/activate
             pip install -q -r requirements-dev.txt
 
-  configure-pyenv:
+  create-pyenv-test:
+    # Create new Python virtual environment
     parameters:
       python-version:
+        type: string
+      python-environment:
+        type: string
+        default: tfbig-test-py<< parameters.python-version >>
+    steps:
+      - run:
+          name: Create Python << parameters.python-version >> test environment '<< parameters.python-environment >>'
+          command: |
+            ../miniconda3/bin/conda create -n << parameters.python-environment >> python=<< parameters.python-version >> 2> /dev/null || true
+            ../miniconda3/envs/<< parameters.python-environment >>/bin/python -m venv venv-<< parameters.python-environment >>
+            . venv-<< parameters.python-environment >>/bin/activate
+
+  configure-tensorflow:
+    parameters:
+      python-environment:
         type: string
       tensorflow-version:
         type: string
     steps:
       - run:
-          name: Configure Python << parameters.python-version>> to use TensorFlow << parameters.tensorflow-version >>
+          name: Configure '<< parameters.python-environment >>' to use TensorFlow << parameters.tensorflow-version >>
           command: |
-            . venv-py<< parameters.python-version >>/bin/activate
+            . venv-<< parameters.python-environment >>/bin/activate
             make clean
             pip install -q -U tensorflow==<< parameters.tensorflow-version >>
             make .bazelrc
@@ -62,26 +82,26 @@ commands:
 
   build-tagged:
     parameters:
-      python-version:
+      python-environment:
         type: string
       tensorflow-version:
         type: string
       tagged-directory:
         type: string
     steps:
-      - configure-pyenv:
-          python-version: << parameters.python-version >>
+      - configure-tensorflow:
+          python-environment: << parameters.python-environment >>
           tensorflow-version: << parameters.tensorflow-version >>
       - run:
-          name: Build tagged for Python << parameters.python-version >> and TensorFlow << parameters.tensorflow-version >>
+          name: Build for TensorFlow << parameters.tensorflow-version >> using '<< parameters.python-environment >>'
           command: |
-            . venv-py<< parameters.python-version >>/bin/activate
+            . venv-<< parameters.python-environment >>/bin/activate
             pip freeze
             DIR_TAGGED=<< parameters.tagged-directory >> make build-tagged
   
   package-bundle:
     parameters:
-      python-version:
+      python-environment:
         type: string
       tagged-directory:
         type: string
@@ -89,9 +109,9 @@ commands:
         type: string
     steps:
       - run:
-          name: Bundle package for Python << parameters.python-version >>
+          name: Bundle package using '<< parameters.python-environment >>'
           command: |
-            . venv-py<< parameters.python-version >>/bin/activate
+            . venv-<< parameters.python-environment >>/bin/activate
             pip freeze
             DIR_TAGGED=<< parameters.tagged-directory >> DIR_WHEEL=<< parameters.wheel-directory >> make package-bundle
 
@@ -103,21 +123,25 @@ jobs:
         type: string
       tensorflow-version:
         type: string
+      python-environment:
+        type: string
+        default: tfbig-build-py<< parameters.python-version >>
     docker:
       - image: tfencrypted/tf-big:0.1.0
     working_directory: ~/repo
     steps:
       - checkout
       - bootstrap-linux
-      - create-pyenv:
+      - create-pyenv-build:
           python-version: << parameters.python-version >>
+          python-environment: << parameters.python-environment >>
       - configure-pyenv:
-          python-version: << parameters.python-version >>
           tensorflow-version: << parameters.tensorflow-version >>
+          python-environment: << parameters.python-environment >>
       - run:
           name: Run tests
           command: |
-            . venv-py<< parameters.python-version >>/bin/activate
+            . venv-<< parameters.python-environment >>/bin/activate
             pip freeze
             make test
 
@@ -127,21 +151,25 @@ jobs:
         type: string
       tensorflow-version:
         type: string
+      python-environment:
+        type: string
+        default: tfbig-build-py<< parameters.python-version >>
     macos:
       xcode: "10.0.0"
     working_directory: ~/repo
     steps:
       - checkout
       - bootstrap-macos
-      - create-pyenv:
+      - create-pyenv-build:
           python-version: << parameters.python-version >>
-      - configure-pyenv:
-          python-version: << parameters.python-version >>
+          python-environment: << parameters.python-environment >>
+      - configure-tensorflow:
           tensorflow-version: << parameters.tensorflow-version >>
+          python-environment: << parameters.python-environment >>
       - run:
           name: Run tests
           command: |
-            . venv-py<< parameters.python-version >>/bin/activate
+            . venv-<< parameters.python-environment >>/bin/activate
             pip freeze
             make test
 
@@ -149,14 +177,18 @@ jobs:
     parameters:
       python-version:
         type: string
+      python-environment:
+        type: string
+        default: tfbig-build-py<< parameters.python-version >>
     macos:
       xcode: "10.0.0"
     working_directory: ~/repo
     steps:
       - checkout
       - bootstrap-macos
-      - create-pyenv:
+      - create-pyenv-build:
           python-version: << parameters.python-version >>
+          python-environment: << parameters.python-environment >>
       - run:
           name: Clear intermediate directories
           command: |
@@ -164,20 +196,20 @@ jobs:
             rm -rf ./wheelhouse
       # build all tagged versions
       - build-tagged:
-          python-version: << parameters.python-version >>
+          python-environment: << parameters.python-environment >>
           tensorflow-version: "1.13.1"
           tagged-directory: ./tagged
       - build-tagged:
-          python-version: << parameters.python-version >>
+          python-environment: << parameters.python-environment >>
           tensorflow-version: "1.13.2"
           tagged-directory: ./tagged
       - build-tagged:
-          python-version: << parameters.python-version >>
+          python-environment: << parameters.python-environment >>
           tensorflow-version: "1.14.0"
           tagged-directory: ./tagged
       # bundle up into wheel
       - package-bundle:
-          python-version: << parameters.python-version >>
+          python-environment: << parameters.python-environment >>
           tagged-directory: ./tagged
           wheel-directory: ./wheelhouse
       # save for test and deployment
@@ -186,22 +218,30 @@ jobs:
           paths:
             - "*.whl"
 
-  # test-package-macos-py35:
-  #   macos:
-  #       xcode: "10.0.0"
-  #   working_directory: ~/repo
-  #   steps:
-  #     - checkout
-  #     - *bootstrap-macos
-  #     - *bootstrap-venv-py35
-  #     - attach_workspace:
-  #         at: wheelhouse
-  #     - run:
-  #         name: Test package
-  #         command: |
-  #           . venv-py35/bin/activate
-  #           make clean
-  #           make package-test
+  package-test-macos:
+    parameters:
+      python-version:
+        type: string
+      python-environment:
+        type: string
+        default: tfbig-test-py<< parameters.python-version >>
+    macos:
+        xcode: "10.0.0"
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - bootstrap-macos
+      - create-pyenv-test:
+          python-version: << parameters.python-version >>
+          python-environment: << parameters.python-environment >>
+      - attach_workspace:
+          at: wheelhouse
+      - run:
+          name: Test package
+          command: |
+            . venv-<< parameters.python-environment >>/bin/activate
+            pip install -U ./wheelhouse/*.whl
+            make package-test
 
   # test-package-macos-py36:
   #   macos:
@@ -243,10 +283,9 @@ workflows:
     # a few tests against latest versions of TensorFlow; build workflows
     # will perform more through testing later
     jobs:
-      - test-macos:
-          name: test-macos-py3.6-tf1.13.2
-          python-version: "3.6"
-          tensorflow-version: "1.13.2"
+      # NOTE(Morten) 
+      # - only run one test on macOS since it's sequential
+      # - run a few on Linux since it's running in parallel
       - test-macos:
           name: test-macos-py3.6-tf1.14.0
           python-version: "3.6"
@@ -266,10 +305,11 @@ workflows:
       - package-build-macos:
           name: package-build-macos-py3.5
           python-version: "3.5"
-      # - test-package-macos:
-      #     name: test-package-macos-py3.5
-      #     requires:
-      #       - build-package-macos-py3.5
+      - package-test-macos:
+          name: package-test-macos-py3.5
+          python-version: "3.5"
+          requires:
+            - package-build-macos-py3.5
       # # macOS, Python 3.6
       # - build-package-macos:
       #     name: build-package-macos-py3.6
