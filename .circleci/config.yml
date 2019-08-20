@@ -60,6 +60,23 @@ commands:
             echo 'test --noshow_progress --noshow_loading_progress' >> .bazelrc
             echo 'build --noshow_progress --noshow_loading_progress' >> .bazelrc
 
+  build-tagged:
+    parameters:
+      python-version:
+        type: string
+      tensorflow-version:
+        type: string
+    steps:
+      - configure-pyenv:
+          python-version: << parameters.python-version >>
+          tensorflow-version: << parameters.tensorflow-version >>
+      - run:
+          name: Build tagged for Python << parameters.python-version >> and TensorFlow << parameters.tensorflow-version >>
+          command: |
+            . venv-py<< parameters.python-version >>/bin/activate
+            pip freeze
+            make build-tagged
+
 jobs:
 
   # build-linux:
@@ -140,27 +157,29 @@ jobs:
             make test
 
   build-macos:
+    parameters:
+      python-version:
+        type: string
     macos:
       xcode: "10.0.0"
     working_directory: ~/repo
     steps:
+      - checkout
+      - bootstrap-macos
+      - create-pyenv:
+          python-version: << parameters.python-version >>
       - run:
-          name: Prepare intermediate output directory
-          command: |
-            rm -rf ./tagged
-      - run:
-          name: Configure build environment
-          command: |
-            . venv-py36/bin/activate
-            make clean
-            pip install -q -U tensorflow==1.14.0
-            make .bazelrc
-      - run:
-          name: Build tagged
-          command: |
-            . venv-py36/bin/activate
-            pip freeze
-            make build-tagged
+          name: Clear intermediate directory
+          command: rm -rf ./tagged
+      - build-tagged:
+          python-version: << parameters.python-version >>
+          tensorflow-version: "1.13.1"
+      - build-tagged:
+          python-version: << parameters.python-version >>
+          tensorflow-version: "1.13.2"
+      - build-tagged:
+          python-version: << parameters.python-version >>
+          tensorflow-version: "1.14.0"
 
   # test-build-macos:
   #   parameters:
@@ -311,11 +330,12 @@ jobs:
 
 workflows:
   version: 2
+
   quicktest:
+    # this workflow runs on every push to the repository and performs only
+    # a few tests against latest versions of TensorFlow; build workflows
+    # will perform more through testing later
     jobs:
-      # this workflow runs on every push to the repository and performs only
-      # a few tests against latest versions of TensorFlow; build workflows
-      # will perform more through testing later
       - test-macos:
           name: test-macos-3.6-1.13.2
           python-version: "3.6"
@@ -332,23 +352,12 @@ workflows:
           name: test-linux-3.6-1.14.0
           python-version: "3.6"
           tensorflow-version: "1.14.0"
-  # build:
-  #   jobs:
-
-  # build:
-  #   jobs:
-  #     - build-macos:
-  #         ame: build-macos-1.13.1
-  #         pyenv-activate-cmd: "venv-py35/bin/activate"
-  #         tensorflow-version: "1.13.1"
-  #     - build-macos:
-  #         ame: build-macos-1.13.2
-  #         pyenv-activate-cmd: "venv-py35/bin/activate"
-  #         tensorflow-version: "1.13.2"
-  #     - build-macos:
-  #         ame: build-macos-1.14.0
-  #         pyenv-activate-cmd: "venv-py35/bin/activate"
-  #         tensorflow-version: "1.14.0"
+  
+  build:
+    jobs:
+      - build-macos:
+          name: build-macos-3.5
+          python-version: "3.5"
 
   #     - build-package-macos:
   #         pyenv-activate-cmd: "venv-py35/bin/activate"
