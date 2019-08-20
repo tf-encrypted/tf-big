@@ -12,6 +12,7 @@ commands:
             apt install -y zip unzip zlib1g-dev
             apt install -y curl git rsync
             apt install -y python3
+            apt install -y mmv
 
             curl -OL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh --silent
             bash Miniconda3-latest-Linux-x86_64.sh -b -f
