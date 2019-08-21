@@ -338,6 +338,10 @@ workflows:
   package:
     # This workflow builds a package and runs all tests against it in
     # a fresh environment
+    filters:
+      branches:
+        only:
+          - master
     jobs:
       # macOS, Python 3.5
       - package-build-macos:
