@@ -14,7 +14,7 @@ build: .bazelrc
 	./build.sh $(DIR_TAGGED)
 
 DIR_WHEEL ?= ./wheelhouse
-bundle: .bazelrc
+bundle:
 	mkdir -p $(DIR_WHEEL)
 	./bundle.sh $(DIR_TAGGED) $(DIR_WHEEL)
 
