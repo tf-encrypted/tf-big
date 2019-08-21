@@ -27,4 +27,4 @@ fmt:
 lint:
 	cd tf_big && find . -iname *.h -o -iname *.cc | xargs cpplint --filter=-legal/copyright
 
-.PHONY: clean test build package-build package-test fmt lint
+.PHONY: clean test build bundle pytest fmt lint

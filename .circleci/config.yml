@@ -275,6 +275,9 @@ jobs:
           name: TODO
           command: |
             tree ./out
+      - store_artifacts:
+          path: /out/wheelhouse/*.whl
+          
 
 workflows:
   version: 2
