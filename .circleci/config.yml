@@ -109,6 +109,7 @@ commands:
           command: |
             . venv-<< parameters.python-environment >>/bin/activate
             pip install -q -r requirements-dev.txt
+            pip install -q -U wheel
             pip freeze
       - attach_workspace:
           at: ./out
