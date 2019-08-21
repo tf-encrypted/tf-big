@@ -489,6 +489,9 @@ workflows:
             - build-macos-py3.6-tf1.13.1
             - build-macos-py3.6-tf1.13.2
             - build-macos-py3.6-tf1.14.0
+          filters:
+            branches:
+              only: master
 
       - whltest-macos:
           name: whltest-macos-py3.6-tf1.13.1
