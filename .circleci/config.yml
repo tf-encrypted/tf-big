@@ -39,7 +39,7 @@ commands:
         type: string
     steps:
       - run:
-          name: Create Python environment '<< parameters.python-environment >>' (Python << parameters.python-version >>)
+          name: Create Python << parameters.python-version >> environment '<< parameters.python-environment >>'
           command: |
             ../miniconda3/bin/conda create -n << parameters.python-environment >> python=<< parameters.python-version >> 2> /dev/null || true
             ../miniconda3/envs/<< parameters.python-environment >>/bin/python -m venv venv-<< parameters.python-environment >>
@@ -66,7 +66,7 @@ commands:
             pip install -q -r requirements-dev.txt
             pip freeze
       - run:
-          name: Install TensorFlow in '<< parameters.python-environment >>' (TensorFlow << parameters.tensorflow-version >>)
+          name: Install TensorFlow << parameters.tensorflow-version >> in '<< parameters.python-environment >>'
           command: |
             . venv-<< parameters.python-environment >>/bin/activate
             make clean
@@ -90,9 +90,9 @@ commands:
             pip freeze
             DIR_TAGGED=<< parameters.output-directory >> make build
       - persist_to_workspace:
-          root: << parameters.output-directory >>
+          root: .
           paths:
-            - "*"
+            - << parameters.output-directory >>
   
   bundle:
     parameters:
@@ -105,6 +105,8 @@ commands:
       wheel-directory:
         type: string
     steps:
+      - attach_workspace:
+          at: .
       - create-pyenv:
           python-environment: << parameters.python-environment >>
           python-version: << parameters.python-version >>
@@ -269,6 +271,20 @@ jobs:
   #         paths:
   #           - "*.whl"
 
+  # wheelhouse:
+  #   parameters:
+  #     directory:
+  #       type: string
+  #   docker:
+  #     - image: ubuntu:19.04
+  #   working_directory: ~/repo
+  #   steps:
+  #     - checkout
+  #     - bootstrap-linux
+  #     - attach_workspace:
+  #         at: ./wheelhouse
+  #     - run: tree ./wheelhouse
+
   # package-test-linux:
   #   parameters:
   #     python-version:
@@ -322,6 +338,7 @@ workflows:
   
   build-test-deploy:
     jobs:
+
       - test-and-build-linux:
           name: build-linux-py3.6-tf1.14.0
           python-version: "3.6"
@@ -333,13 +350,18 @@ workflows:
           tensorflow-version: "1.13.2"
           output-directory: ./tagged
       - bundle-linux:
-          name: bundle-linux-py3.6  
+          name: bundle-linux-py3.6
           python-version: "3.6"
           tagged-directory: ./tagged
-          wheel-directory: ./wheel
+          wheel-directory: ./wheelhouse
           requires:
             - build-linux-py3.6-tf1.13.2
             - build-linux-py3.6-tf1.14.0
+
+      # - wheelhouse:
+      #     directory: ./wheelhouse
+      #     requires:
+      #       - bundle-linux-py3.6
 
       # # macOS, Python 3.5
       # - package-build-macos:
