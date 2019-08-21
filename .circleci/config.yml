@@ -98,6 +98,8 @@ commands:
     parameters:
       python-environment:
         type: string
+      python-version:
+        type: string
       tagged-directory:
         type: string
       wheel-directory:
