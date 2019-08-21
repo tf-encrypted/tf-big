@@ -116,7 +116,7 @@ commands:
           name: Merge builds
           command: |
             tree ./out
-            rsync -avm ./out/builds/*/ ./out/build
+            rsync -avm ./out/builds/*/ ./out/merged
             tree ./out
       - run:
           name: Bundle package in '<< parameters.python-environment >>'
@@ -124,13 +124,12 @@ commands:
             . venv-<< parameters.python-environment >>/bin/activate
             python --version
             pip freeze
-            DIR_TAGGED=./out/build DIR_WHEEL=./out make bundle
+            DIR_TAGGED=./out/merged DIR_WHEEL=./out/wheelhouse make bundle
             tree ./out
       - persist_to_workspace:
           root: ./out
           paths:
-            - "build"
-            - "*.whl"
+            - 'wheelhouse'
 
   # package-build:
   #   parameters:
@@ -187,7 +186,7 @@ commands:
           name: Test wheel
           command: |
             tree ./out
-      #       # . venv-<< parameters.python-environment >>/bin/activate
+            . venv-<< parameters.python-environment >>/bin/activate
       #       # # install dependencies by installing the package
       #       # pip install -q -U tf-big --find-links << './out/*.whl'
       #       # # re-install package using only the wheel directory
@@ -362,17 +361,17 @@ workflows:
           name: build-linux-py3.6-tf1.13.2
           python-version: "3.6"
           tensorflow-version: "1.13.2"
-      - test-and-build-linux:
-          name: build-linux-py3.6-tf1.14.0
-          python-version: "3.6"
-          tensorflow-version: "1.14.0"
+      # - test-and-build-linux:
+      #     name: build-linux-py3.6-tf1.14.0
+      #     python-version: "3.6"
+      #     tensorflow-version: "1.14.0"
       - bundle-linux:
           name: bundle-linux-py3.6
           python-version: "3.6"
           requires:
             # - build-linux-py3.6-tf1.13.1
             - build-linux-py3.6-tf1.13.2
-            - build-linux-py3.6-tf1.14.0
+            # - build-linux-py3.6-tf1.14.0
       - whltest-linux:
           name: whltest-linux-py3.6-tf1.13.2
           python-version: "3.6"
