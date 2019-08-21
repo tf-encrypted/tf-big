@@ -402,6 +402,9 @@ workflows:
             - whltest-linux-py3.6-tf1.13.1
             - whltest-linux-py3.6-tf1.13.2
             - whltest-linux-py3.6-tf1.14.0
+          filters:
+            branches:
+              only: master
 
   macos-py3.5:
     jobs:
