@@ -51,8 +51,6 @@ commands:
         type: string
       tensorflow-version:
         type: string
-      output-directory:
-        type: string
       # next parameter should be derived 
       python-environment:
         type: string
@@ -89,46 +87,49 @@ commands:
             . venv-<< parameters.python-environment >>/bin/activate
             python --version
             pip freeze
-            DIR_TAGGED=<< parameters.output-directory >>/py<< parameters.python-version >>-tf<< parameters.tensorflow-version >> make build
+            DIR_TAGGED=./out/builds/py<< parameters.python-version >>-tf<< parameters.tensorflow-version >> make build
       - persist_to_workspace:
-          root: .
+          root: ./out
           paths:
-            - << parameters.output-directory >>/py<< parameters.python-version >>-tf<< parameters.tensorflow-version >>
+            - builds/py<< parameters.python-version >>-tf<< parameters.tensorflow-version >>
   
   bundle:
     parameters:
       python-version:
         type: string
-      tagged-directory:
-        type: string
-      wheel-directory:
-        type: string
       # next parameter should be derived 
       python-environment:
         type: string
     steps:
+      - create-pyenv:
+          python-environment: << parameters.python-environment >>
+          python-version: << parameters.python-version >>
+      - run:
+          name: Install requirements-dev.txt in '<< parameters.python-environment >>'
+          command: |
+            . venv-<< parameters.python-environment >>/bin/activate
+            pip install -q -r requirements-dev.txt
+            pip freeze
       - attach_workspace:
-          at: .
-      - run: tree ./tagged
-      # - create-pyenv:
-      #     python-environment: << parameters.python-environment >>
-      #     python-version: << parameters.python-version >>
-      # - run:
-      #     name: Install requirements-dev.txt in '<< parameters.python-environment >>'
-      #     command: |
-      #       . venv-<< parameters.python-environment >>/bin/activate
-      #       pip install -q -r requirements-dev.txt
-      #       pip freeze
-      # - run:
-      #     name: Bundle package in '<< parameters.python-environment >>'
-      #     command: |
-      #       . venv-<< parameters.python-environment >>/bin/activate
-      #       python --version
-      #       pip freeze
-      #       tree << parameters.tagged-directory >>
-      #       DIR_TAGGED=<< parameters.tagged-directory >> DIR_WHEEL=<< parameters.wheel-directory >> make bundle
-      #       tree << parameters.tagged-directory >>
-      #       tree << parameters.wheel-directory >>
+          at: ./out
+      - run:
+          name: Merge builds
+          command: |
+            tree ./out/builds
+            rsync -avm ./out/builds/*/ ./out/build
+            tree ./out/build
+      - run:
+          name: Bundle package in '<< parameters.python-environment >>'
+          command: |
+            . venv-<< parameters.python-environment >>/bin/activate
+            python --version
+            pip freeze
+            DIR_TAGGED=./out/build DIR_WHEEL=./out make bundle
+      - persist_to_workspace:
+          root: ./out
+          paths:
+            - build
+            - *.whl
 
   # package-build:
   #   parameters:
@@ -169,29 +170,31 @@ commands:
   #         tagged-directory: << parameters.tagged-directory >>
   #         wheel-directory: << parameters.wheel-directory >>
 
-  # package-test:
-  #   parameters:
-  #     python-version:
-  #       type: string
-  #     python-environment:
-  #       type: string
-  #     wheel-directory:
-  #       type: string
-  #   steps:
-  #     - create-pyenv-test:
-  #         python-version: << parameters.python-version >>
-  #         python-environment: << parameters.python-environment >>
-  #     - run:
-  #         name: Test package
-  #         command: |
-  #           . venv-<< parameters.python-environment >>/bin/activate
-  #           # install dependencies by installing the package
-  #           pip install -q -U tf-big --find-links << parameters.wheel-directory >>
-  #           # re-install package using only the wheel directory
-  #           pip uninstall tf-big -y
-  #           pip install -q tf-big --no-cache-dir --no-index --find-links << parameters.wheel-directory >>
-  #           # run tests
-  #           make package-test
+  whltest:
+    parameters:
+      python-version:
+        type: string
+      tensorflow-version:
+        type: string
+      python-environment:
+        type: string
+    steps:
+      - create-pyenv-test:
+          python-version: << parameters.python-version >>
+          python-environment: << parameters.python-environment >>
+      - run:
+          name: Test wheel
+          command: |
+            . venv-<< parameters.python-environment >>/bin/activate
+            # install dependencies by installing the package
+            pip install -q -U tf-big --find-links << parameters.wheel-directory >>
+            # re-install package using only the wheel directory
+            pip uninstall tf-big -y
+            pip install -q tf-big --no-cache-dir --no-index --find-links ./out/*.whl
+            # make sure we have the right TensorFlow version
+            pip install -q -U tensorflow==<< parameters.tensorflow-version >>
+            # run tests
+            make pytest
 
 jobs:
 
@@ -201,8 +204,6 @@ jobs:
         type: string
       tensorflow-version:
         type: string
-      output-directory:
-        type: string
     docker:
       - image: tfencrypted/tf-big:0.1.0
     working_directory: ~/repo
@@ -210,11 +211,9 @@ jobs:
       - checkout
       - bootstrap-linux
       - test-and-build:
-          python-environment: build-py<< parameters.python-version >>-tf<< parameters.tensorflow-version >>
           python-version: << parameters.python-version >>
           tensorflow-version: << parameters.tensorflow-version >>
-          output-directory: << parameters.output-directory >>
-          
+          python-environment: build-py<< parameters.python-version >>-tf<< parameters.tensorflow-version >>
 
   # test-and-build-macos:
   #   parameters:
@@ -240,10 +239,6 @@ jobs:
     parameters:
       python-version:
         type: string
-      tagged-directory:
-        type: string
-      wheel-directory:
-        type: string
     docker:
       - image: tfencrypted/tf-big:0.1.0
     working_directory: ~/repo
@@ -251,10 +246,8 @@ jobs:
       - checkout
       - bootstrap-linux
       - bundle:
-          python-environment: bundle-py<< parameters.python-version >>
           python-version: << parameters.python-version >>
-          tagged-directory: << parameters.tagged-directory >>
-          wheel-directory: << parameters.wheel-directory >>
+          python-environment: bundle-py<< parameters.python-version >>
 
   # package-build-macos:
   #   parameters:
@@ -275,19 +268,22 @@ jobs:
   #         paths:
   #           - "*.whl"
 
-  # wheelhouse:
-  #   parameters:
-  #     directory:
-  #       type: string
-  #   docker:
-  #     - image: ubuntu:19.04
-  #   working_directory: ~/repo
-  #   steps:
-  #     - checkout
-  #     - bootstrap-linux
-  #     - attach_workspace:
-  #         at: ./wheelhouse
-  #     - run: tree ./wheelhouse
+  whltest-linux:
+    parameters:
+      python-version:
+        type: string
+      tensorflow-version:
+        type: string
+    docker:
+      - image: ubuntu:19.04
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - bootstrap-linux
+      - whltest:
+          python-version: << parameters.python-version >>
+          python-environment: test-py<< parameters.python-version >>
+          tensorflow-version: << parameters.tensorflow-version >>
 
   # package-test-linux:
   #   parameters:
@@ -325,49 +321,36 @@ jobs:
 
 workflows:
   version: 2
-
-  # quicktest:
-  #   # This workflow runs on every push to the repository and performs only
-  #   # a few tests against latest versions of TensorFlow; build workflows
-  #   # will perform more through testing later
-  #   jobs:
-  #     - test-macos:
-  #         name: macos-py3.6-tf1.14.0
-  #         python-version: "3.6"
-  #         tensorflow-version: "1.14.0"
-  #     - test-linux:
-  #         name: linux-py3.6-tf1.14.0
-  #         python-version: "3.6"
-  #         tensorflow-version: "1.14.0"
   
-  build-test-deploy:
+  # linux-py3.5:
+  #   jobs:
+  #     - test-and-build-linux:
+  #         name: build-linux-py3.5-tf1.13.1
+  #         python-version: "3.5"
+  #         tensorflow-version: "1.13.1"
+  #         output-directory: ./tagged
+  #     - test-and-build-linux:
+  #         name: build-linux-py3.5-tf1.13.2
+  #         python-version: "3.5"
+  #         tensorflow-version: "1.13.2"
+  #         output-directory: ./tagged
+  #     - test-and-build-linux:
+  #         name: build-linux-py3.5-tf1.14.0
+  #         python-version: "3.5"
+  #         tensorflow-version: "1.14.0"
+  #         output-directory: ./tagged
+  #     - bundle-linux:
+  #         name: bundle-linux-py3.5
+  #         python-version: "3.5"
+  #         tagged-directory: ./tagged
+  #         wheel-directory: ./wheelhouse
+  #         requires:
+  #           - build-linux-py3.5-tf1.13.1
+  #           - build-linux-py3.5-tf1.13.2
+  #           - build-linux-py3.5-tf1.14.0
+
+  linux-py3.6:
     jobs:
-
-      # - test-and-build-linux:
-      #     name: build-linux-py3.5-tf1.13.1
-      #     python-version: "3.5"
-      #     tensorflow-version: "1.13.1"
-      #     output-directory: ./tagged
-      # - test-and-build-linux:
-      #     name: build-linux-py3.5-tf1.13.2
-      #     python-version: "3.5"
-      #     tensorflow-version: "1.13.2"
-      #     output-directory: ./tagged
-      # - test-and-build-linux:
-      #     name: build-linux-py3.5-tf1.14.0
-      #     python-version: "3.5"
-      #     tensorflow-version: "1.14.0"
-      #     output-directory: ./tagged
-      # - bundle-linux:
-      #     name: bundle-linux-py3.5
-      #     python-version: "3.5"
-      #     tagged-directory: ./tagged
-      #     wheel-directory: ./wheelhouse
-      #     requires:
-      #       - build-linux-py3.5-tf1.13.1
-      #       - build-linux-py3.5-tf1.13.2
-      #       - build-linux-py3.5-tf1.14.0
-
       # - test-and-build-linux:
       #     name: build-linux-py3.6-tf1.13.1
       #     python-version: "3.6"
@@ -377,76 +360,82 @@ workflows:
           name: build-linux-py3.6-tf1.13.2
           python-version: "3.6"
           tensorflow-version: "1.13.2"
-          output-directory: ./tagged
       - test-and-build-linux:
           name: build-linux-py3.6-tf1.14.0
           python-version: "3.6"
           tensorflow-version: "1.14.0"
-          output-directory: ./tagged
       - bundle-linux:
           name: bundle-linux-py3.6
           python-version: "3.6"
-          tagged-directory: ./tagged
-          wheel-directory: ./wheelhouse
           requires:
             # - build-linux-py3.6-tf1.13.1
             - build-linux-py3.6-tf1.13.2
             - build-linux-py3.6-tf1.14.0
+      - whltest-linux:
+          name: whltest-linux-py3.6-tf1.13.2
+          python-version: "3.6"
+          tensorflow-version: "1.13.2"
+          requires:
+            - bundle-linux-py3.6
+      - whltest-linux:
+          name: whltest-linux-py3.6-tf1.14.0
+          python-version: "3.6"
+          tensorflow-version: "1.14.0"
+          requires:
+            - bundle-linux-py3.6
 
-      # - test-and-build-macos:
-      #     name: build-macos-py3.5-tf1.13.1
-      #     python-version: "3.5"
-      #     tensorflow-version: "1.13.1"
-      #     output-directory: ./tagged
-      # - test-and-build-macos:
-      #     name: build-macos-py3.5-tf1.13.2
-      #     python-version: "3.5"
-      #     tensorflow-version: "1.13.2"
-      #     output-directory: ./tagged
-      # - test-and-build-macos:
-      #     name: build-macos-py3.5-tf1.14.0
-      #     python-version: "3.5"
-      #     tensorflow-version: "1.14.0"
-      #     output-directory: ./tagged
-      # - bundle-macos:
-      #     name: bundle-macos-py3.5
-      #     python-version: "3.5"
-      #     tagged-directory: ./tagged
-      #     wheel-directory: ./wheelhouse
-      #     requires:
-      #       - build-macos-py3.5-tf1.13.1
-      #       - build-macos-py3.5-tf1.13.2
-      #       - build-macos-py3.5-tf1.14.0
 
-      # - test-and-build-macos:
-      #     name: build-macos-py3.6-tf1.13.1
-      #     python-version: "3.6"
-      #     tensorflow-version: "1.13.1"
-      #     output-directory: ./tagged
-      # - test-and-build-macos:
-      #     name: build-macos-py3.6-tf1.13.2
-      #     python-version: "3.6"
-      #     tensorflow-version: "1.13.2"
-      #     output-directory: ./tagged
-      # - test-and-build-macos:
-      #     name: build-macos-py3.6-tf1.14.0
-      #     python-version: "3.6"
-      #     tensorflow-version: "1.14.0"
-      #     output-directory: ./tagged
-      # - bundle-macos:
-      #     name: bundle-macos-py3.6
-      #     python-version: "3.6"
-      #     tagged-directory: ./tagged
-      #     wheel-directory: ./wheelhouse
-      #     requires:
-      #       - build-macos-py3.6-tf1.13.1
-      #       - build-macos-py3.6-tf1.13.2
-      #       - build-macos-py3.6-tf1.14.0
 
-      # - wheelhouse:
-      #     directory: ./wheelhouse
-      #     requires:
-      #       - bundle-linux-py3.5
-      #       - bundle-linux-py3.6
-      #       - bundle-macos-py3.5
-      #       - bundle-macos-py3.6
+    # macos-py3.5:
+    #   jobs:
+    #     - test-and-build-macos:
+    #         name: build-macos-py3.5-tf1.13.1
+    #         python-version: "3.5"
+    #         tensorflow-version: "1.13.1"
+    #         output-directory: ./tagged
+    #     - test-and-build-macos:
+    #         name: build-macos-py3.5-tf1.13.2
+    #         python-version: "3.5"
+    #         tensorflow-version: "1.13.2"
+    #         output-directory: ./tagged
+    #     - test-and-build-macos:
+    #         name: build-macos-py3.5-tf1.14.0
+    #         python-version: "3.5"
+    #         tensorflow-version: "1.14.0"
+    #         output-directory: ./tagged
+    #     - bundle-macos:
+    #         name: bundle-macos-py3.5
+    #         python-version: "3.5"
+    #         tagged-directory: ./tagged
+    #         wheel-directory: ./wheelhouse
+    #         requires:
+    #           - build-macos-py3.5-tf1.13.1
+    #           - build-macos-py3.5-tf1.13.2
+    #           - build-macos-py3.5-tf1.14.0
+
+    # macos-py3.6:
+    #   jobs:
+    #     - test-and-build-macos:
+    #         name: build-macos-py3.6-tf1.13.1
+    #         python-version: "3.6"
+    #         tensorflow-version: "1.13.1"
+    #         output-directory: ./tagged
+    #     - test-and-build-macos:
+    #         name: build-macos-py3.6-tf1.13.2
+    #         python-version: "3.6"
+    #         tensorflow-version: "1.13.2"
+    #         output-directory: ./tagged
+    #     - test-and-build-macos:
+    #         name: build-macos-py3.6-tf1.14.0
+    #         python-version: "3.6"
+    #         tensorflow-version: "1.14.0"
+    #         output-directory: ./tagged
+    #     - bundle-macos:
+    #         name: bundle-macos-py3.6
+    #         python-version: "3.6"
+    #         tagged-directory: ./tagged
+    #         wheel-directory: ./wheelhouse
+    #         requires:
+    #           - build-macos-py3.6-tf1.13.1
+    #           - build-macos-py3.6-tf1.13.2
+    #           - build-macos-py3.6-tf1.14.0
