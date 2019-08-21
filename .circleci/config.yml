@@ -265,16 +265,16 @@ jobs:
   deploy:
     docker:
       - image: ubuntu:19.04
-      working_directory: ~/repo
-      steps:
-        - checkout
-        - bootstrap-linux
-        - attach_workspace:
-            at: ./out
-        - run:
-            - name: TODO
-            - command: |
-                tree ./out
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - bootstrap-linux
+      - attach_workspace:
+          at: ./out
+      - run:
+          - name: TODO
+          - command: |
+              tree ./out
 
 workflows:
   version: 2
