@@ -281,54 +281,54 @@ jobs:
 workflows:
   version: 2
   
-  # linux-py3.5:
-  #   jobs:
-  #     - test-and-build-linux:
-  #         name: build-linux-py3.5-tf1.13.1
-  #         python-version: "3.5"
-  #         tensorflow-version: "1.13.1"
-  #     - test-and-build-linux:
-  #         name: build-linux-py3.5-tf1.13.2
-  #         python-version: "3.5"
-  #         tensorflow-version: "1.13.2"
-  #     - test-and-build-linux:
-  #         name: build-linux-py3.5-tf1.14.0
-  #         python-version: "3.5"
-  #         tensorflow-version: "1.14.0"
+  linux-py3.5:
+    jobs:
+      - test-and-build-linux:
+          name: build-linux-py3.5-tf1.13.1
+          python-version: "3.5"
+          tensorflow-version: "1.13.1"
+      - test-and-build-linux:
+          name: build-linux-py3.5-tf1.13.2
+          python-version: "3.5"
+          tensorflow-version: "1.13.2"
+      - test-and-build-linux:
+          name: build-linux-py3.5-tf1.14.0
+          python-version: "3.5"
+          tensorflow-version: "1.14.0"
 
-  #     - bundle-linux:
-  #         name: bundle-linux-py3.5
-  #         python-version: "3.5"
-  #         requires:
-  #           - build-linux-py3.5-tf1.13.1
-  #           - build-linux-py3.5-tf1.13.2
-  #           - build-linux-py3.5-tf1.14.0
+      - bundle-linux:
+          name: bundle-linux-py3.5
+          python-version: "3.5"
+          requires:
+            - build-linux-py3.5-tf1.13.1
+            - build-linux-py3.5-tf1.13.2
+            - build-linux-py3.5-tf1.14.0
 
-  #     - whltest-linux:
-  #         name: whltest-linux-py3.5-tf1.13.1
-  #         python-version: "3.5"
-  #         tensorflow-version: "1.13.1"
-  #         requires:
-  #           - bundle-linux-py3.5
-  #     - whltest-linux:
-  #         name: whltest-linux-py3.5-tf1.13.2
-  #         python-version: "3.5"
-  #         tensorflow-version: "1.13.2"
-  #         requires:
-  #           - bundle-linux-py3.5
-  #     - whltest-linux:
-  #         name: whltest-linux-py3.5-tf1.14.0
-  #         python-version: "3.5"
-  #         tensorflow-version: "1.14.0"
-  #         requires:
-  #           - bundle-linux-py3.5
+      - whltest-linux:
+          name: whltest-linux-py3.5-tf1.13.1
+          python-version: "3.5"
+          tensorflow-version: "1.13.1"
+          requires:
+            - bundle-linux-py3.5
+      - whltest-linux:
+          name: whltest-linux-py3.5-tf1.13.2
+          python-version: "3.5"
+          tensorflow-version: "1.13.2"
+          requires:
+            - bundle-linux-py3.5
+      - whltest-linux:
+          name: whltest-linux-py3.5-tf1.14.0
+          python-version: "3.5"
+          tensorflow-version: "1.14.0"
+          requires:
+            - bundle-linux-py3.5
 
-  #     - deploy:
-  #         name: deploy-linux-py3.5
-  #         requires:
-  #           - whltest-linux-py3.5-tf1.13.1
-  #           - whltest-linux-py3.5-tf1.13.2
-  #           - whltest-linux-py3.5-tf1.14.0
+      - deploy:
+          name: deploy-linux-py3.5
+          requires:
+            - whltest-linux-py3.5-tf1.13.1
+            - whltest-linux-py3.5-tf1.13.2
+            - whltest-linux-py3.5-tf1.14.0
 
   linux-py3.6:
     jobs:
