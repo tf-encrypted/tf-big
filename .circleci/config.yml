@@ -182,11 +182,13 @@ commands:
       - create-pyenv-test:
           python-version: << parameters.python-version >>
           python-environment: << parameters.python-environment >>
+      - attach_workspace:
+          at: ./out
       - run:
           name: Test wheel
           command: |
             tree ./out
-            . venv-<< parameters.python-environment >>/bin/activate
+            # . venv-<< parameters.python-environment >>/bin/activate
       #       # # install dependencies by installing the package
       #       # pip install -q -U tf-big --find-links << './out/*.whl'
       #       # # re-install package using only the wheel directory
@@ -281,10 +283,10 @@ jobs:
     steps:
       - checkout
       - bootstrap-linux
-      # - whltest:
-      #     python-version: << parameters.python-version >>
-      #     python-environment: test-py<< parameters.python-version >>
-      #     tensorflow-version: << parameters.tensorflow-version >>
+      - whltest:
+          python-version: << parameters.python-version >>
+          python-environment: test-py<< parameters.python-version >>
+          tensorflow-version: << parameters.tensorflow-version >>
 
   # package-test-linux:
   #   parameters:
