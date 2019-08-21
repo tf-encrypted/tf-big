@@ -146,7 +146,7 @@ commands:
       - attach_workspace:
           at: ./out
       - run:
-          name: Test wheel
+          name: Test wheel in '<< parameters.python-environment >>'
           command: |
             tree ./out
             . venv-<< parameters.python-environment >>/bin/activate
@@ -277,7 +277,6 @@ jobs:
             tree ./out
       - store_artifacts:
           path: /out/wheelhouse/*.whl
-          
 
 workflows:
   version: 2
