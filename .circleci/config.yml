@@ -187,7 +187,7 @@ commands:
           command: |
             . venv-<< parameters.python-environment >>/bin/activate
             # install dependencies by installing the package
-            pip install -q -U tf-big --find-links << parameters.wheel-directory >>
+            pip install -q -U tf-big --find-links << ./out/*.whl
             # re-install package using only the wheel directory
             pip uninstall tf-big -y
             pip install -q tf-big --no-cache-dir --no-index --find-links ./out/*.whl
