@@ -115,9 +115,9 @@ commands:
       - run:
           name: Merge builds
           command: |
-            tree ./out/builds
+            tree ./out
             rsync -avm ./out/builds/*/ ./out/build
-            tree ./out/build
+            tree ./out
       - run:
           name: Bundle package in '<< parameters.python-environment >>'
           command: |
@@ -125,6 +125,7 @@ commands:
             python --version
             pip freeze
             DIR_TAGGED=./out/build DIR_WHEEL=./out make bundle
+            tree ./out
       - persist_to_workspace:
           root: ./out
           paths:
@@ -182,10 +183,10 @@ commands:
       - create-pyenv-test:
           python-version: << parameters.python-version >>
           python-environment: << parameters.python-environment >>
-      # - run:
-      #     name: Test wheel
-      #     command: |
-      #       tree ./out
+      - run:
+          name: Test wheel
+          command: |
+            tree ./out
       #       # . venv-<< parameters.python-environment >>/bin/activate
       #       # # install dependencies by installing the package
       #       # pip install -q -U tf-big --find-links << './out/*.whl'
