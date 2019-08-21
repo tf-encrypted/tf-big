@@ -285,7 +285,6 @@ jobs:
       - store_artifacts:
           path: ./out/wheelhouse
           destination: wheelhouse
-          
 
 workflows:
   version: 2
@@ -347,6 +346,9 @@ workflows:
             - whltest-linux-py3.5-tf1.13.1
             - whltest-linux-py3.5-tf1.13.2
             - whltest-linux-py3.5-tf1.14.0
+          filters:
+            branches:
+              only: master
 
   linux-py3.6:
     jobs:
@@ -463,6 +465,9 @@ workflows:
             - whltest-macos-py3.5-tf1.13.1
             - whltest-macos-py3.5-tf1.13.2
             - whltest-macos-py3.5-tf1.14.0
+          filters:
+            branches:
+              only: master
 
   macos-py3.6:
     jobs:
@@ -521,3 +526,6 @@ workflows:
             - whltest-macos-py3.6-tf1.13.1
             - whltest-macos-py3.6-tf1.13.2
             - whltest-macos-py3.6-tf1.14.0
+          filters:
+            branches:
+              only: master
