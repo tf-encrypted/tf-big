@@ -13,18 +13,18 @@ if [[ -z ${1} ]]; then
 fi
 OUT=${1}
 
-# build all files via `build_tagged` Bazel target
+# build all files via `build_sh` Bazel target
 bazel clean
-bazel build :build_tagged
+bazel build :build_sh
 
 # tag .so files in build with current TensorFlow version
 TF_VERSION=`python -c "import tensorflow; print(tensorflow.__version__)"`
-pushd ./bazel-bin/build_tagged.runfiles/__main__/tf_big
+pushd ./bazel-bin/build_sh.runfiles/__main__/tf_big
 mmv ";*.so" "#1#2_${TF_VERSION}.so"
 popd
 
 # copy out files to destination
 rsync -avm \
   --exclude "_solib*" \
-  --exclude "build_tagged*" \
-  -L ./bazel-bin/build_tagged.runfiles/__main__/ ${OUT}
+  --exclude "build_sh*" \
+  -L ./bazel-bin/build_sh.runfiles/__main__/ ${OUT}

@@ -1,7 +1,7 @@
 
 sh_binary(
-    name = "build_tagged",
-    srcs = ["build_tagged.sh"],
+    name = "build_sh",
+    srcs = ["build.sh"],
     data = [
         "README.md",
         "MANIFEST.in",

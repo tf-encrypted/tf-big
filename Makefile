@@ -8,21 +8,18 @@ clean:
 test: .bazelrc
 	bazel test ... --test_output=all
 
-build: .bazelrc
-	bazel build //tf_big:tf_big_py
-
 DIR_TAGGED ?= ./tagged
-build-tagged: .bazelrc
+build: .bazelrc
 	mkdir -p $(DIR_TAGGED)
-	./build_tagged.sh $(DIR_TAGGED)
+	./build.sh $(DIR_TAGGED)
 
 DIR_WHEEL ?= ./wheelhouse
-package-bundle: .bazelrc
+bundle: .bazelrc
 	mkdir -p $(DIR_WHEEL)
-	./package_bundle.sh $(DIR_TAGGED) $(DIR_WHEEL)
+	./bundle.sh $(DIR_TAGGED) $(DIR_WHEEL)
 
-package-test:
-	./package_test.sh
+pytest:
+	./pytest.sh
 
 fmt:
 	cd tf_big && find . -iname *.h -o -iname *.cc | xargs clang-format -i -style=google
