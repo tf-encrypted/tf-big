@@ -128,8 +128,8 @@ commands:
       - persist_to_workspace:
           root: ./out
           paths:
-            - build
-            - *.whl
+            - 'build'
+            - '*.whl'
 
   # package-build:
   #   parameters:
