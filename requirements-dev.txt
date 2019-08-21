@@ -1,2 +1,4 @@
 cpplint==1.4.4
 numpy==1.16.4
+twine==1.13.0
+wheel==0.33.6
