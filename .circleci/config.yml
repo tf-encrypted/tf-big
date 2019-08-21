@@ -88,6 +88,7 @@ commands:
             python --version
             pip freeze
             DIR_TAGGED=./out/builds/py<< parameters.python-version >>-tf<< parameters.tensorflow-version >> make build
+            tree ./out
       - persist_to_workspace:
           root: ./out
           paths:
@@ -129,7 +130,7 @@ commands:
       - persist_to_workspace:
           root: ./out
           paths:
-            - 'wheelhouse'
+            - wheelhouse
 
   whltest:
     parameters:
