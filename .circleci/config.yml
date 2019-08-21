@@ -362,7 +362,6 @@ workflows:
           name: build-linux-py3.6-tf1.13.1
           python-version: "3.6"
           tensorflow-version: "1.13.1"
-          output-directory: ./tagged
       - test-and-build-linux:
           name: build-linux-py3.6-tf1.13.2
           python-version: "3.6"
