@@ -128,8 +128,8 @@ commands:
       - persist_to_workspace:
           root: ./out
           paths:
-            - 'build'
-            - '*.whl'
+            - "build"
+            - "*.whl"
 
   # package-build:
   #   parameters:
@@ -187,10 +187,10 @@ commands:
           command: |
             . venv-<< parameters.python-environment >>/bin/activate
             # install dependencies by installing the package
-            pip install -q -U tf-big --find-links << ./out/*.whl
+            pip install -q -U tf-big --find-links << "./out/*.whl"
             # re-install package using only the wheel directory
             pip uninstall tf-big -y
-            pip install -q tf-big --no-cache-dir --no-index --find-links ./out/*.whl
+            pip install -q tf-big --no-cache-dir --no-index --find-links "./out/*.whl"
             # make sure we have the right TensorFlow version
             pip install -q -U tensorflow==<< parameters.tensorflow-version >>
             # run tests
