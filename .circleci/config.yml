@@ -179,7 +179,7 @@ commands:
       python-environment:
         type: string
     steps:
-      - create-pyenv-test:
+      - create-pyenv:
           python-version: << parameters.python-version >>
           python-environment: << parameters.python-environment >>
       - attach_workspace:
