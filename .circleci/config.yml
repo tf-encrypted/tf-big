@@ -185,16 +185,17 @@ commands:
       - run:
           name: Test wheel
           command: |
-            . venv-<< parameters.python-environment >>/bin/activate
-            # install dependencies by installing the package
-            pip install -q -U tf-big --find-links << "./out/*.whl"
-            # re-install package using only the wheel directory
-            pip uninstall tf-big -y
-            pip install -q tf-big --no-cache-dir --no-index --find-links "./out/*.whl"
-            # make sure we have the right TensorFlow version
-            pip install -q -U tensorflow==<< parameters.tensorflow-version >>
-            # run tests
-            make pytest
+            tree ./out
+            # . venv-<< parameters.python-environment >>/bin/activate
+            # # install dependencies by installing the package
+            # pip install -q -U tf-big --find-links << './out/*.whl'
+            # # re-install package using only the wheel directory
+            # pip uninstall tf-big -y
+            # pip install -q tf-big --no-cache-dir --no-index --find-links './out/*.whl'
+            # # make sure we have the right TensorFlow version
+            # pip install -q -U tensorflow==<< parameters.tensorflow-version >>
+            # # run tests
+            # make pytest
 
 jobs:
 
@@ -371,18 +372,18 @@ workflows:
             # - build-linux-py3.6-tf1.13.1
             - build-linux-py3.6-tf1.13.2
             - build-linux-py3.6-tf1.14.0
-      # - whltest-linux:
-      #     name: whltest-linux-py3.6-tf1.13.2
-      #     python-version: "3.6"
-      #     tensorflow-version: "1.13.2"
-      #     requires:
-      #       - bundle-linux-py3.6
-      # - whltest-linux:
-      #     name: whltest-linux-py3.6-tf1.14.0
-      #     python-version: "3.6"
-      #     tensorflow-version: "1.14.0"
-      #     requires:
-      #       - bundle-linux-py3.6
+      - whltest-linux:
+          name: whltest-linux-py3.6-tf1.13.2
+          python-version: "3.6"
+          tensorflow-version: "1.13.2"
+          requires:
+            - bundle-linux-py3.6
+      - whltest-linux:
+          name: whltest-linux-py3.6-tf1.14.0
+          python-version: "3.6"
+          tensorflow-version: "1.14.0"
+          requires:
+            - bundle-linux-py3.6
 
 
 
