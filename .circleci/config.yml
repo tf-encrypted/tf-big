@@ -272,9 +272,9 @@ jobs:
       - attach_workspace:
           at: ./out
       - run:
-          - name: TODO
-          - command: |
-              tree ./out
+          name: TODO
+          command: |
+            tree ./out
 
 workflows:
   version: 2
