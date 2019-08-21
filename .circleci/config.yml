@@ -182,20 +182,20 @@ commands:
       - create-pyenv-test:
           python-version: << parameters.python-version >>
           python-environment: << parameters.python-environment >>
-      - run:
-          name: Test wheel
-          command: |
-            tree ./out
-            # . venv-<< parameters.python-environment >>/bin/activate
-            # # install dependencies by installing the package
-            # pip install -q -U tf-big --find-links << './out/*.whl'
-            # # re-install package using only the wheel directory
-            # pip uninstall tf-big -y
-            # pip install -q tf-big --no-cache-dir --no-index --find-links './out/*.whl'
-            # # make sure we have the right TensorFlow version
-            # pip install -q -U tensorflow==<< parameters.tensorflow-version >>
-            # # run tests
-            # make pytest
+      # - run:
+      #     name: Test wheel
+      #     command: |
+      #       tree ./out
+      #       # . venv-<< parameters.python-environment >>/bin/activate
+      #       # # install dependencies by installing the package
+      #       # pip install -q -U tf-big --find-links << './out/*.whl'
+      #       # # re-install package using only the wheel directory
+      #       # pip uninstall tf-big -y
+      #       # pip install -q tf-big --no-cache-dir --no-index --find-links './out/*.whl'
+      #       # # make sure we have the right TensorFlow version
+      #       # pip install -q -U tensorflow==<< parameters.tensorflow-version >>
+      #       # # run tests
+      #       # make pytest
 
 jobs:
 
@@ -281,10 +281,10 @@ jobs:
     steps:
       - checkout
       - bootstrap-linux
-      - whltest:
-          python-version: << parameters.python-version >>
-          python-environment: test-py<< parameters.python-version >>
-          tensorflow-version: << parameters.tensorflow-version >>
+      # - whltest:
+      #     python-version: << parameters.python-version >>
+      #     python-environment: test-py<< parameters.python-version >>
+      #     tensorflow-version: << parameters.tensorflow-version >>
 
   # package-test-linux:
   #   parameters:
@@ -378,12 +378,12 @@ workflows:
           tensorflow-version: "1.13.2"
           requires:
             - bundle-linux-py3.6
-      - whltest-linux:
-          name: whltest-linux-py3.6-tf1.14.0
-          python-version: "3.6"
-          tensorflow-version: "1.14.0"
-          requires:
-            - bundle-linux-py3.6
+      # - whltest-linux:
+      #     name: whltest-linux-py3.6-tf1.14.0
+      #     python-version: "3.6"
+      #     tensorflow-version: "1.14.0"
+      #     requires:
+      #       - bundle-linux-py3.6
 
 
 
