@@ -283,7 +283,8 @@ jobs:
           command: |
             tree ./out/wheelhouse
       - store_artifacts:
-          path: ./out/wheelhouse/*.whl
+          path: ./out/wheelhouse
+          destination: wheelhouse
           
 
 workflows:
