@@ -60,7 +60,7 @@ commands:
           python-environment: << parameters.python-environment >>
           python-version: << parameters.python-version >>
       - run:
-          name: Install requirements in '<< parameters.python-environment >>'
+          name: Install requirements-dev.txt in '<< parameters.python-environment >>'
           command: |
             . venv-<< parameters.python-environment >>/bin/activate
             pip install -q -r requirements-dev.txt
@@ -76,14 +76,14 @@ commands:
             echo 'test --noshow_progress --noshow_loading_progress' >> .bazelrc
             echo 'build --noshow_progress --noshow_loading_progress' >> .bazelrc
       - run:
-          name: Test using '<< parameters.python-environment >>'
+          name: Test in '<< parameters.python-environment >>'
           command: |
             . venv-<< parameters.python-environment >>/bin/activate
             python --version
             pip freeze
             make test
       - run:
-          name: Build using '<< parameters.python-environment >>'
+          name: Build in '<< parameters.python-environment >>'
           command: |
             . venv-<< parameters.python-environment >>/bin/activate
             python --version
@@ -94,23 +94,34 @@ commands:
           paths:
             - "*"
   
-  # package-bundle:
-  #   parameters:
-  #     python-environment:
-  #       type: string
-  #     tagged-directory:
-  #       type: string
-  #     wheel-directory:
-  #       type: string
-  #   steps:
-  #     - run:
-  #         name: Bundle package using '<< parameters.python-environment >>'
-  #         command: |
-  #           . venv-<< parameters.python-environment >>/bin/activate
-  #           python --version
-  #           pip freeze
-  #           tree << parameters.tagged-directory >>
-  #           DIR_TAGGED=<< parameters.tagged-directory >> DIR_WHEEL=<< parameters.wheel-directory >> make package-bundle
+  bundle:
+    parameters:
+      python-environment:
+        type: string
+      tagged-directory:
+        type: string
+      wheel-directory:
+        type: string
+    steps:
+      - create-pyenv:
+          python-environment: << parameters.python-environment >>
+          python-version: << parameters.python-version >>
+      - run:
+          name: Install requirements-dev.txt in '<< parameters.python-environment >>'
+          command: |
+            . venv-<< parameters.python-environment >>/bin/activate
+            pip install -q -r requirements-dev.txt
+            pip freeze
+      - run:
+          name: Bundle package in '<< parameters.python-environment >>'
+          command: |
+            . venv-<< parameters.python-environment >>/bin/activate
+            python --version
+            pip freeze
+            tree << parameters.tagged-directory >>
+            DIR_TAGGED=<< parameters.tagged-directory >> DIR_WHEEL=<< parameters.wheel-directory >> make bundle
+            tree << parameters.tagged-directory >>
+            tree << parameters.wheel-directory >>
 
   # package-build:
   #   parameters:
@@ -192,7 +203,7 @@ jobs:
       - checkout
       - bootstrap-linux
       - test-and-build:
-          python-environment: build-py<< parameters.python-version >>
+          python-environment: build-py<< parameters.python-version >>-tf<< parameters.tensorflow-version >>
           python-version: << parameters.python-version >>
           tensorflow-version: << parameters.tensorflow-version >>
           output-directory: << parameters.output-directory >>
@@ -217,24 +228,25 @@ jobs:
   #         tensorflow-version: << parameters.tensorflow-version >>
   #         output-directory: << parameters.output-directory >>
 
-  # package-build-linux:
-  #   parameters:
-  #     python-version:
-  #       type: string
-  #   docker:
-  #     - image: tfencrypted/tf-big:0.1.0
-  #   working_directory: ~/repo
-  #   steps:
-  #     - checkout
-  #     - bootstrap-linux
-  #     - package-build:
-  #         python-version: << parameters.python-version >>
-  #         python-environment: build-py<< parameters.python-version >>
-  #         wheel-directory: ./wheelhouse
-  #     - persist_to_workspace:
-  #         root: ./wheelhouse
-  #         paths:
-  #           - "*.whl"
+  bundle-linux:
+    parameters:
+      python-version:
+        type: string
+      tagged-directory:
+        type: string
+      wheel-directory:
+        type: string
+    docker:
+      - image: tfencrypted/tf-big:0.1.0
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - bootstrap-linux
+      - bundle:
+          python-environment: bundle-py<< parameters.python-version >>
+          python-version: << parameters.python-version >>
+          tagged-directory: << parameters.tagged-directory >>
+          wheel-directory: << parameters.wheel-directory >>
 
   # package-build-macos:
   #   parameters:
@@ -318,6 +330,14 @@ workflows:
           python-version: "3.6"
           tensorflow-version: "1.13.2"
           output-directory: ./tagged
+      - bundle-linux:
+          name: bundle-linux-py3.6  
+          python-version: "3.6"
+          tagged-directory: ./tagged
+          wheel-directory: ./wheel
+          requires:
+            - build-linux-py3.6-tf1.13.2
+            - build-linux-py3.6-tf1.14.0
 
       # # macOS, Python 3.5
       # - package-build-macos:
