@@ -131,45 +131,6 @@ commands:
           paths:
             - 'wheelhouse'
 
-  # package-build:
-  #   parameters:
-  #     python-version:
-  #       type: string
-  #     python-environment:
-  #       type: string
-  #     wheel-directory:
-  #       type: string
-  #     tagged-directory:
-  #       type: string
-  #       default: ./tagged
-  #   steps:
-  #     - create-pyenv-build:
-  #         python-version: << parameters.python-version >>
-  #         python-environment: << parameters.python-environment >>
-  #     - run:
-  #         name: Clear intermediate directories
-  #         command: |
-  #           rm -rf << parameters.tagged-directory >>
-  #           rm -rf << parameters.wheel-directory >>
-  #     # build all tagged versions
-  #     - build-tagged:
-  #         python-environment: << parameters.python-environment >>
-  #         tensorflow-version: "1.13.1"
-  #         tagged-directory: << parameters.tagged-directory >>
-  #     - build-tagged:
-  #         python-environment: << parameters.python-environment >>
-  #         tensorflow-version: "1.13.2"
-  #         tagged-directory: << parameters.tagged-directory >>
-  #     - build-tagged:
-  #         python-environment: << parameters.python-environment >>
-  #         tensorflow-version: "1.14.0"
-  #         tagged-directory: << parameters.tagged-directory >>
-  #     # bundle up into wheel
-  #     - package-bundle:
-  #         python-environment: << parameters.python-environment >>
-  #         tagged-directory: << parameters.tagged-directory >>
-  #         wheel-directory: << parameters.wheel-directory >>
-
   whltest:
     parameters:
       python-version:
@@ -220,27 +181,24 @@ jobs:
       - test-and-build:
           python-version: << parameters.python-version >>
           tensorflow-version: << parameters.tensorflow-version >>
-          python-environment: build-py<< parameters.python-version >>-tf<< parameters.tensorflow-version >>
+          python-environment: build-linux-py<< parameters.python-version >>-tf<< parameters.tensorflow-version >>
 
-  # test-and-build-macos:
-  #   parameters:
-  #     python-version:
-  #       type: string
-  #     tensorflow-version:
-  #       type: string
-  #     output-directory:
-  #       type: string
-  #   macos:
-  #     xcode: "10.0.0"
-  #   working_directory: ~/repo
-  #   steps:
-  #     - checkout
-  #     - bootstrap-macos
-  #     - test-and-build:
-  #         python-environment: build-py<< parameters.python-version >>
-  #         python-version: << parameters.python-version >>
-  #         tensorflow-version: << parameters.tensorflow-version >>
-  #         output-directory: << parameters.output-directory >>
+  test-and-build-macos:
+    parameters:
+      python-version:
+        type: string
+      tensorflow-version:
+        type: string
+    macos:
+      xcode: "10.0.0"
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - bootstrap-macos
+      - test-and-build:
+          python-version: << parameters.python-version >>
+          tensorflow-version: << parameters.tensorflow-version >>
+          python-environment: build-macos-py<< parameters.python-version >>-tf<< parameters.tensorflow-version >>
 
   bundle-linux:
     parameters:
@@ -254,26 +212,21 @@ jobs:
       - bootstrap-linux
       - bundle:
           python-version: << parameters.python-version >>
-          python-environment: bundle-py<< parameters.python-version >>
+          python-environment: bundle-linux-py<< parameters.python-version >>
 
-  # package-build-macos:
-  #   parameters:
-  #     python-version:
-  #       type: string
-  #   macos:
-  #     xcode: "10.0.0"
-  #   working_directory: ~/repo
-  #   steps:
-  #     - checkout
-  #     - bootstrap-macos
-  #     - package-build:
-  #         python-version: << parameters.python-version >>
-  #         python-environment: build-py<< parameters.python-version >>
-  #         wheel-directory: ./wheelhouse
-  #     - persist_to_workspace:
-  #         root: ./wheelhouse
-  #         paths:
-  #           - "*.whl"
+  bundle-macos:
+    parameters:
+      python-version:
+        type: string
+    macos:
+      xcode: "10.0.0"
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - bootstrap-macos
+      - bundle:
+          python-version: << parameters.python-version >>
+          python-environment: bundle-macos-py<< parameters.python-version >>
 
   whltest-linux:
     parameters:
@@ -289,42 +242,39 @@ jobs:
       - bootstrap-linux
       - whltest:
           python-version: << parameters.python-version >>
-          python-environment: test-py<< parameters.python-version >>
+          python-environment: test-linux-py<< parameters.python-version >>
           tensorflow-version: << parameters.tensorflow-version >>
 
-  # package-test-linux:
-  #   parameters:
-  #     python-version:
-  #       type: string
-  #   docker:
-  #     - image: ubuntu:19.04
-  #   working_directory: ~/repo
-  #   steps:
-  #     - checkout
-  #     - bootstrap-linux
-  #     - attach_workspace:
-  #         at: ./wheelhouse
-  #     - package-test:
-  #         python-version: << parameters.python-version >>
-  #         python-environment: test-py<< parameters.python-version >>
-  #         wheel-directory: ./wheelhouse
+  whltest-macos:
+    parameters:
+      python-version:
+        type: string
+      tensorflow-version:
+        type: string
+    macos:
+        xcode: "10.0.0"
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - bootstrap-macos
+      - whltest:
+          python-version: << parameters.python-version >>
+          python-environment: test-macos-py<< parameters.python-version >>
+          tensorflow-version: << parameters.tensorflow-version >>
 
-  # package-test-macos:
-  #   parameters:
-  #     python-version:
-  #       type: string
-  #   macos:
-  #       xcode: "10.0.0"
-  #   working_directory: ~/repo
-  #   steps:
-  #     - checkout
-  #     - bootstrap-macos
-  #     - attach_workspace:
-  #         at: ./wheelhouse
-  #     - package-test:
-  #         python-version: << parameters.python-version >>
-  #         python-environment: test-py<< parameters.python-version >>
-  #         wheel-directory: ./wheelhouse
+  deploy:
+    docker:
+      - image: ubuntu:19.04
+      working_directory: ~/repo
+      steps:
+        - checkout
+        - bootstrap-linux
+        - attach_workspace:
+            at: ./out
+        - run:
+            - name: TODO
+            - command: |
+                tree ./out
 
 workflows:
   version: 2
@@ -335,26 +285,48 @@ workflows:
   #         name: build-linux-py3.5-tf1.13.1
   #         python-version: "3.5"
   #         tensorflow-version: "1.13.1"
-  #         output-directory: ./tagged
   #     - test-and-build-linux:
   #         name: build-linux-py3.5-tf1.13.2
   #         python-version: "3.5"
   #         tensorflow-version: "1.13.2"
-  #         output-directory: ./tagged
   #     - test-and-build-linux:
   #         name: build-linux-py3.5-tf1.14.0
   #         python-version: "3.5"
   #         tensorflow-version: "1.14.0"
-  #         output-directory: ./tagged
+
   #     - bundle-linux:
   #         name: bundle-linux-py3.5
   #         python-version: "3.5"
-  #         tagged-directory: ./tagged
-  #         wheel-directory: ./wheelhouse
   #         requires:
   #           - build-linux-py3.5-tf1.13.1
   #           - build-linux-py3.5-tf1.13.2
   #           - build-linux-py3.5-tf1.14.0
+
+  #     - whltest-linux:
+  #         name: whltest-linux-py3.5-tf1.13.1
+  #         python-version: "3.5"
+  #         tensorflow-version: "1.13.1"
+  #         requires:
+  #           - bundle-linux-py3.5
+  #     - whltest-linux:
+  #         name: whltest-linux-py3.5-tf1.13.2
+  #         python-version: "3.5"
+  #         tensorflow-version: "1.13.2"
+  #         requires:
+  #           - bundle-linux-py3.5
+  #     - whltest-linux:
+  #         name: whltest-linux-py3.5-tf1.14.0
+  #         python-version: "3.5"
+  #         tensorflow-version: "1.14.0"
+  #         requires:
+  #           - bundle-linux-py3.5
+
+  #     - deploy:
+  #         name: deploy-linux-py3.5
+  #         requires:
+  #           - whltest-linux-py3.5-tf1.13.1
+  #           - whltest-linux-py3.5-tf1.13.2
+  #           - whltest-linux-py3.5-tf1.14.0
 
   linux-py3.6:
     jobs:
@@ -370,6 +342,7 @@ workflows:
           name: build-linux-py3.6-tf1.14.0
           python-version: "3.6"
           tensorflow-version: "1.14.0"
+
       - bundle-linux:
           name: bundle-linux-py3.6
           python-version: "3.6"
@@ -377,6 +350,7 @@ workflows:
             - build-linux-py3.6-tf1.13.1
             - build-linux-py3.6-tf1.13.2
             - build-linux-py3.6-tf1.14.0
+
       - whltest-linux:
           name: whltest-linux-py3.6-tf1.13.1
           python-version: "3.6"
@@ -396,58 +370,58 @@ workflows:
           requires:
             - bundle-linux-py3.6
 
+      - deploy:
+          name: deploy-linux-py3.6
+          requires:
+            - whltest-linux-py3.6-tf1.13.1
+            - whltest-linux-py3.6-tf1.13.2
+            - whltest-linux-py3.6-tf1.14.0
 
+  macos-py3.6:
+    jobs:
+      - test-and-build-macos:
+          name: build-macos-py3.6-tf1.13.1
+          python-version: "3.6"
+          tensorflow-version: "1.13.1"
+      - test-and-build-macos:
+          name: build-macos-py3.6-tf1.13.2
+          python-version: "3.6"
+          tensorflow-version: "1.13.2"
+      - test-and-build-macos:
+          name: build-macos-py3.6-tf1.14.0
+          python-version: "3.6"
+          tensorflow-version: "1.14.0"
 
-    # macos-py3.5:
-    #   jobs:
-    #     - test-and-build-macos:
-    #         name: build-macos-py3.5-tf1.13.1
-    #         python-version: "3.5"
-    #         tensorflow-version: "1.13.1"
-    #         output-directory: ./tagged
-    #     - test-and-build-macos:
-    #         name: build-macos-py3.5-tf1.13.2
-    #         python-version: "3.5"
-    #         tensorflow-version: "1.13.2"
-    #         output-directory: ./tagged
-    #     - test-and-build-macos:
-    #         name: build-macos-py3.5-tf1.14.0
-    #         python-version: "3.5"
-    #         tensorflow-version: "1.14.0"
-    #         output-directory: ./tagged
-    #     - bundle-macos:
-    #         name: bundle-macos-py3.5
-    #         python-version: "3.5"
-    #         tagged-directory: ./tagged
-    #         wheel-directory: ./wheelhouse
-    #         requires:
-    #           - build-macos-py3.5-tf1.13.1
-    #           - build-macos-py3.5-tf1.13.2
-    #           - build-macos-py3.5-tf1.14.0
+      - bundle-macos:
+          name: bundle-macos-py3.6
+          python-version: "3.6"
+          requires:
+            - build-macos-py3.6-tf1.13.1
+            - build-macos-py3.6-tf1.13.2
+            - build-macos-py3.6-tf1.14.0
 
-    # macos-py3.6:
-    #   jobs:
-    #     - test-and-build-macos:
-    #         name: build-macos-py3.6-tf1.13.1
-    #         python-version: "3.6"
-    #         tensorflow-version: "1.13.1"
-    #         output-directory: ./tagged
-    #     - test-and-build-macos:
-    #         name: build-macos-py3.6-tf1.13.2
-    #         python-version: "3.6"
-    #         tensorflow-version: "1.13.2"
-    #         output-directory: ./tagged
-    #     - test-and-build-macos:
-    #         name: build-macos-py3.6-tf1.14.0
-    #         python-version: "3.6"
-    #         tensorflow-version: "1.14.0"
-    #         output-directory: ./tagged
-    #     - bundle-macos:
-    #         name: bundle-macos-py3.6
-    #         python-version: "3.6"
-    #         tagged-directory: ./tagged
-    #         wheel-directory: ./wheelhouse
-    #         requires:
-    #           - build-macos-py3.6-tf1.13.1
-    #           - build-macos-py3.6-tf1.13.2
-    #           - build-macos-py3.6-tf1.14.0
+      - whltest-macos:
+          name: whltest-macos-py3.6-tf1.13.1
+          python-version: "3.6"
+          tensorflow-version: "1.13.1"
+          requires:
+            - bundle-macos-py3.6
+      - whltest-macos:
+          name: whltest-macos-py3.6-tf1.13.2
+          python-version: "3.6"
+          tensorflow-version: "1.13.2"
+          requires:
+            - bundle-macos-py3.6
+      - whltest-macos:
+          name: whltest-macos-py3.6-tf1.14.0
+          python-version: "3.6"
+          tensorflow-version: "1.14.0"
+          requires:
+            - bundle-macos-py3.6
+
+      - deploy:
+          name: deploy-macos-py3.6
+          requires:
+            - whltest-macos-py3.6-tf1.13.1
+            - whltest-macos-py3.6-tf1.13.2
+            - whltest-macos-py3.6-tf1.14.0
