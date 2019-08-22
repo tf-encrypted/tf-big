@@ -288,6 +288,35 @@ jobs:
 workflows:
   version: 2
   
+  quicktest:
+    jobs:
+      - test-and-build-linux:
+          name: build-linux-py3.6-tf1.14.0
+          python-version: "3.6"
+          tensorflow-version: "1.14.0"
+          filters:
+            branches:
+              ignore: master
+
+      - bundle-linux:
+          name: bundle-linux-py3.6
+          python-version: "3.6"
+          requires:
+            - build-linux-py3.6-tf1.14.0
+          filters:
+            branches:
+              ignore: master
+
+      - whltest-linux:
+          name: whltest-linux-py3.6-tf1.14.0
+          python-version: "3.6"
+          tensorflow-version: "1.14.0"
+          requires:
+            - bundle-linux-py3.6
+          filters:
+            branches:
+              ignore: master
+
   linux-py3.5:
     jobs:
       - test-and-build-linux:
