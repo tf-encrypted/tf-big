@@ -277,7 +277,7 @@ jobs:
           command: |
             tree ./out
       - store_artifacts:
-          path: /out/wheelhouse/*.whl
+          path: ./out/wheelhouse/*.whl
 
 workflows:
   version: 2
