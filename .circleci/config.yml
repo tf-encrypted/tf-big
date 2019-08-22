@@ -147,9 +147,9 @@ commands:
       - attach_workspace:
           at: ./out
       - run:
-          name: Test wheel in '<< parameters.python-environment >>'
+          name: Configure '<< parameters.python-environment >>'
           command: |
-            tree ./out
+            tree ./out/wheelhouse
             . venv-<< parameters.python-environment >>/bin/activate
             # we want to make sure that tests are run against whatever is
             # in the wheelhouse; for this we'd like to use --no-index but
@@ -162,7 +162,12 @@ commands:
             pip install -q tf-big --no-cache-dir --no-index --find-links ./out/wheelhouse
             # make sure we are testing against the right version of TensorFlow
             pip install -q -U tensorflow==<< parameters.tensorflow-version >>
-            # run tests
+      - run:
+          name: Test wheel in '<< parameters.python-environment >>'
+          command: |
+            . venv-<< parameters.python-environment >>/bin/activate
+            python --version
+            pip freeze
             make pytest
 
 jobs:
