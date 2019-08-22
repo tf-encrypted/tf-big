@@ -3,16 +3,23 @@
 
 clean:
 	bazel clean
-	rm .bazelrc || true
+	rm -f .bazelrc
 
 test: .bazelrc
 	bazel test ... --test_output=all
 
-bazel-bin/build_pip_pkg:
-	bazel build build_pip_pkg
+DIR_TAGGED ?= ./tagged
+build: .bazelrc
+	mkdir -p $(DIR_TAGGED)
+	./build.sh $(DIR_TAGGED)
 
-build: .bazelrc bazel-bin/build_pip_pkg
-	./bazel-bin/build_pip_pkg `pwd`/artifacts
+DIR_WHEEL ?= ./wheelhouse
+bundle:
+	mkdir -p $(DIR_WHEEL)
+	./bundle.sh $(DIR_TAGGED) $(DIR_WHEEL)
+
+pytest:
+	./pytest.sh
 
 fmt:
 	cd tf_big && find . -iname *.h -o -iname *.cc | xargs clang-format -i -style=google
@@ -20,4 +27,4 @@ fmt:
 lint:
 	cd tf_big && find . -iname *.h -o -iname *.cc | xargs cpplint --filter=-legal/copyright
 
-.PHONY: clean test build fmt lint
+.PHONY: clean test build bundle pytest fmt lint

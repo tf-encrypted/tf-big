@@ -1,6 +1,7 @@
+
 sh_binary(
-    name = "build_pip_pkg",
-    srcs = ["build_pip_pkg.sh"],
+    name = "build_sh",
+    srcs = ["build.sh"],
     data = [
         "README.md",
         "MANIFEST.in",

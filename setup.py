@@ -16,7 +16,9 @@ setuptools.setup(
     name="tf-big",
     version="0.1.0",
     packages=setuptools.find_packages(),
-    package_data={'tf_big': []},
+    package_data={
+        '': ['*.so'],
+    },
     python_requires=">=3.5",
     install_requires=[
         "numpy >=1.14",

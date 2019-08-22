@@ -1,88 +1,436 @@
-version: 2
+version: 2.1
+
+commands:
+
+  bootstrap-linux:
+    steps:
+      - run:
+          name: Bootstrap Linux
+          command: |
+            apt update
+            apt install -y pkg-config g++ cmake
+            apt install -y zip unzip zlib1g-dev
+            apt install -y curl git rsync tree mmv
+            apt install -y python3
+
+            curl -OL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh --silent
+            bash Miniconda3-latest-Linux-x86_64.sh -b -f
+
+  bootstrap-macos:
+    steps:
+      - run:
+          name: Bootstrap macOS
+          command: |
+            HOMEBREW_NO_AUTO_UPDATE=1 brew tap bazelbuild/tap >> build.log
+            HOMEBREW_NO_AUTO_UPDATE=1 brew install bazelbuild/tap/bazel >> build.log
+            HOMEBREW_NO_AUTO_UPDATE=1 brew install gmp >> build.log
+            HOMEBREW_NO_AUTO_UPDATE=1 brew install mmv >> build.log
+            HOMEBREW_NO_AUTO_UPDATE=1 brew install tree >> build.log
+
+            curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh --silent
+            bash Miniconda3-latest-MacOSX-x86_64.sh -b -f >> build.log
+
+  create-pyenv:
+    # Create new Python virtual environment
+    parameters:
+      python-version:
+        type: string
+      python-environment:
+        type: string
+    steps:
+      - run:
+          name: Create Python << parameters.python-version >> environment '<< parameters.python-environment >>'
+          command: |
+            ../miniconda3/bin/conda create -n << parameters.python-environment >> python=<< parameters.python-version >> 2> /dev/null || true
+            ../miniconda3/envs/<< parameters.python-environment >>/bin/python -m venv venv-<< parameters.python-environment >>
+            . venv-<< parameters.python-environment >>/bin/activate
+
+  test-and-build:
+    parameters:
+      python-version:
+        type: string
+      tensorflow-version:
+        type: string
+      # next parameter should be derived 
+      python-environment:
+        type: string
+    steps:
+      - create-pyenv:
+          python-environment: << parameters.python-environment >>
+          python-version: << parameters.python-version >>
+      - run:
+          name: Install requirements-dev.txt in '<< parameters.python-environment >>'
+          command: |
+            . venv-<< parameters.python-environment >>/bin/activate
+            pip install -q -r requirements-dev.txt
+            pip freeze
+      - run:
+          name: Install TensorFlow << parameters.tensorflow-version >> in '<< parameters.python-environment >>'
+          command: |
+            . venv-<< parameters.python-environment >>/bin/activate
+            make clean
+            pip install -q -U tensorflow==<< parameters.tensorflow-version >>
+            make .bazelrc
+            # reduce Bazel output to logs
+            echo 'test --noshow_progress --noshow_loading_progress' >> .bazelrc
+            echo 'build --noshow_progress --noshow_loading_progress' >> .bazelrc
+      - run:
+          name: Test in '<< parameters.python-environment >>'
+          command: |
+            . venv-<< parameters.python-environment >>/bin/activate
+            python --version
+            pip freeze
+            make test
+      - run:
+          name: Build in '<< parameters.python-environment >>'
+          command: |
+            . venv-<< parameters.python-environment >>/bin/activate
+            python --version
+            pip freeze
+            DIR_TAGGED=./out/builds/py<< parameters.python-version >>-tf<< parameters.tensorflow-version >> make build
+      - persist_to_workspace:
+          root: ./out
+          paths:
+            - builds/py<< parameters.python-version >>-tf<< parameters.tensorflow-version >>
+  
+  bundle:
+    parameters:
+      python-version:
+        type: string
+      # next parameter should be derived 
+      python-environment:
+        type: string
+    steps:
+      - create-pyenv:
+          python-environment: << parameters.python-environment >>
+          python-version: << parameters.python-version >>
+      - run:
+          name: Install requirements-dev.txt in '<< parameters.python-environment >>'
+          command: |
+            . venv-<< parameters.python-environment >>/bin/activate
+            pip install -q -r requirements-dev.txt
+            pip install -q -U wheel
+            pip freeze
+      - attach_workspace:
+          at: ./out
+      - run:
+          name: Merge builds
+          command: |
+            tree ./out
+            rsync -avm ./out/builds/*/ ./out/merged
+            tree ./out
+      - run:
+          name: Bundle package in '<< parameters.python-environment >>'
+          command: |
+            . venv-<< parameters.python-environment >>/bin/activate
+            python --version
+            pip freeze
+            DIR_TAGGED=./out/merged DIR_WHEEL=./out/wheelhouse make bundle
+            tree ./out
+      - persist_to_workspace:
+          root: ./out
+          paths:
+            - 'wheelhouse'
+
+  whltest:
+    parameters:
+      python-version:
+        type: string
+      tensorflow-version:
+        type: string
+      python-environment:
+        type: string
+    steps:
+      - create-pyenv:
+          python-version: << parameters.python-version >>
+          python-environment: << parameters.python-environment >>
+      - attach_workspace:
+          at: ./out
+      - run:
+          name: Configure '<< parameters.python-environment >>' to use TensorFlow << parameters.tensorflow-version >>
+          command: |
+            tree ./out/wheelhouse
+            . venv-<< parameters.python-environment >>/bin/activate
+            # we want to make sure that tests are run against whatever is
+            # in the wheelhouse; for this we'd like to use --no-index but
+            # that will also block dependencies from being installed.
+            # as a result we first install dependencies by installing the
+            # package and then immediately remove it again
+            pip install -q -U tf-big --find-links ./out/wheelhouse
+            pip uninstall tf-big -y
+            # install the package, but forced to only use the wheelhouse
+            pip install -q tf-big --no-cache-dir --no-index --find-links ./out/wheelhouse
+            # make sure we are testing against the right version of TensorFlow
+            pip install -q -U tensorflow==<< parameters.tensorflow-version >>
+      - run:
+          name: Test wheel in '<< parameters.python-environment >>'
+          command: |
+            . venv-<< parameters.python-environment >>/bin/activate
+            python --version
+            pip freeze
+            make pytest
 
 jobs:
-  build-linux:
+
+  test-and-build-linux:
+    parameters:
+      python-version:
+        type: string
+      tensorflow-version:
+        type: string
     docker:
       - image: tfencrypted/tf-big:0.1.0
     working_directory: ~/repo
     steps:
       - checkout
-      - run:
-          name: run tests
-          command: |
-            . /venv-py35/bin/activate
-            export LD_LIBRARY_PATH=/usr/local
-            make clean
-            make test
-      - run:
-          name: build pip
-          command: |
-            . /venv-py35/bin/activate
-            make clean
-            make build
-            . /venv-py36/bin/activate
-            make clean
-            make build
+      - bootstrap-linux
+      - test-and-build:
+          python-version: << parameters.python-version >>
+          tensorflow-version: << parameters.tensorflow-version >>
+          python-environment: build-linux-py<< parameters.python-version >>-tf<< parameters.tensorflow-version >>
 
-            for filename in artifacts/*; do
-              auditwheel repair $filename
-            done
-      - store_artifacts:
-          path: wheelhouse
-  build-macos:
+  test-and-build-macos:
+    parameters:
+      python-version:
+        type: string
+      tensorflow-version:
+        type: string
     macos:
-        xcode: "10.0.0"
+      xcode: "10.0.0"
     working_directory: ~/repo
     steps:
       - checkout
-      - run:
-          name: install deps
-          command: |
-            curl -O https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
-            bash Miniconda3-latest-MacOSX-x86_64.sh -b -f
-            ../miniconda3/bin/conda create -n py35 python=3.5 2> /dev/null || true
-            ../miniconda3/envs/py35/bin/python -m venv venv-py35
-            ../miniconda3/bin/conda create -n py36 python=3.6 2> /dev/null || true
-            ../miniconda3/envs/py36/bin/python -m venv venv-py36
-            . venv-py35/bin/activate
-            HOMEBREW_NO_AUTO_UPDATE=1 brew tap bazelbuild/tap
-            HOMEBREW_NO_AUTO_UPDATE=1 brew install bazelbuild/tap/bazel
-            HOMEBREW_NO_AUTO_UPDATE=1 brew install gmp
-            pip install -r requirements-dev.txt
-      - run:
-          name: run tests
-          command: |
-            . venv-py35/bin/activate
-            make clean
-            make test
-      - run:
-          name: build pip
-          command: |
-            . venv-py35/bin/activate
-            make clean
-            make build
-            . venv-py36/bin/activate
-            make clean
-            make build
-      - store_artifacts:
-          path: artifacts
+      - bootstrap-macos
+      - test-and-build:
+          python-version: << parameters.python-version >>
+          tensorflow-version: << parameters.tensorflow-version >>
+          python-environment: build-macos-py<< parameters.python-version >>-tf<< parameters.tensorflow-version >>
 
+  bundle-linux:
+    parameters:
+      python-version:
+        type: string
+    docker:
+      - image: tfencrypted/tf-big:0.1.0
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - bootstrap-linux
+      - bundle:
+          python-version: << parameters.python-version >>
+          python-environment: bundle-linux-py<< parameters.python-version >>
+
+  bundle-macos:
+    parameters:
+      python-version:
+        type: string
+    macos:
+      xcode: "10.0.0"
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - bootstrap-macos
+      - bundle:
+          python-version: << parameters.python-version >>
+          python-environment: bundle-macos-py<< parameters.python-version >>
+
+  whltest-linux:
+    parameters:
+      python-version:
+        type: string
+      tensorflow-version:
+        type: string
+    docker:
+      - image: ubuntu:19.04
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - bootstrap-linux
+      - whltest:
+          python-version: << parameters.python-version >>
+          python-environment: test-linux-py<< parameters.python-version >>
+          tensorflow-version: << parameters.tensorflow-version >>
+
+  whltest-macos:
+    parameters:
+      python-version:
+        type: string
+      tensorflow-version:
+        type: string
+    macos:
+      xcode: "10.0.0"
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - bootstrap-macos
+      - whltest:
+          python-version: << parameters.python-version >>
+          python-environment: test-macos-py<< parameters.python-version >>
+          tensorflow-version: << parameters.tensorflow-version >>
+
+  deploy:
+    docker:
+      - image: ubuntu:19.04
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - bootstrap-linux
+      - attach_workspace:
+          at: ./out
+      - run:
+          name: TODO
+          command: |
+            tree ./out
+      - store_artifacts:
+          path: ./out/wheelhouse
+          destination: wheelhouse
 
 workflows:
   version: 2
-  build-linux-macos:
+  
+  linux-py3.5:
     jobs:
-      - build-linux:
-          filters:
-            tags:
-              # In order for the 'deploy' job to run, we must first kick off
-              # the build job on all tags. By default, Circle CI only kicks off
-              # builds on tags if a filter is defined.
-              only: /^(?:[0-9]+)\.(?:[0-9]+)\.(?:[0-9]+)(?:(\-rc[0-9]+)?)$/
-      - build-macos:
-          filters:
-            tags:
-              # In order for the 'deploy' job to run, we must first kick off
-              # the build job on all tags. By default, Circle CI only kicks off
-              # builds on tags if a filter is defined.
-              only: /^(?:[0-9]+)\.(?:[0-9]+)\.(?:[0-9]+)(?:(\-rc[0-9]+)?)$/
+      - test-and-build-linux:
+          name: build-linux-py3.5-tf1.13.1
+          python-version: "3.5"
+          tensorflow-version: "1.13.1"
+      - test-and-build-linux:
+          name: build-linux-py3.5-tf1.13.2
+          python-version: "3.5"
+          tensorflow-version: "1.13.2"
+      - test-and-build-linux:
+          name: build-linux-py3.5-tf1.14.0
+          python-version: "3.5"
+          tensorflow-version: "1.14.0"
+
+      - bundle-linux:
+          name: bundle-linux-py3.5
+          python-version: "3.5"
+          requires:
+            - build-linux-py3.5-tf1.13.1
+            - build-linux-py3.5-tf1.13.2
+            - build-linux-py3.5-tf1.14.0
+
+      - whltest-linux:
+          name: whltest-linux-py3.5-tf1.13.1
+          python-version: "3.5"
+          tensorflow-version: "1.13.1"
+          requires:
+            - bundle-linux-py3.5
+      - whltest-linux:
+          name: whltest-linux-py3.5-tf1.13.2
+          python-version: "3.5"
+          tensorflow-version: "1.13.2"
+          requires:
+            - bundle-linux-py3.5
+      - whltest-linux:
+          name: whltest-linux-py3.5-tf1.14.0
+          python-version: "3.5"
+          tensorflow-version: "1.14.0"
+          requires:
+            - bundle-linux-py3.5
+
+      - deploy:
+          name: deploy-linux-py3.5
+          requires:
+            - whltest-linux-py3.5-tf1.13.1
+            - whltest-linux-py3.5-tf1.13.2
+            - whltest-linux-py3.5-tf1.14.0
+
+  linux-py3.6:
+    jobs:
+      - test-and-build-linux:
+          name: build-linux-py3.6-tf1.13.1
+          python-version: "3.6"
+          tensorflow-version: "1.13.1"
+      - test-and-build-linux:
+          name: build-linux-py3.6-tf1.13.2
+          python-version: "3.6"
+          tensorflow-version: "1.13.2"
+      - test-and-build-linux:
+          name: build-linux-py3.6-tf1.14.0
+          python-version: "3.6"
+          tensorflow-version: "1.14.0"
+
+      - bundle-linux:
+          name: bundle-linux-py3.6
+          python-version: "3.6"
+          requires:
+            - build-linux-py3.6-tf1.13.1
+            - build-linux-py3.6-tf1.13.2
+            - build-linux-py3.6-tf1.14.0
+
+      - whltest-linux:
+          name: whltest-linux-py3.6-tf1.13.1
+          python-version: "3.6"
+          tensorflow-version: "1.13.1"
+          requires:
+            - bundle-linux-py3.6
+      - whltest-linux:
+          name: whltest-linux-py3.6-tf1.13.2
+          python-version: "3.6"
+          tensorflow-version: "1.13.2"
+          requires:
+            - bundle-linux-py3.6
+      - whltest-linux:
+          name: whltest-linux-py3.6-tf1.14.0
+          python-version: "3.6"
+          tensorflow-version: "1.14.0"
+          requires:
+            - bundle-linux-py3.6
+
+      - deploy:
+          name: deploy-linux-py3.6
+          requires:
+            - whltest-linux-py3.6-tf1.13.1
+            - whltest-linux-py3.6-tf1.13.2
+            - whltest-linux-py3.6-tf1.14.0
+
+  macos-py3.6:
+    jobs:
+      - test-and-build-macos:
+          name: build-macos-py3.6-tf1.13.1
+          python-version: "3.6"
+          tensorflow-version: "1.13.1"
+      - test-and-build-macos:
+          name: build-macos-py3.6-tf1.13.2
+          python-version: "3.6"
+          tensorflow-version: "1.13.2"
+      - test-and-build-macos:
+          name: build-macos-py3.6-tf1.14.0
+          python-version: "3.6"
+          tensorflow-version: "1.14.0"
+
+      - bundle-macos:
+          name: bundle-macos-py3.6
+          python-version: "3.6"
+          requires:
+            - build-macos-py3.6-tf1.13.1
+            - build-macos-py3.6-tf1.13.2
+            - build-macos-py3.6-tf1.14.0
+
+      - whltest-macos:
+          name: whltest-macos-py3.6-tf1.13.1
+          python-version: "3.6"
+          tensorflow-version: "1.13.1"
+          requires:
+            - bundle-macos-py3.6
+      - whltest-macos:
+          name: whltest-macos-py3.6-tf1.13.2
+          python-version: "3.6"
+          tensorflow-version: "1.13.2"
+          requires:
+            - bundle-macos-py3.6
+      - whltest-macos:
+          name: whltest-macos-py3.6-tf1.14.0
+          python-version: "3.6"
+          tensorflow-version: "1.14.0"
+          requires:
+            - bundle-macos-py3.6
+
+      - deploy:
+          name: deploy-macos-py3.6
+          requires:
+            - whltest-macos-py3.6-tf1.13.1
+            - whltest-macos-py3.6-tf1.13.2
+            - whltest-macos-py3.6-tf1.14.0

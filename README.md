@@ -65,6 +65,7 @@ Using [Homebrew](https://brew.sh/) we first make sure that both [Bazel](https://
 brew tap bazelbuild/tap
 brew install bazelbuild/tap/bazel
 brew install gmp
+brew install mmv
 ```
 
 The remaining PyPI packages can then be installed using:

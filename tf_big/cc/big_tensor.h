@@ -13,7 +13,6 @@
 #include "tensorflow/core/framework/variant_encode_decode.h"
 #include "tensorflow/core/framework/variant_op_registry.h"
 #include "tensorflow/core/framework/variant_tensor_data.h"
-#include "tensorflow/core/kernels/bounds_check.h"
 
 #include "Eigen/Core"
 #include "Eigen/Dense"
