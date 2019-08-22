@@ -323,14 +323,23 @@ workflows:
           name: build-linux-py3.5-tf1.13.1
           python-version: "3.5"
           tensorflow-version: "1.13.1"
+          filters:
+            branches:
+              only: master
       - test-and-build-linux:
           name: build-linux-py3.5-tf1.13.2
           python-version: "3.5"
           tensorflow-version: "1.13.2"
+          filters:
+            branches:
+              only: master
       - test-and-build-linux:
           name: build-linux-py3.5-tf1.14.0
           python-version: "3.5"
           tensorflow-version: "1.14.0"
+          filters:
+            branches:
+              only: master
 
       - bundle-linux:
           name: bundle-linux-py3.5
@@ -372,14 +381,23 @@ workflows:
           name: build-linux-py3.6-tf1.13.1
           python-version: "3.6"
           tensorflow-version: "1.13.1"
+          filters:
+            branches:
+              only: master
       - test-and-build-linux:
           name: build-linux-py3.6-tf1.13.2
           python-version: "3.6"
           tensorflow-version: "1.13.2"
+          filters:
+            branches:
+              only: master
       - test-and-build-linux:
           name: build-linux-py3.6-tf1.14.0
           python-version: "3.6"
           tensorflow-version: "1.14.0"
+          filters:
+            branches:
+              only: master
 
       - bundle-linux:
           name: bundle-linux-py3.6
@@ -421,14 +439,23 @@ workflows:
           name: build-macos-py3.6-tf1.13.1
           python-version: "3.6"
           tensorflow-version: "1.13.1"
+          filters:
+            branches:
+              only: master
       - test-and-build-macos:
           name: build-macos-py3.6-tf1.13.2
           python-version: "3.6"
           tensorflow-version: "1.13.2"
+          filters:
+            branches:
+              only: master
       - test-and-build-macos:
           name: build-macos-py3.6-tf1.14.0
           python-version: "3.6"
           tensorflow-version: "1.14.0"
+          filters:
+            branches:
+              only: master
 
       - bundle-macos:
           name: bundle-macos-py3.6
