@@ -55,7 +55,7 @@ if [[ "$TF_NEED_CUDA" == "0" ]]; then
     fi
     # Install CPU version
     echo 'Installing tensorflow......\n'
-    pip install tensorflow==1.13.1
+    pip install tensorflow
   fi
 
 else
