@@ -2,33 +2,21 @@ version: 2.1
 
 commands:
 
-  bootstrap-linux:
-    steps:
-      - run:
-          name: Bootstrap Linux
-          command: |
-            apt update
-            apt install -y pkg-config g++ cmake
-            apt install -y zip unzip zlib1g-dev
-            apt install -y curl git rsync tree mmv
-            apt install -y python3
-
-            curl -OL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh --silent
-            bash Miniconda3-latest-Linux-x86_64.sh -b -f
-
   bootstrap-macos:
     steps:
       - run:
           name: Bootstrap macOS
           command: |
             HOMEBREW_NO_AUTO_UPDATE=1 brew tap bazelbuild/tap >> build.log
-            HOMEBREW_NO_AUTO_UPDATE=1 brew install bazelbuild/tap/bazel >> build.log
-            HOMEBREW_NO_AUTO_UPDATE=1 brew install gmp >> build.log
-            HOMEBREW_NO_AUTO_UPDATE=1 brew install mmv >> build.log
-            HOMEBREW_NO_AUTO_UPDATE=1 brew install tree >> build.log
+            HOMEBREW_NO_AUTO_UPDATE=1 brew install \
+                bazelbuild/tap/bazel gmp mmv tree >> build.log
 
             curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh --silent
             bash Miniconda3-latest-MacOSX-x86_64.sh -b -f >> build.log
+            ~/miniconda3/bin/conda create -n py3.5 python=3.5 -y
+            ln -s ~/miniconda3/envs/py3.5/bin/python ~/python3.5
+            ~/miniconda3/bin/conda create -n py3.6 python=3.6 -y
+            ln -s ~/miniconda3/envs/py3.6/bin/python ~/python3.6
 
   create-pyenv:
     # Create new Python virtual environment
@@ -41,11 +29,9 @@ commands:
       - run:
           name: Create Python << parameters.python-version >> environment '<< parameters.python-environment >>'
           command: |
-            ../miniconda3/bin/conda create -n << parameters.python-environment >> python=<< parameters.python-version >> 2> /dev/null || true
-            ../miniconda3/envs/<< parameters.python-environment >>/bin/python -m venv venv-<< parameters.python-environment >>
-            . venv-<< parameters.python-environment >>/bin/activate
+            ~/python<< parameters.python-version >> -m venv << parameters.python-environment >>
 
-  test-and-build:
+  build:
     parameters:
       python-version:
         type: string
@@ -61,13 +47,13 @@ commands:
       - run:
           name: Install requirements-dev.txt in '<< parameters.python-environment >>'
           command: |
-            . venv-<< parameters.python-environment >>/bin/activate
+            . << parameters.python-environment >>/bin/activate
             pip install -q -r requirements-dev.txt
             pip freeze
       - run:
           name: Install TensorFlow << parameters.tensorflow-version >> in '<< parameters.python-environment >>'
           command: |
-            . venv-<< parameters.python-environment >>/bin/activate
+            . << parameters.python-environment >>/bin/activate
             make clean
             pip install -q -U tensorflow==<< parameters.tensorflow-version >>
             make .bazelrc
@@ -77,14 +63,14 @@ commands:
       - run:
           name: Test in '<< parameters.python-environment >>'
           command: |
-            . venv-<< parameters.python-environment >>/bin/activate
+            . << parameters.python-environment >>/bin/activate
             python --version
             pip freeze
             make test
       - run:
           name: Build in '<< parameters.python-environment >>'
           command: |
-            . venv-<< parameters.python-environment >>/bin/activate
+            . << parameters.python-environment >>/bin/activate
             python --version
             pip freeze
             DIR_TAGGED=./out/builds/py<< parameters.python-version >>-tf<< parameters.tensorflow-version >> make build
@@ -107,7 +93,7 @@ commands:
       - run:
           name: Install requirements-dev.txt in '<< parameters.python-environment >>'
           command: |
-            . venv-<< parameters.python-environment >>/bin/activate
+            . << parameters.python-environment >>/bin/activate
             pip install -q -r requirements-dev.txt
             pip install -q -U wheel
             pip freeze
@@ -122,7 +108,7 @@ commands:
       - run:
           name: Bundle package in '<< parameters.python-environment >>'
           command: |
-            . venv-<< parameters.python-environment >>/bin/activate
+            . << parameters.python-environment >>/bin/activate
             python --version
             pip freeze
             DIR_TAGGED=./out/merged DIR_WHEEL=./out/wheelhouse make bundle
@@ -150,7 +136,7 @@ commands:
           name: Configure '<< parameters.python-environment >>' to use TensorFlow << parameters.tensorflow-version >>
           command: |
             tree ./out/wheelhouse
-            . venv-<< parameters.python-environment >>/bin/activate
+            . << parameters.python-environment >>/bin/activate
             # we want to make sure that tests are run against whatever is
             # in the wheelhouse; for this we'd like to use --no-index but
             # that will also block dependencies from being installed.
@@ -165,31 +151,30 @@ commands:
       - run:
           name: Test wheel in '<< parameters.python-environment >>'
           command: |
-            . venv-<< parameters.python-environment >>/bin/activate
+            . << parameters.python-environment >>/bin/activate
             python --version
             pip freeze
             make pytest
 
 jobs:
 
-  test-and-build-linux:
+  build-linux:
     parameters:
       python-version:
         type: string
       tensorflow-version:
         type: string
     docker:
-      - image: tfencrypted/tf-big:0.1.0
+      - image: tfencrypted/tf-big:build
     working_directory: ~/repo
     steps:
       - checkout
-      - bootstrap-linux
-      - test-and-build:
+      - build:
           python-version: << parameters.python-version >>
           tensorflow-version: << parameters.tensorflow-version >>
           python-environment: build-linux-py<< parameters.python-version >>-tf<< parameters.tensorflow-version >>
 
-  test-and-build-macos:
+  build-macos:
     parameters:
       python-version:
         type: string
@@ -201,7 +186,7 @@ jobs:
     steps:
       - checkout
       - bootstrap-macos
-      - test-and-build:
+      - build:
           python-version: << parameters.python-version >>
           tensorflow-version: << parameters.tensorflow-version >>
           python-environment: build-macos-py<< parameters.python-version >>-tf<< parameters.tensorflow-version >>
@@ -211,11 +196,10 @@ jobs:
       python-version:
         type: string
     docker:
-      - image: tfencrypted/tf-big:0.1.0
+      - image: tfencrypted/tf-big:build
     working_directory: ~/repo
     steps:
       - checkout
-      - bootstrap-linux
       - bundle:
           python-version: << parameters.python-version >>
           python-environment: bundle-linux-py<< parameters.python-version >>
@@ -241,11 +225,10 @@ jobs:
       tensorflow-version:
         type: string
     docker:
-      - image: ubuntu:19.04
+      - image: tfencrypted/tf-big:whltest
     working_directory: ~/repo
     steps:
       - checkout
-      - bootstrap-linux
       - whltest:
           python-version: << parameters.python-version >>
           python-environment: test-linux-py<< parameters.python-version >>
@@ -274,7 +257,11 @@ jobs:
     working_directory: ~/repo
     steps:
       - checkout
-      - bootstrap-linux
+      - run:
+          name: Bootstrap for 'deploy'
+          command: |
+            apt update
+            apt install -y tree
       - attach_workspace:
           at: ./out
       - run:
@@ -290,7 +277,7 @@ workflows:
   
   quicktest:
     jobs:
-      - test-and-build-linux:
+      - build-linux:
           name: build-linux-py3.6-tf1.14.0
           python-version: "3.6"
           tensorflow-version: "1.14.0"
@@ -319,21 +306,21 @@ workflows:
 
   linux-py3.5:
     jobs:
-      - test-and-build-linux:
+      - build-linux:
           name: build-linux-py3.5-tf1.13.1
           python-version: "3.5"
           tensorflow-version: "1.13.1"
           filters:
             branches:
               only: master
-      - test-and-build-linux:
+      - build-linux:
           name: build-linux-py3.5-tf1.13.2
           python-version: "3.5"
           tensorflow-version: "1.13.2"
           filters:
             branches:
               only: master
-      - test-and-build-linux:
+      - build-linux:
           name: build-linux-py3.5-tf1.14.0
           python-version: "3.5"
           tensorflow-version: "1.14.0"
@@ -377,21 +364,21 @@ workflows:
 
   linux-py3.6:
     jobs:
-      - test-and-build-linux:
+      - build-linux:
           name: build-linux-py3.6-tf1.13.1
           python-version: "3.6"
           tensorflow-version: "1.13.1"
           filters:
             branches:
               only: master
-      - test-and-build-linux:
+      - build-linux:
           name: build-linux-py3.6-tf1.13.2
           python-version: "3.6"
           tensorflow-version: "1.13.2"
           filters:
             branches:
               only: master
-      - test-and-build-linux:
+      - build-linux:
           name: build-linux-py3.6-tf1.14.0
           python-version: "3.6"
           tensorflow-version: "1.14.0"
@@ -435,21 +422,21 @@ workflows:
 
   macos-py3.6:
     jobs:
-      - test-and-build-macos:
+      - build-macos:
           name: build-macos-py3.6-tf1.13.1
           python-version: "3.6"
           tensorflow-version: "1.13.1"
           filters:
             branches:
               only: master
-      - test-and-build-macos:
+      - build-macos:
           name: build-macos-py3.6-tf1.13.2
           python-version: "3.6"
           tensorflow-version: "1.13.2"
           filters:
             branches:
               only: master
-      - test-and-build-macos:
+      - build-macos:
           name: build-macos-py3.6-tf1.14.0
           python-version: "3.6"
           tensorflow-version: "1.14.0"
