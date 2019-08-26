@@ -51,6 +51,22 @@ class ArithmeticTest(test.TestCase):
     self._core_test(lambda x, y: x * y)
 
 
+class ModTest(test.TestCase):
+
+  def test_mod(self):
+    x_raw = np.array([[123456789123456789123456789, 123456789123456789123456789]])
+    n_raw = np.array([[10000]])
+    y_raw = x_raw % n_raw
+
+    x = convert_to_tensor(x_raw)
+    n = convert_to_tensor(n_raw)
+    y = x % n
+
+    with tf.Session() as sess:
+      res = sess.run(y)
+      np.testing.assert_array_equal(res, y_raw.astype(str))
+
+
 class ConvertTest(test.TestCase):
 
   def _core_test(self, in_np, out_np, convert_to_tf_tensor):

@@ -62,6 +62,11 @@ class Tensor(object):
   def __pow__(self, exponent):
     return self.pow(exponent)
 
+  def __mod__(self, modulus):
+    modulus = convert_to_tensor(modulus)
+    res = ops.big_mod(val=self._raw, mod=modulus._raw)
+    return Tensor(res)
+
 
 def _fetch_function(big_tensor):
   unwrapped = [convert_from_tensor(big_tensor, dtype=tf.string)]
@@ -221,3 +226,6 @@ def pow(base, exponent, modulus=None, secure=None):
 def matmul(x, y):
   # TODO(Morten) lifting etc
   return x.matmul(y)
+
+def mod(x, n):
+  return x.mod(n)
