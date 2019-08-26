@@ -51,7 +51,7 @@ class ArithmeticTest(test.TestCase):
     self._core_test(lambda x, y: x * y)
 
 
-class ModTest(test.TestCase):
+class NumberTheoryTest(test.TestCase):
 
   def test_mod(self):
     x_raw = np.array([[123456789123456789123456789, 123456789123456789123456789]])
@@ -61,6 +61,30 @@ class ModTest(test.TestCase):
     x = convert_to_tensor(x_raw)
     n = convert_to_tensor(n_raw)
     y = x % n
+
+    with tf.Session() as sess:
+      res = sess.run(y)
+      np.testing.assert_array_equal(res, y_raw.astype(str))
+
+  def test_inv(self):
+
+    def egcd(a, b):
+      if a == 0:
+        return (b, 0, 1)
+      g, y, x = egcd(b % a, a)
+      return (g, x - (b // a) * y, y)
+
+    def inv(a, m):
+      g, b, _ = egcd(a, m)
+      return b % m
+
+    x_raw = np.array([[123456789123456789123456789]])
+    n_raw = np.array([[10000000]])
+    y_raw = np.array([[inv(123456789123456789123456789, 10000000)]])
+
+    x = convert_to_tensor(x_raw)
+    n = convert_to_tensor(n_raw)
+    y = x.inv(n)
 
     with tf.Session() as sess:
       res = sess.run(y)

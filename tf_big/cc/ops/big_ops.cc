@@ -101,3 +101,18 @@ REGISTER_OP("BigMod")
         c->set_output(0, val);
         return ::tensorflow::Status::OK();
     });
+
+REGISTER_OP("BigInv")
+    .Input("val: variant")
+    .Input("mod: variant")
+    .Output("res: variant")
+    .SetIsStateful()
+    .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
+        ::tensorflow::shape_inference::ShapeHandle val = c->input(0);
+        ::tensorflow::shape_inference::ShapeHandle mod = c->input(1);
+        TF_RETURN_IF_ERROR(c->WithRankAtMost(val, 2, &val));
+        // TODO(Morten) `mod` below should be a scalar
+        TF_RETURN_IF_ERROR(c->WithRankAtMost(mod, 2, &mod));
+        c->set_output(0, val);
+        return ::tensorflow::Status::OK();
+    });

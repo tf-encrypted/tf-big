@@ -19,6 +19,8 @@ __all__ = [
   'sub',
   'mul',
   'pow',
+  'mod',
+  'inv',
   'matmul',
   'constant',
   'convert_from_tensor',

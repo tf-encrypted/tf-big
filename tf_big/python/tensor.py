@@ -67,6 +67,11 @@ class Tensor(object):
     res = ops.big_mod(val=self._raw, mod=modulus._raw)
     return Tensor(res)
 
+  def inv(self, modulus):
+    modulus = convert_to_tensor(modulus)
+    res = ops.big_inv(val=self._raw, mod=modulus._raw)
+    return Tensor(res)
+
 
 def _fetch_function(big_tensor):
   unwrapped = [convert_from_tensor(big_tensor, dtype=tf.string)]
@@ -229,3 +234,6 @@ def matmul(x, y):
 
 def mod(x, n):
   return x.mod(n)
+
+def inv(x, n):
+  return x.inv(n)

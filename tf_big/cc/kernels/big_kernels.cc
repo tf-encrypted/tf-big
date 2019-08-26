@@ -239,6 +239,36 @@ class BigModOp : public OpKernel {
   }
 };
 
+class BigInvOp : public OpKernel {
+ public:
+  explicit BigInvOp(OpKernelConstruction* context) : OpKernel(context) {}
+
+  void Compute(OpKernelContext* ctx) override {
+    const BigTensor* val = nullptr;
+    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 0, &val));
+
+    const BigTensor* mod = nullptr;
+    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 1, &mod));
+    auto modulus = mod->value(0, 0);
+
+    MatrixXm res_matrix(val->rows(), val->cols());
+    auto res_data = res_matrix.data();
+    auto val_data = val->value.data();
+    auto size = val->value.size();
+
+    for (int i = 0; i < size; i++) {
+      mpz_t ele;
+      mpz_init(ele);
+      mpz_invert(ele, val_data[i].get_mpz_t(), modulus.get_mpz_t());
+      res_data[i] = mpz_class(ele);
+    }
+
+    Tensor* res;
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, TensorShape{}, &res));
+    res->scalar<Variant>()() = BigTensor(res_matrix);
+  }
+};
+
 REGISTER_KERNEL_BUILDER(
   Name("BigImport")
   .Device(DEVICE_CPU)
@@ -279,3 +309,4 @@ REGISTER_KERNEL_BUILDER(Name("BigMul").Device(DEVICE_CPU), BigMulOp);
 REGISTER_KERNEL_BUILDER(Name("BigPow").Device(DEVICE_CPU), BigPowOp);
 REGISTER_KERNEL_BUILDER(Name("BigMatMul").Device(DEVICE_CPU), BigMatMulOp);
 REGISTER_KERNEL_BUILDER(Name("BigMod").Device(DEVICE_CPU), BigModOp);
+REGISTER_KERNEL_BUILDER(Name("BigInv").Device(DEVICE_CPU), BigInvOp);
