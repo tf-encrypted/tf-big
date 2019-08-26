@@ -154,33 +154,26 @@ class BigPowOp : public OpKernel {
     auto v = base->value.data();
     auto size = base->value.size();
 
-    if (secure) {
-      for (int i = 0; i < size; i++) {
-        mpz_t ans;
-        mpz_init(ans);
-
+    mpz_t tmp;
+    mpz_init(tmp);
+    for (int i = 0; i < size; i++) {
+      if (secure) {
         mpz_powm_sec(
-            ans,
+            tmp,
             v[i].get_mpz_t(),
             exponent.get_mpz_t(),
             modulus.get_mpz_t());
-
-        res.data()[i] = mpz_class(ans);
-      }
-    } else {
-      for (int i = 0; i < size; i++) {
-        mpz_t ans;
-        mpz_init(ans);
-
+      } else {
         mpz_powm(
-            ans,
-            v[i].get_mpz_t(),
-            exponent.get_mpz_t(),
-            modulus.get_mpz_t());
-
-        res.data()[i] = mpz_class(ans);
+          tmp,
+          v[i].get_mpz_t(),
+          exponent.get_mpz_t(),
+          modulus.get_mpz_t());
       }
+
+      res.data()[i] = mpz_class(tmp);
     }
+    mpz_clear(tmp);
 
     output->scalar<Variant>()() = BigTensor(res);
   }
@@ -226,12 +219,13 @@ class BigModOp : public OpKernel {
     auto val_data = val->value.data();
     auto size = val->value.size();
 
+    mpz_t tmp;
+    mpz_init(tmp);
     for (int i = 0; i < size; i++) {
-      mpz_t ele;
-      mpz_init(ele);
-      mpz_mod(ele, val_data[i].get_mpz_t(), modulus.get_mpz_t());
-      res_data[i] = mpz_class(ele);
+      mpz_mod(tmp, val_data[i].get_mpz_t(), modulus.get_mpz_t());
+      res_data[i] = mpz_class(tmp);
     }
+    mpz_clear(tmp);
 
     Tensor* res;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(0, TensorShape{}, &res));
@@ -256,12 +250,13 @@ class BigInvOp : public OpKernel {
     auto val_data = val->value.data();
     auto size = val->value.size();
 
+    mpz_t tmp;
+    mpz_init(tmp);
     for (int i = 0; i < size; i++) {
-      mpz_t ele;
-      mpz_init(ele);
-      mpz_invert(ele, val_data[i].get_mpz_t(), modulus.get_mpz_t());
-      res_data[i] = mpz_class(ele);
+      mpz_invert(tmp, val_data[i].get_mpz_t(), modulus.get_mpz_t());
+      res_data[i] = mpz_class(tmp);
     }
+    mpz_clear(tmp);
 
     Tensor* res;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(0, TensorShape{}, &res));
