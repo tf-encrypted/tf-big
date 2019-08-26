@@ -51,3 +51,4 @@ big_mul = big_ops.big_mul
 big_pow = big_ops.big_pow
 big_matmul = big_ops.big_mat_mul
 big_mod = big_ops.big_mod
+big_inv = big_ops.big_inv
