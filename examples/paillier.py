@@ -14,11 +14,12 @@ class EncryptionKey:
 class DecryptionKey:
   def __init__(self):
     # TODO what do we need?
+    pass
 
-def keygen(modulus_bitlen):
-  # TODO
-  p = tf_big.constant(SOME PRIME)
-  q = tf_big.constant(SOME PRIME)
+def dummy_keygen():
+  # TODO use fixed large primes  
+  p = tf_big.constant([17])
+  q = tf_big.constant([19])
   n = p * q
 
   g = n + 1
@@ -29,7 +30,8 @@ def keygen(modulus_bitlen):
   return ek, dk
 
 def encrypt(ek, x):
-  r = tf_big.random.uniform(ek.n, shape=x.shape)
+  # r = tf_big.random.uniform(ek.n, shape=x.shape)
+  r = tf_big.convert_to_tensor(tf.constant([[123, 124], [125, 126]])) # TODO
   assert r.shape == x.shape, "Shapes are not matching: {}, {}".format(r.shape, x.shape)
 
   gx = tf_big.pow(ek.g, x, ek.nn)
@@ -39,6 +41,7 @@ def encrypt(ek, x):
 
 def decrypt(dk, c):
   # TODO what do we need?
+  pass
 
 def add(ek, c1, c2):
   c = c1 * c2 % ek.nn
@@ -48,7 +51,7 @@ def mul(ek, c1, x2):
   c = tf_big.pow(c1, x2, ek.nn)
   return c
 
-ek, dk = keygen(2048)
+ek, dk = dummy_keygen()
 
 # TODO(Morten) relace with lin reg computation?
 
@@ -65,6 +68,6 @@ c4 = mul(ek, c3, tf.constant(3))
 y = decrypt(dk, c4)
 
 with tf.Session() as sess:
-  actual = sess.run(tf_big.convert_from_tensor(y))
+  actual = sess.run(y)
   expected = (x1 + x2) * 3
   np.testing.assert_array_equal(actual, expected)
