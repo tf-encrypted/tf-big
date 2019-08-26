@@ -253,15 +253,10 @@ jobs:
 
   deploy:
     docker:
-      - image: ubuntu:19.04
+      - image: tfencrypted/tf-big:deploy
     working_directory: ~/repo
     steps:
       - checkout
-      - run:
-          name: Bootstrap for 'deploy'
-          command: |
-            apt update
-            apt install -y tree
       - attach_workspace:
           at: ./out
       - run:
