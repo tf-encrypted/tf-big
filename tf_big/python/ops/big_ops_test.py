@@ -7,6 +7,7 @@ from tf_big.python.ops.big_ops import big_export
 from tf_big.python.ops.big_ops import big_add
 from tf_big.python.ops.big_ops import big_matmul
 from tf_big.python.ops.big_ops import big_mul
+from tf_big.python.ops.big_ops import big_mod
 from tf_big.python.ops.big_ops import big_pow
 
 class BigTest(test.TestCase):
@@ -136,6 +137,21 @@ class BigTest(test.TestCase):
       output = sess.run(c_str)
 
       np.testing.assert_equal(output, expected)
+
+  def test_mod(self):
+    with tf.Session() as sess:
+      x = np.array([[123, 234], [345, 456]]).astype(np.int32)
+      n = np.array([[37]]).astype(np.int32)
+
+      expected = x % n
+
+      x_big = big_import(x)
+      n_big = big_import(n)
+      y_big = big_mod(x_big, n_big)
+
+      actual = sess.run(big_export(y_big, tf.int32))
+
+      np.testing.assert_equal(actual, expected)
 
 
 if __name__ == '__main__':
