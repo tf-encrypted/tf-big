@@ -135,6 +135,8 @@ commands:
       - run:
           name: Configure '<< parameters.python-environment >>' to use TensorFlow << parameters.tensorflow-version >>
           command: |
+            set -e
+            set -x
             tree ./out/wheelhouse
             . << parameters.python-environment >>/bin/activate
             # we want to make sure that tests are run against whatever is
@@ -145,7 +147,7 @@ commands:
             pip install -q -U tf-big --find-links ./out/wheelhouse
             pip uninstall tf-big -y
             # install the package, but forced to only use the wheelhouse
-            pip install -q tf-big --no-cache-dir --no-index --find-links ./out/wheelhouse
+            pip install -U tf-big --no-deps --no-cache-dir --no-index --find-links ./out/wheelhouse
             # make sure we are testing against the right version of TensorFlow
             pip install -q -U tensorflow==<< parameters.tensorflow-version >>
       - run:
