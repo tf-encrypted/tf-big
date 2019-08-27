@@ -1,6 +1,6 @@
 # TF Big
 
-TF Big adds big number support to TensorFlow, allowing computaitons to be performed on arbitrary precision integers. Internally these are represented as variant tensors of [GMP](https://gmplib.org/) values, exposed in Python through the `tf_big.Tensor` wrapper for convenience. For importing and exporting, numbers are typically expressed as strings.
+TF Big adds big number support to TensorFlow, allowing computations to be performed on arbitrary precision integers. Internally these are represented as variant tensors of [GMP](https://gmplib.org/) values, exposed in Python through the `tf_big.Tensor` wrapper for convenience. For importing and exporting, numbers are typically expressed as strings.
 
 [![PyPI](https://img.shields.io/pypi/v/tf-big.svg)](https://pypi.org/project/tf-big/) [![CircleCI Badge](https://circleci.com/gh/tf-encrypted/tf-big/tree/master.svg?style=svg)](https://circleci.com/gh/tf-encrypted/tf-big/tree/master)
 
