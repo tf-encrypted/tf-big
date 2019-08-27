@@ -27,4 +27,12 @@ fmt:
 lint:
 	cd tf_big && find . -iname *.h -o -iname *.cc | xargs cpplint --filter=-legal/copyright
 
-.PHONY: clean test build bundle pytest fmt lint
+download-wheels:
+	rm -rf ./wheelhouse
+	mkdir -p ./wheelhouse
+	DESTDIR=./wheelhouse python ./artifacts.py
+
+push-wheels:
+	python -m twine upload wheelhouse/*.whl
+
+.PHONY: clean test build bundle pytest fmt lint download-wheels push-wheels
