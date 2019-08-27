@@ -21,6 +21,19 @@ REGISTER_OP("BigExport")
     .SetIsStateful()
     .SetShapeFn(::tensorflow::shape_inference::UnchangedShape);
 
+REGISTER_OP("BigRandomUniform")
+    .Input("shape: int32")
+    .Input("maxval: variant")
+    .Output("out: variant")
+    .SetIsStateful()
+    .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
+        // TODO(Morten) `maxval` should be a scalar
+        ::tensorflow::shape_inference::ShapeHandle out;
+        TF_RETURN_IF_ERROR(c->MakeShapeFromShapeTensor(0, &out));
+        c->set_output(0, out);
+        return ::tensorflow::Status::OK();
+    });
+
 REGISTER_OP("BigAdd")
     .Input("val0: variant")
     .Input("val1: variant")

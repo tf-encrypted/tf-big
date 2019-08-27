@@ -45,6 +45,8 @@ big_ops = try_load_library('_big_ops')
 big_import = big_ops.big_import
 big_export = big_ops.big_export
 
+big_random_uniform = big_ops.big_random_uniform
+
 big_add = big_ops.big_add
 big_sub = big_ops.big_sub
 big_mul = big_ops.big_mul
