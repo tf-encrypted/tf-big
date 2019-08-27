@@ -209,6 +209,12 @@ def get_secure_default():
   return _SECURE
 
 
+def random_uniform(shape, maxval):
+  maxval = convert_to_tensor(maxval)
+  r_raw = ops.big_random_uniform(shape, maxval._raw)
+  return Tensor(r_raw)
+
+
 def add(x, y):
   # TODO(Morten) lifting etc
   return x + y

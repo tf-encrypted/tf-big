@@ -3,14 +3,14 @@ import tensorflow as tf
 from tensorflow.python.keras.utils import tf_utils
 from tensorflow.python.platform import test
 
-from tf_big.python.ops.big_ops import big_import
 from tf_big.python.tensor import convert_to_tensor
+from tf_big.python.tensor import random_uniform
 
 
 class EvaluationTest(test.TestCase):
 
   def test_session_run(self):
-    x_raw = np.array([[123456789123456789123456789, 123456789123456789123456789]])
+    x_raw = np.array([[123456789123456089123456089, 123406789123456789123406789]])
     x = convert_to_tensor(x_raw)
 
     with tf.Session() as sess:
@@ -26,11 +26,25 @@ class EvaluationTest(test.TestCase):
       np.testing.assert_array_equal(res, x_raw.astype(str))
 
 
+class RandomTest(test.TestCase):
+
+  def test_uniform_random(self):
+    shape = (2, 2)
+    maxval = 2**100
+
+    x = random_uniform(shape=shape, maxval=maxval)
+    assert x.shape == shape
+    
+    with tf.Session() as sess:
+      res = sess.run(x)
+      assert res.shape == shape
+
+
 class ArithmeticTest(test.TestCase):
 
   def _core_test(self, op):
-    x_raw = np.array([[123456789123456789123456789, 123456789123456789123456789]])
-    y_raw = np.array([[123456789123456789123456789, 123456789123456789123456789]])
+    x_raw = np.array([[123456789123456789687293389, 123456789125927572056789]])
+    y_raw = np.array([[123456785629362289123456789, 123456789123456723456789]])
     z_raw = op(x_raw, y_raw)
 
     x = convert_to_tensor(x_raw)

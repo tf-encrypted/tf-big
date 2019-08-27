@@ -264,30 +264,47 @@ class BigInvOp : public OpKernel {
   }
 };
 
-REGISTER_KERNEL_BUILDER(
-  Name("BigImport")
-  .Device(DEVICE_CPU)
-  .TypeConstraint<string>("dtype"),
-  BigImportOp<string>);
+class BigRandomUniformOp : public OpKernel {
+ public:
+  explicit BigRandomUniformOp(OpKernelConstruction* context) : OpKernel(context) {}
 
-REGISTER_KERNEL_BUILDER(
-  Name("BigImport")
-  .Device(DEVICE_CPU)
-  .TypeConstraint<int32>("dtype"),
-  BigImportOp<int32>);
+  void Compute(OpKernelContext* ctx) override {
+    const Tensor& shape_tensor = ctx->input(0);
+    TensorShape shape;
+    OP_REQUIRES_OK(ctx, MakeShape(shape_tensor, &shape));
 
-REGISTER_KERNEL_BUILDER(
-  Name("BigExport")
-  .Device(DEVICE_CPU)
-  .TypeConstraint<string>("dtype"),
-  BigExportOp<string>);
+    const BigTensor* maxval_tensor = nullptr;
+    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 1, &maxval_tensor));
+    auto maxval = maxval_tensor->value(0, 0).get_mpz_t();
 
-REGISTER_KERNEL_BUILDER(
-  Name("BigExport")
-  .Device(DEVICE_CPU)
-  .TypeConstraint<int32>("dtype"),
-  BigExportOp<int32>);
+    MatrixXm res_matrix(shape.dim_size(0), shape.dim_size(1));
+    auto res_data = res_matrix.data();
+    auto size = res_matrix.size();
 
+    // TODO(Morten) offer secure randomness
+    gmp_randstate_t state;
+    gmp_randinit_mt(state);
+    mpz_t tmp;
+    mpz_init(tmp);
+    for (int i = 0; i < size; i++) {
+      mpz_urandomm(tmp, state, maxval);
+      res_data[i] = mpz_class(tmp);
+    }
+    mpz_clear(tmp);
+
+    Tensor* res;
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, TensorShape{}, &res));
+    res->scalar<Variant>()() = BigTensor(res_matrix);
+  }
+};
+
+REGISTER_UNARY_VARIANT_DECODE_FUNCTION(BigTensor, BigTensor::kTypeName);
+
+REGISTER_KERNEL_BUILDER(Name("BigImport").Device(DEVICE_CPU).TypeConstraint<string>("dtype"), BigImportOp<string>);
+REGISTER_KERNEL_BUILDER(Name("BigImport").Device(DEVICE_CPU).TypeConstraint<int32>("dtype"), BigImportOp<int32>);
+
+REGISTER_KERNEL_BUILDER(Name("BigExport").Device(DEVICE_CPU).TypeConstraint<string>("dtype"), BigExportOp<string>);
+REGISTER_KERNEL_BUILDER(Name("BigExport").Device(DEVICE_CPU).TypeConstraint<int32>("dtype"), BigExportOp<int32>);
 
 // TODO(justin1121) there's no simple mpz to int64 convert functions
 // there's a suggestion here (https://stackoverflow.com/a/6248913/1116574) on
@@ -296,7 +313,7 @@ REGISTER_KERNEL_BUILDER(
 // can convert to number in python????
 // REGISTER_CPU(int64);
 
-REGISTER_UNARY_VARIANT_DECODE_FUNCTION(BigTensor, BigTensor::kTypeName);
+REGISTER_KERNEL_BUILDER(Name("BigRandomUniform").Device(DEVICE_CPU), BigRandomUniformOp);
 
 REGISTER_KERNEL_BUILDER(Name("BigAdd").Device(DEVICE_CPU), BigAddOp);
 REGISTER_KERNEL_BUILDER(Name("BigSub").Device(DEVICE_CPU), BigSubOp);
