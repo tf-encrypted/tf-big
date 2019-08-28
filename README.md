@@ -81,7 +81,7 @@ pip install -r requirements-dev.txt
 Run the tests on Ubuntu by running the `make test` command inside of a docker container. Right now, the docker container doesn't exist on docker hub yet so we must first build it:
 
 ```
-docker build -t tf-encrypted/tf-big:0.1.0 .
+docker build -t tf-encrypted/tf-big:build .
 ```
 
 Then we can run `make test`:
@@ -104,4 +104,20 @@ This will install TensorFlow if not previously installed and build and run the t
 
 ### Building pip package
 
-CircleCI currently builds the pip packages for us. If you have a need to do it on your own you can just run `make build`. For linux, doing it inside the tensorflow/tensorflow:custom-op container is recommended.
+Just run:
+
+```
+make build && make bundle
+```
+
+For linux, doing it inside the tensorflow/tensorflow:custom-op container is recommended. Note that [CircleCI](#circle-ci) is currently used to build the official pip packages.
+
+## Circle CI
+
+We use [Circle CI](https://circleci.com/gh/tf-encrypted/workflows/tf-big) for integration testing and deployment of TF Big.
+
+### Releasing
+
+1. update version number in setup.py and push to master; this will build and tests wheels
+2. iterate 1. until happy with the release, having potentially tested the wheel manually
+3. when happy, tag a commit with semver label and push; this will build, test, and deploy wheels
