@@ -275,12 +275,21 @@ jobs:
     working_directory: ~/repo
     steps:
       - checkout
+      - create-pyenv:
+          python-version: "3.6"
+          python-environment: "deploy-py3.6"
       - attach_workspace:
           at: ./out
+      - run:
+          name: Configure 'deploy-3.5'
+          command: |
+            . deploy-py3.6/bin/activate
+            pip install -q -U twine
       - run:
           name: Upload to PyPI
           command: |
             tree ./out/wheelhouse
+            . deploy-py3.6/bin/activate
             DIR_WHEEL=./out/wheelhouse make push-wheels
 
 workflows:
