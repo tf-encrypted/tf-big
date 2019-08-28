@@ -18,8 +18,21 @@ if [[ -z ${2} ]]; then
 fi
 OUT=${2}
 
-pushd ${TMP}
-python setup.py bdist_wheel > /dev/null
-popd
+OS_NAME="$(uname -s | tr A-Z a-z)"
 
-cp ${TMP}/dist/*.whl ${OUT}
+if [ $OS_NAME == "darwin" ]; then
+  pushd ${TMP}
+  python setup.py bdist_wheel > /dev/null
+  popd
+  cp ${TMP}/dist/*.whl ${OUT}
+
+elif [ $OS_NAME == "linux" ]; then
+  pushd ${TMP}
+  python setup.py bdist_wheel > /dev/null
+  auditwheel repair dist/*.whl
+  popd
+  cp ${TMP}/wheelhouse/*.whl ${OUT}
+
+else
+  echo "Don't know how to bundle package for '$OS_NAME'"
+fi

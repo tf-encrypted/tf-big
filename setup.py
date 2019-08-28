@@ -6,6 +6,9 @@ from setuptools.dist import Distribution
 class BinaryDistribution(Distribution):
   """This class is needed in order to create OS specific wheels."""
 
+  def is_pure(self):
+    return False
+
   def has_ext_modules(self):
     return True
 
