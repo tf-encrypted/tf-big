@@ -253,6 +253,22 @@ jobs:
           python-environment: test-macos-py<< parameters.python-version >>
           tensorflow-version: << parameters.tensorflow-version >>
 
+  store:
+    docker:
+      - image: tfencrypted/tf-big:deploy
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ./out
+      - run:
+          name: List content to be stored
+          command: |
+            tree ./out/wheelhouse
+      - store_artifacts:
+          path: ./out/wheelhouse
+          destination: wheelhouse
+
   deploy:
     docker:
       - image: tfencrypted/tf-big:deploy
@@ -262,16 +278,20 @@ jobs:
       - attach_workspace:
           at: ./out
       - run:
-          name: TODO
+          name: Upload to PyPI
           command: |
-            tree ./out
-      - store_artifacts:
-          path: ./out/wheelhouse
-          destination: wheelhouse
+            tree ./out/wheelhouse
+            DIR_WHEEL=./out/wheelhouse make push-wheels
 
 workflows:
   version: 2
   
+  # these workflows implement the following logic:
+  # - non-master branch: run quick tests
+  # - master branch: build, test, and store wheels
+  # - non-semver tag: build, test, and store wheels
+  # - semver tag: build, test, store, and deploy wheels 
+
   quicktest:
     jobs:
       - build-linux:
@@ -281,6 +301,8 @@ workflows:
           filters:
             branches:
               ignore: master
+            tags:
+              ignore: /.*/
 
       - bundle-linux:
           name: bundle-linux-py3.6
@@ -290,6 +312,8 @@ workflows:
           filters:
             branches:
               ignore: master
+            tags:
+              ignore: /.*/
 
       - whltest-linux:
           name: whltest-linux-py3.6-tf1.14.0
@@ -300,6 +324,8 @@ workflows:
           filters:
             branches:
               ignore: master
+            tags:
+              ignore: /.*/
 
   linux-py3.5:
     jobs:
@@ -310,6 +336,8 @@ workflows:
           filters:
             branches:
               only: master
+            tags:
+              only: /.*/
       - build-linux:
           name: build-linux-py3.5-tf1.13.2
           python-version: "3.5"
@@ -317,6 +345,8 @@ workflows:
           filters:
             branches:
               only: master
+            tags:
+              only: /.*/
       - build-linux:
           name: build-linux-py3.5-tf1.14.0
           python-version: "3.5"
@@ -324,6 +354,8 @@ workflows:
           filters:
             branches:
               only: master
+            tags:
+              only: /.*/
 
       - bundle-linux:
           name: bundle-linux-py3.5
@@ -332,6 +364,11 @@ workflows:
             - build-linux-py3.5-tf1.13.1
             - build-linux-py3.5-tf1.13.2
             - build-linux-py3.5-tf1.14.0
+          filters:
+            branches:
+              only: master
+            tags:
+              only: /.*/
 
       - whltest-linux:
           name: whltest-linux-py3.5-tf1.13.1
@@ -339,26 +376,64 @@ workflows:
           tensorflow-version: "1.13.1"
           requires:
             - bundle-linux-py3.5
+          filters:
+            branches:
+              only: master
+            tags:
+              only: /.*/
       - whltest-linux:
           name: whltest-linux-py3.5-tf1.13.2
           python-version: "3.5"
           tensorflow-version: "1.13.2"
           requires:
             - bundle-linux-py3.5
+          filters:
+            branches:
+              only: master
+            tags:
+              only: /.*/
       - whltest-linux:
           name: whltest-linux-py3.5-tf1.14.0
           python-version: "3.5"
           tensorflow-version: "1.14.0"
           requires:
             - bundle-linux-py3.5
+          filters:
+            branches:
+              only: master
+            tags:
+              only: /.*/
 
-      - deploy:
-          name: deploy-linux-py3.5
+      - store:
+          name: store-linux-py3.5
           requires:
             - whltest-linux-py3.5-tf1.13.1
             - whltest-linux-py3.5-tf1.13.2
             - whltest-linux-py3.5-tf1.14.0
           filters:
+            branches:
+              only: master
+            tags:
+              only: /.*/
+
+      - hold:
+          type: approval
+          name: hold-linux-py3.5
+          requires:
+           - store-linux-py3.5
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^(?:[0-9]+)\.(?:[0-9]+)\.(?:[0-9]+)(?:(\-rc[0-9]+)?)$/
+
+      - deploy:
+          name: deploy-linux-py3.5
+          requires:
+            - hold-linux-py3.5
+          filters:
+            branches:
+              ignore: /.*/
             tags:
               only: /^(?:[0-9]+)\.(?:[0-9]+)\.(?:[0-9]+)(?:(\-rc[0-9]+)?)$/
 
@@ -371,6 +446,8 @@ workflows:
           filters:
             branches:
               only: master
+            tags:
+              only: /.*/
       - build-linux:
           name: build-linux-py3.6-tf1.13.2
           python-version: "3.6"
@@ -378,6 +455,8 @@ workflows:
           filters:
             branches:
               only: master
+            tags:
+              only: /.*/
       - build-linux:
           name: build-linux-py3.6-tf1.14.0
           python-version: "3.6"
@@ -385,6 +464,8 @@ workflows:
           filters:
             branches:
               only: master
+            tags:
+              only: /.*/
 
       - bundle-linux:
           name: bundle-linux-py3.6
@@ -393,6 +474,11 @@ workflows:
             - build-linux-py3.6-tf1.13.1
             - build-linux-py3.6-tf1.13.2
             - build-linux-py3.6-tf1.14.0
+          filters:
+            branches:
+              only: master
+            tags:
+              only: /.*/
 
       - whltest-linux:
           name: whltest-linux-py3.6-tf1.13.1
@@ -400,26 +486,64 @@ workflows:
           tensorflow-version: "1.13.1"
           requires:
             - bundle-linux-py3.6
+          filters:
+            branches:
+              only: master
+            tags:
+              only: /.*/
       - whltest-linux:
           name: whltest-linux-py3.6-tf1.13.2
           python-version: "3.6"
           tensorflow-version: "1.13.2"
           requires:
             - bundle-linux-py3.6
+          filters:
+            branches:
+              only: master
+            tags:
+              only: /.*/
       - whltest-linux:
           name: whltest-linux-py3.6-tf1.14.0
           python-version: "3.6"
           tensorflow-version: "1.14.0"
           requires:
             - bundle-linux-py3.6
+          filters:
+            branches:
+              only: master
+            tags:
+              only: /.*/
 
-      - deploy:
-          name: deploy-linux-py3.6
+      - store:
+          name: store-linux-py3.6
           requires:
             - whltest-linux-py3.6-tf1.13.1
             - whltest-linux-py3.6-tf1.13.2
             - whltest-linux-py3.6-tf1.14.0
           filters:
+            branches:
+              only: master
+            tags:
+              only: /.*/
+
+      - hold:
+          type: approval
+          name: hold-linux-py3.6
+          requires:
+           - store-linux-py3.6
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^(?:[0-9]+)\.(?:[0-9]+)\.(?:[0-9]+)(?:(\-rc[0-9]+)?)$/
+
+      - deploy:
+          name: deploy-linux-py3.6
+          requires:
+            - hold-linux-py3.6
+          filters:
+            branches:
+              ignore: /.*/
             tags:
               only: /^(?:[0-9]+)\.(?:[0-9]+)\.(?:[0-9]+)(?:(\-rc[0-9]+)?)$/
 
@@ -432,6 +556,8 @@ workflows:
           filters:
             branches:
               only: master
+            tags:
+              only: /.*/
       - build-macos:
           name: build-macos-py3.6-tf1.13.2
           python-version: "3.6"
@@ -439,6 +565,8 @@ workflows:
           filters:
             branches:
               only: master
+            tags:
+              only: /.*/
       - build-macos:
           name: build-macos-py3.6-tf1.14.0
           python-version: "3.6"
@@ -446,6 +574,8 @@ workflows:
           filters:
             branches:
               only: master
+            tags:
+              only: /.*/
 
       - bundle-macos:
           name: bundle-macos-py3.6
@@ -454,6 +584,11 @@ workflows:
             - build-macos-py3.6-tf1.13.1
             - build-macos-py3.6-tf1.13.2
             - build-macos-py3.6-tf1.14.0
+          filters:
+            branches:
+              only: master
+            tags:
+              only: /.*/
 
       - whltest-macos:
           name: whltest-macos-py3.6-tf1.13.1
@@ -461,25 +596,63 @@ workflows:
           tensorflow-version: "1.13.1"
           requires:
             - bundle-macos-py3.6
+          filters:
+            branches:
+              only: master
+            tags:
+              only: /.*/
       - whltest-macos:
           name: whltest-macos-py3.6-tf1.13.2
           python-version: "3.6"
           tensorflow-version: "1.13.2"
           requires:
             - bundle-macos-py3.6
+          filters:
+            branches:
+              only: master
+            tags:
+              only: /.*/
       - whltest-macos:
           name: whltest-macos-py3.6-tf1.14.0
           python-version: "3.6"
           tensorflow-version: "1.14.0"
           requires:
             - bundle-macos-py3.6
+          filters:
+            branches:
+              only: master
+            tags:
+              only: /.*/
 
-      - deploy:
-          name: deploy-macos-py3.6
+      - store:
+          name: store-macos-py3.6
           requires:
             - whltest-macos-py3.6-tf1.13.1
             - whltest-macos-py3.6-tf1.13.2
             - whltest-macos-py3.6-tf1.14.0
           filters:
+            branches:
+              only: master
+            tags:
+              only: /.*/
+
+      - hold:
+          type: approval
+          name: hold-macos-py3.6
+          requires:
+           - store-macos-py3.6
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^(?:[0-9]+)\.(?:[0-9]+)\.(?:[0-9]+)(?:(\-rc[0-9]+)?)$/
+
+      - deploy:
+          name: deploy-macos-py3.6
+          requires:
+            - hold-macos-py3.6
+          filters:
+            branches:
+              ignore: /.*/
             tags:
               only: /^(?:[0-9]+)\.(?:[0-9]+)\.(?:[0-9]+)(?:(\-rc[0-9]+)?)$/

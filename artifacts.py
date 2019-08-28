@@ -12,7 +12,7 @@ assert len(CIRCLE_TOKEN) >= 1, "Missing CIRCLE_TOKEN environment variable."
 
 circleci = Api(CIRCLE_TOKEN)
 
-def find_most_recent_deploy_builds(deploy_job_name_prefix='deploy-'):
+def find_most_recent_store_builds(store_job_name_prefix='store-'):
 
   all_recent_builds = circleci.get_project_build_summary(
       username='tf-encrypted',
@@ -24,14 +24,14 @@ def find_most_recent_deploy_builds(deploy_job_name_prefix='deploy-'):
   )
 
   commit_filter = None
-  most_recent_deploy_builds = list()
+  most_recent_store_builds = list()
 
   for build in all_recent_builds:
     job_name = build['workflows']['job_name']
     commit = build['all_commit_details'][0]['commit']
 
     # skip all jobs we're not interested in
-    if not job_name.startswith(deploy_job_name_prefix):
+    if not job_name.startswith(store_job_name_prefix):
       continue
 
     # we only want the most recent builds
@@ -43,12 +43,12 @@ def find_most_recent_deploy_builds(deploy_job_name_prefix='deploy-'):
       if commit != commit_filter:
         continue
 
-    most_recent_deploy_builds.append(build)
+    most_recent_store_builds.append(build)
 
-  return most_recent_deploy_builds
+  return most_recent_store_builds
 
 def download_artifacts_from_builds(builds, destdir=None):
-  for build in deploy_builds:
+  for build in builds:
     artifacts = circleci.get_artifacts(
         username='tf-encrypted',
         project='tf-big',
@@ -70,5 +70,5 @@ def download_artifacts_from_builds(builds, destdir=None):
           destdir=destdir,
       )
 
-deploy_builds = find_most_recent_deploy_builds()
-download_artifacts_from_builds(deploy_builds, destdir=DESTDIR)
+store_builds = find_most_recent_store_builds()
+download_artifacts_from_builds(store_builds, destdir=DESTDIR)
