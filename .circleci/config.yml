@@ -112,6 +112,7 @@ commands:
             python --version
             pip freeze
             DIR_TAGGED=./out/merged DIR_WHEEL=./out/wheelhouse make bundle
+            python -m twine check ./out/wheelhouse/*.whl
             tree ./out
       - persist_to_workspace:
           root: ./out
@@ -281,7 +282,7 @@ jobs:
       - attach_workspace:
           at: ./out
       - run:
-          name: Configure 'deploy-3.5'
+          name: Configure 'deploy-3.6'
           command: |
             . deploy-py3.6/bin/activate
             pip install -q -U twine
