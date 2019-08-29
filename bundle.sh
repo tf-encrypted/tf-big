@@ -24,6 +24,7 @@ if [ $OS_NAME == "darwin" ]; then
   pushd ${TMP}
   python setup.py bdist_wheel > /dev/null
   popd
+  python -m twine check ${TMP}/dist/*.whl
   cp ${TMP}/dist/*.whl ${OUT}
 
 elif [ $OS_NAME == "linux" ]; then
@@ -31,8 +32,10 @@ elif [ $OS_NAME == "linux" ]; then
   python setup.py bdist_wheel > /dev/null
   auditwheel repair dist/*.whl
   popd
+  python -m twine check ${TMP}/wheelhouse/*.whl
   cp ${TMP}/wheelhouse/*.whl ${OUT}
 
 else
   echo "Don't know how to bundle package for '$OS_NAME'"
+  exit 1
 fi

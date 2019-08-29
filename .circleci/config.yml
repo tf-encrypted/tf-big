@@ -48,7 +48,7 @@ commands:
           name: Install requirements-dev.txt in '<< parameters.python-environment >>'
           command: |
             . << parameters.python-environment >>/bin/activate
-            pip install -q -r requirements-dev.txt
+            pip install -q -U -r requirements-dev.txt
             pip freeze
       - run:
           name: Install TensorFlow << parameters.tensorflow-version >> in '<< parameters.python-environment >>'
@@ -94,8 +94,7 @@ commands:
           name: Install requirements-dev.txt in '<< parameters.python-environment >>'
           command: |
             . << parameters.python-environment >>/bin/activate
-            pip install -q -r requirements-dev.txt
-            pip install -q -U wheel
+            pip install -q -U -r requirements-dev.txt
             pip freeze
       - attach_workspace:
           at: ./out
@@ -112,7 +111,6 @@ commands:
             python --version
             pip freeze
             DIR_TAGGED=./out/merged DIR_WHEEL=./out/wheelhouse make bundle
-            python -m twine check ./out/wheelhouse/*.whl
             tree ./out
       - persist_to_workspace:
           root: ./out
@@ -285,7 +283,7 @@ jobs:
           name: Configure 'deploy-3.6'
           command: |
             . deploy-py3.6/bin/activate
-            pip install -q -U twine
+            pip install -q -U -r requirements-dev.txt
       - run:
           name: Upload to PyPI
           command: |
