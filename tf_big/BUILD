@@ -7,8 +7,8 @@ cc_binary(
     srcs = [
         "cc/big_tensor.h",
         "cc/big_tensor.cc",
-        "cc/ops/big_ops.cc",
-        "cc/kernels/big_kernels.cc",
+        "cc/ops.cc",
+        "cc/kernels.cc",
     ],
     linkshared = 1,
     deps = [
