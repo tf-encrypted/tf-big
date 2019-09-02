@@ -165,12 +165,11 @@ class BigPowOp : public OpKernel {
             modulus.get_mpz_t());
       } else {
         mpz_powm(
-          tmp,
-          v[i].get_mpz_t(),
-          exponent.get_mpz_t(),
-          modulus.get_mpz_t());
+            tmp,
+            v[i].get_mpz_t(),
+            exponent.get_mpz_t(),
+            modulus.get_mpz_t());
       }
-
       res.data()[i] = mpz_class(tmp);
     }
     mpz_clear(tmp);
