@@ -14,33 +14,34 @@ from tf_big.python.ops.big_ops import big_mul
 from tf_big.python.ops.big_ops import big_mod
 from tf_big.python.ops.big_ops import big_pow
 
+
 class BigTest(parameterized.TestCase):
   """BigTest test"""
 
-  def test_import_export(self):
-    context = tf_execution_context(False)
+  @parameterized.parameters(
+      {"run_eagerly": run_eagerly, "raw": raw, "dtype": dtype}
+      for run_eagerly in (True, False)
+      for raw, dtype in (
+          ([[43424]], tf.int32),
+          ([[b"43424"]], tf.string),
+      )
+  )
+  def test_import_export(self, run_eagerly, raw, dtype):
+    context = tf_execution_context(run_eagerly)
     with context.scope():
-      inp = [[b"43424"]]
-      variant = big_import(inp)
-      output = big_export(variant, tf.string)
+      variant = big_import(raw)
+      output = big_export(variant, dtype)
+    assert context.evaluate(output) == raw
 
-    assert context.evaluate(output) == inp
-
-  def test_import_export_int32(self):
-    context = tf_execution_context(False)
-    with context.scope():
-      inp = [[43424]]
-      variant = big_import(inp)
-      output = big_export(variant, tf.int32)
-
-    assert context.evaluate(output) == inp
-
-  def test_add(self):
+  @parameterized.parameters(
+      {"run_eagerly": run_eagerly} for run_eagerly in (True, False)
+  )
+  def test_add(self, run_eagerly):
     a = "5453452435245245245242534"
     b = "1424132412341234123412341234134"
     expected = int(a) + int(b)
 
-    context = tf_execution_context(False)
+    context = tf_execution_context(run_eagerly)
     with context.scope():
 
       a_var = big_import([[a]])
@@ -72,12 +73,15 @@ class BigTest(parameterized.TestCase):
 
     np.testing.assert_equal(int(context.evaluate(out_str)), expected)
 
-  def test_2d_matrix_add(self):
+  @parameterized.parameters(
+      {"run_eagerly": run_eagerly} for run_eagerly in (True, False)
+  )
+  def test_2d_matrix_add(self, run_eagerly):
     a = np.array([[5, 5], [5, 5]]).astype(np.int32)
     b = np.array([[6, 6], [6, 6]]).astype(np.int32)
     expected = a + b
 
-    context = tf_execution_context(False)
+    context = tf_execution_context(run_eagerly)
     with context.scope():
 
       a_var = big_import(a)
@@ -87,12 +91,15 @@ class BigTest(parameterized.TestCase):
 
     np.testing.assert_equal(context.evaluate(c_str), expected)
 
-  def test_matmul(self):
+  @parameterized.parameters(
+      {"run_eagerly": run_eagerly} for run_eagerly in (True, False)
+  )
+  def test_matmul(self, run_eagerly):
     a = np.array([[5, 5], [5, 5]]).astype(np.int32)
     b = np.array([[6, 6], [6, 6]]).astype(np.int32)
     expected = a.dot(b)
 
-    context = tf_execution_context(False)
+    context = tf_execution_context(run_eagerly)
     with context.scope():
 
       a_var = big_import(a)
@@ -102,12 +109,15 @@ class BigTest(parameterized.TestCase):
 
     np.testing.assert_equal(context.evaluate(c_str), expected)
 
-  def test_mul(self):
+  @parameterized.parameters(
+      {"run_eagerly": run_eagerly} for run_eagerly in (True, False)
+  )
+  def test_mul(self, run_eagerly):
     a = np.array([[5, 5], [5, 5]]).astype(np.int32)
     b = np.array([[6, 6], [6, 6]]).astype(np.int32)
     expected = a * b
 
-    context = tf_execution_context(False)
+    context = tf_execution_context(run_eagerly)
     with context.scope():
 
       a_var = big_import(a)
@@ -117,12 +127,15 @@ class BigTest(parameterized.TestCase):
 
     np.testing.assert_equal(context.evaluate(c_str), expected)
 
-  def test_mod(self):
+  @parameterized.parameters(
+      {"run_eagerly": run_eagerly} for run_eagerly in (True, False)
+  )
+  def test_mod(self, run_eagerly):
     x = np.array([[123, 234], [345, 456]]).astype(np.int32)
     n = np.array([[37]]).astype(np.int32)
     expected = x % n
 
-    context = tf_execution_context(False)
+    context = tf_execution_context(run_eagerly)
     with context.scope():
 
       x_big = big_import(x)
