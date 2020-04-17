@@ -17,7 +17,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="tf-big",
-    version="0.1.3",
+    version="0.2.0",
     packages=setuptools.find_packages(),
     package_data={
         '': ['*.so'],
@@ -25,10 +25,10 @@ setuptools.setup(
     python_requires=">=3.5",
     install_requires=[
         "numpy >=1.14",
-        "tensorflow >=1.13.1, <2",
+        "tensorflow ==2.1.0",
     ],
     extras_require={
-        "tf": ["tensorflow >=1.13.1, <2"],
+        "tf": ["tensorflow ==2.1.0"],
     },
     license="Apache License 2.0",
     url="https://github.com/tf-encrypted/tf-big",
