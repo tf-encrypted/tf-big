@@ -1,59 +1,59 @@
+import unittest
+from absl.testing import parameterized
+
 import numpy as np
 import tensorflow as tf
-from tensorflow.python.keras.utils import tf_utils
-from tensorflow.python.platform import test
+
+from tf_encrypted.test import tf_execution_context
 
 from tf_big.python.tensor import convert_to_tensor
 from tf_big.python.tensor import random_uniform
 
 
-class EvaluationTest(test.TestCase):
+class EvaluationTest(parameterized.TestCase):
 
-  def test_session_run(self):
-    x_raw = np.array([[123456789123456089123456089, 123406789123456789123406789]])
-    x = convert_to_tensor(x_raw)
-
-    with tf.Session() as sess:
-      res = sess.run(x)
-      np.testing.assert_array_equal(res, x_raw.astype(str))
-
-  def test_eval(self):
+  def test_eval(self, run_eagerly=False):
     x_raw = np.array([[123456789123456789123456789, 123456789123456789123456789]])
-    x = convert_to_tensor(x_raw)
 
-    with tf.Session() as sess:
-      res = x.eval(session=sess)
-      np.testing.assert_array_equal(res, x_raw.astype(str))
+    context = tf_execution_context(run_eagerly)
+    with context.scope():
+      x = convert_to_tensor(x_raw)
+
+    np.testing.assert_array_equal(context.evaluate(x), x_raw.astype(str))
+
+    if not tf.executing_eagerly():
+      np.testing.assert_array_equal(x.eval(session=context.session), x_raw.astype(str))
 
 
-class RandomTest(test.TestCase):
+class RandomTest(parameterized.TestCase):
 
   def test_uniform_random(self):
     shape = (2, 2)
     maxval = 2**100
 
-    x = random_uniform(shape=shape, maxval=maxval)
+    context = tf_execution_context(False)
+    with context.scope():
+      x = random_uniform(shape=shape, maxval=maxval)
+
     assert x.shape == shape
-    
-    with tf.Session() as sess:
-      res = sess.run(x)
-      assert res.shape == shape
+    assert context.evaluate(x).shape == shape
 
 
-class ArithmeticTest(test.TestCase):
+class ArithmeticTest(parameterized.TestCase):
 
   def _core_test(self, op):
     x_raw = np.array([[123456789123456789687293389, 123456789125927572056789]])
     y_raw = np.array([[123456785629362289123456789, 123456789123456723456789]])
     z_raw = op(x_raw, y_raw)
 
-    x = convert_to_tensor(x_raw)
-    y = convert_to_tensor(y_raw)
-    z = op(x, y)
+    context = tf_execution_context(False)
+    with context.scope():
 
-    with tf.Session() as sess:
-      res = sess.run(z)
-      np.testing.assert_array_equal(res, z_raw.astype(str))
+      x = convert_to_tensor(x_raw)
+      y = convert_to_tensor(y_raw)
+      z = op(x, y)
+
+    np.testing.assert_array_equal(context.evaluate(z), z_raw.astype(str))
 
   def test_add(self):
     self._core_test(lambda x, y: x + y)
@@ -65,20 +65,22 @@ class ArithmeticTest(test.TestCase):
     self._core_test(lambda x, y: x * y)
 
 
-class NumberTheoryTest(test.TestCase):
+class NumberTheoryTest(parameterized.TestCase):
 
   def test_mod(self):
     x_raw = np.array([[123456789123456789123456789, 123456789123456789123456789]])
     n_raw = np.array([[10000]])
     y_raw = x_raw % n_raw
 
-    x = convert_to_tensor(x_raw)
-    n = convert_to_tensor(n_raw)
-    y = x % n
+    context = tf_execution_context(False)
+    with context.scope():
 
-    with tf.Session() as sess:
-      res = sess.run(y)
-      np.testing.assert_array_equal(res, y_raw.astype(str))
+      x = convert_to_tensor(x_raw)
+      n = convert_to_tensor(n_raw)
+      y = x % n
+
+    np.testing.assert_array_equal(context.evaluate(y), y_raw.astype(str))
+
 
   def test_inv(self):
 
@@ -96,27 +98,31 @@ class NumberTheoryTest(test.TestCase):
     n_raw = np.array([[10000000]])
     y_raw = np.array([[inv(123456789123456789123456789, 10000000)]])
 
-    x = convert_to_tensor(x_raw)
-    n = convert_to_tensor(n_raw)
-    y = x.inv(n)
+    context = tf_execution_context(False)
+    with context.scope():
 
-    with tf.Session() as sess:
-      res = sess.run(y)
-      np.testing.assert_array_equal(res, y_raw.astype(str))
+      x = convert_to_tensor(x_raw)
+      n = convert_to_tensor(n_raw)
+      y = x.inv(n)
+
+    np.testing.assert_array_equal(context.evaluate(y), y_raw.astype(str))
 
 
-class ConvertTest(test.TestCase):
+class ConvertTest(parameterized.TestCase):
 
   def _core_test(self, in_np, out_np, convert_to_tf_tensor):
-    if convert_to_tf_tensor:
-      in_tf = tf.convert_to_tensor(in_np)
-      x = convert_to_tensor(in_tf)
-    else:
-      x = convert_to_tensor(in_np)
 
-    with tf.Session() as sess:
-      res = sess.run(x)
-      np.testing.assert_array_equal(res, out_np)
+    context = tf_execution_context(False)
+    with context.scope():
+
+      if convert_to_tf_tensor:
+        in_tf = tf.convert_to_tensor(in_np)
+        x = convert_to_tensor(in_tf)
+      else:
+        x = convert_to_tensor(in_np)
+
+    np.testing.assert_array_equal(context.evaluate(x), out_np)
+
 
   def test_constant_int32(self):
     x = np.array([[1,2,3,4]]).astype(np.int32)
@@ -179,37 +185,32 @@ class ConvertTest(test.TestCase):
     )
 
   def test_is_tensor(self):
-    x = convert_to_tensor(np.array([[10, 20]]))
-    #assert tf.is_tensor(x)  # for TensorFlow >=1.14
-    assert tf.contrib.framework.is_tensor(x)
+    context = tf_execution_context(False)
+
+    with context.scope():
+      x = convert_to_tensor(np.array([[10, 20]]))
+
+    assert tf.is_tensor(x)
 
   def test_register_tensor_conversion_function(self):
-    x = convert_to_tensor(np.array([[10, 20]]))
-    y = tf.convert_to_tensor(np.array([[30, 40]]))
-    z = x + y
-    with tf.Session() as sess:
-      res = sess.run(z)
-      np.testing.assert_array_equal(res, np.array([["40", "60"]]))
+    context = tf_execution_context(False)
+    
+    with context.scope():
+      x = convert_to_tensor(np.array([[10, 20]]))
+      y = tf.convert_to_tensor(np.array([[30, 40]]))
+      z = x + y
+
+    np.testing.assert_array_equal(context.evaluate(z), np.array([["40", "60"]]))
 
   def test_convert_to_tensor(self):
-    x = convert_to_tensor(np.array([[10, 20]]))
-    y = tf.convert_to_tensor(x)
+    context = tf_execution_context(False)
+
+    with context.scope():
+      x = convert_to_tensor(np.array([[10, 20]]))
+      y = tf.convert_to_tensor(x)
+
     assert y.dtype is tf.string
 
 
-class IntegrationTest(test.TestCase):
-
-  def test_register_symbolic(self):
-    x = convert_to_tensor(np.array(10))
-    assert tf_utils.is_symbolic_tensor(x)
-
-  # def test_use_in_model(self):
-  #   x = convert_to_tensor(np.array(10))
-  #   model = tf.keras.models.Sequential([
-  #     tf.keras.layers.Dense(10)
-  #   ])
-  #   model(x)
-
-
 if __name__ == '__main__':
-  test.main()
+  unittest.main()
