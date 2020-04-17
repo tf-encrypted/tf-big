@@ -66,7 +66,6 @@ py_library(
     ]),
     deps = [
         ":big_ops_py",
-        "//tf_big/python/test:test_py",
     ],
     srcs_version = "PY2AND3",
 )
