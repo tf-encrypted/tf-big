@@ -303,9 +303,9 @@ workflows:
   quicktest:
     jobs:
       - build-linux:
-          name: build-linux-py3.6-tf1.14.0
+          name: build-linux-py3.6-tf2.1.0
           python-version: "3.6"
-          tensorflow-version: "1.14.0"
+          tensorflow-version: "2.1.0"
           filters:
             branches:
               ignore: master
@@ -316,7 +316,7 @@ workflows:
           name: bundle-linux-py3.6
           python-version: "3.6"
           requires:
-            - build-linux-py3.6-tf1.14.0
+            - build-linux-py3.6-tf2.1.0
           filters:
             branches:
               ignore: master
@@ -324,9 +324,9 @@ workflows:
               ignore: /.*/
 
       - whltest-linux:
-          name: whltest-linux-py3.6-tf1.14.0
+          name: whltest-linux-py3.6-tf2.1.0
           python-version: "3.6"
-          tensorflow-version: "1.14.0"
+          tensorflow-version: "2.1.0"
           requires:
             - bundle-linux-py3.6
           filters:
@@ -338,27 +338,9 @@ workflows:
   linux-py3.5:
     jobs:
       - build-linux:
-          name: build-linux-py3.5-tf1.13.1
+          name: build-linux-py3.5-tf2.1.0
           python-version: "3.5"
-          tensorflow-version: "1.13.1"
-          filters:
-            branches:
-              only: master
-            tags:
-              only: /.*/
-      - build-linux:
-          name: build-linux-py3.5-tf1.13.2
-          python-version: "3.5"
-          tensorflow-version: "1.13.2"
-          filters:
-            branches:
-              only: master
-            tags:
-              only: /.*/
-      - build-linux:
-          name: build-linux-py3.5-tf1.14.0
-          python-version: "3.5"
-          tensorflow-version: "1.14.0"
+          tensorflow-version: "2.1.0"
           filters:
             branches:
               only: master
@@ -369,9 +351,7 @@ workflows:
           name: bundle-linux-py3.5
           python-version: "3.5"
           requires:
-            - build-linux-py3.5-tf1.13.1
-            - build-linux-py3.5-tf1.13.2
-            - build-linux-py3.5-tf1.14.0
+            - build-linux-py3.5-tf2.1.0
           filters:
             branches:
               only: master
@@ -379,31 +359,9 @@ workflows:
               only: /.*/
 
       - whltest-linux:
-          name: whltest-linux-py3.5-tf1.13.1
+          name: whltest-linux-py3.5-tf2.1.0
           python-version: "3.5"
-          tensorflow-version: "1.13.1"
-          requires:
-            - bundle-linux-py3.5
-          filters:
-            branches:
-              only: master
-            tags:
-              only: /.*/
-      - whltest-linux:
-          name: whltest-linux-py3.5-tf1.13.2
-          python-version: "3.5"
-          tensorflow-version: "1.13.2"
-          requires:
-            - bundle-linux-py3.5
-          filters:
-            branches:
-              only: master
-            tags:
-              only: /.*/
-      - whltest-linux:
-          name: whltest-linux-py3.5-tf1.14.0
-          python-version: "3.5"
-          tensorflow-version: "1.14.0"
+          tensorflow-version: "2.1.0"
           requires:
             - bundle-linux-py3.5
           filters:
@@ -415,9 +373,7 @@ workflows:
       - store:
           name: store-linux-py3.5
           requires:
-            - whltest-linux-py3.5-tf1.13.1
-            - whltest-linux-py3.5-tf1.13.2
-            - whltest-linux-py3.5-tf1.14.0
+            - whltest-linux-py3.5-tf2.1.0
           filters:
             branches:
               only: master
@@ -448,27 +404,9 @@ workflows:
   linux-py3.6:
     jobs:
       - build-linux:
-          name: build-linux-py3.6-tf1.13.1
+          name: build-linux-py3.6-tf2.1.0
           python-version: "3.6"
-          tensorflow-version: "1.13.1"
-          filters:
-            branches:
-              only: master
-            tags:
-              only: /.*/
-      - build-linux:
-          name: build-linux-py3.6-tf1.13.2
-          python-version: "3.6"
-          tensorflow-version: "1.13.2"
-          filters:
-            branches:
-              only: master
-            tags:
-              only: /.*/
-      - build-linux:
-          name: build-linux-py3.6-tf1.14.0
-          python-version: "3.6"
-          tensorflow-version: "1.14.0"
+          tensorflow-version: "2.1.0"
           filters:
             branches:
               only: master
@@ -479,9 +417,7 @@ workflows:
           name: bundle-linux-py3.6
           python-version: "3.6"
           requires:
-            - build-linux-py3.6-tf1.13.1
-            - build-linux-py3.6-tf1.13.2
-            - build-linux-py3.6-tf1.14.0
+            - build-linux-py3.6-tf2.1.0
           filters:
             branches:
               only: master
@@ -489,31 +425,9 @@ workflows:
               only: /.*/
 
       - whltest-linux:
-          name: whltest-linux-py3.6-tf1.13.1
+          name: whltest-linux-py3.6-tf2.1.0
           python-version: "3.6"
-          tensorflow-version: "1.13.1"
-          requires:
-            - bundle-linux-py3.6
-          filters:
-            branches:
-              only: master
-            tags:
-              only: /.*/
-      - whltest-linux:
-          name: whltest-linux-py3.6-tf1.13.2
-          python-version: "3.6"
-          tensorflow-version: "1.13.2"
-          requires:
-            - bundle-linux-py3.6
-          filters:
-            branches:
-              only: master
-            tags:
-              only: /.*/
-      - whltest-linux:
-          name: whltest-linux-py3.6-tf1.14.0
-          python-version: "3.6"
-          tensorflow-version: "1.14.0"
+          tensorflow-version: "2.1.0"
           requires:
             - bundle-linux-py3.6
           filters:
@@ -525,9 +439,7 @@ workflows:
       - store:
           name: store-linux-py3.6
           requires:
-            - whltest-linux-py3.6-tf1.13.1
-            - whltest-linux-py3.6-tf1.13.2
-            - whltest-linux-py3.6-tf1.14.0
+            - whltest-linux-py3.6-tf2.1.0
           filters:
             branches:
               only: master
@@ -558,27 +470,9 @@ workflows:
   macos-py3.6:
     jobs:
       - build-macos:
-          name: build-macos-py3.6-tf1.13.1
+          name: build-macos-py3.6-tf2.1.0
           python-version: "3.6"
-          tensorflow-version: "1.13.1"
-          filters:
-            branches:
-              only: master
-            tags:
-              only: /.*/
-      - build-macos:
-          name: build-macos-py3.6-tf1.13.2
-          python-version: "3.6"
-          tensorflow-version: "1.13.2"
-          filters:
-            branches:
-              only: master
-            tags:
-              only: /.*/
-      - build-macos:
-          name: build-macos-py3.6-tf1.14.0
-          python-version: "3.6"
-          tensorflow-version: "1.14.0"
+          tensorflow-version: "2.1.0"
           filters:
             branches:
               only: master
@@ -589,9 +483,7 @@ workflows:
           name: bundle-macos-py3.6
           python-version: "3.6"
           requires:
-            - build-macos-py3.6-tf1.13.1
-            - build-macos-py3.6-tf1.13.2
-            - build-macos-py3.6-tf1.14.0
+            - build-macos-py3.6-tf2.1.0
           filters:
             branches:
               only: master
@@ -599,31 +491,9 @@ workflows:
               only: /.*/
 
       - whltest-macos:
-          name: whltest-macos-py3.6-tf1.13.1
+          name: whltest-macos-py3.6-tf2.1.0
           python-version: "3.6"
-          tensorflow-version: "1.13.1"
-          requires:
-            - bundle-macos-py3.6
-          filters:
-            branches:
-              only: master
-            tags:
-              only: /.*/
-      - whltest-macos:
-          name: whltest-macos-py3.6-tf1.13.2
-          python-version: "3.6"
-          tensorflow-version: "1.13.2"
-          requires:
-            - bundle-macos-py3.6
-          filters:
-            branches:
-              only: master
-            tags:
-              only: /.*/
-      - whltest-macos:
-          name: whltest-macos-py3.6-tf1.14.0
-          python-version: "3.6"
-          tensorflow-version: "1.14.0"
+          tensorflow-version: "2.1.0"
           requires:
             - bundle-macos-py3.6
           filters:
@@ -635,9 +505,7 @@ workflows:
       - store:
           name: store-macos-py3.6
           requires:
-            - whltest-macos-py3.6-tf1.13.1
-            - whltest-macos-py3.6-tf1.13.2
-            - whltest-macos-py3.6-tf1.14.0
+            - whltest-macos-py3.6-tf2.1.0
           filters:
             branches:
               only: master

@@ -19,22 +19,6 @@ cc_binary(
     copts = ["-pthread", "-std=c++11", "-D_GLIBCXX_USE_CXX11_ABI=0", "-fPIC"],
 )
 
-cc_test(
-    name = "big_ops_test",
-    srcs = [
-        "cc/big_tensor_test.cc",
-        "cc/big_tensor.h",
-        "cc/big_tensor.cc",
-    ],
-    deps = [
-        "@com_google_googletest//:gtest",
-        "@local_config_tf//:libtensorflow_framework",
-        "@local_config_tf//:tf_header_lib",
-        "@libgmp//:lib"
-    ],
-    copts = ["-pthread", "-std=c++11", "-D_GLIBCXX_USE_CXX11_ABI=0", "-fPIC"],
-)
-
 py_library(
     name = "big_ops_py",
     srcs = ([
@@ -55,6 +39,7 @@ py_test(
     main = "python/ops/big_ops_test.py",
     deps = [
         ":big_ops_py",
+        "//tf_big/python/test:test_py",
     ],
     srcs_version = "PY2AND3",
 )
@@ -67,6 +52,7 @@ py_test(
     main = "python/tensor_test.py",
     deps = [
         ":big_ops_py",
+        "//tf_big/python/test:test_py",
     ],
     srcs_version = "PY2AND3",
 )
@@ -79,7 +65,7 @@ py_library(
         "python/ops/__init__.py",
     ]),
     deps = [
-        ":big_ops_py"
+        ":big_ops_py",
     ],
     srcs_version = "PY2AND3",
 )
