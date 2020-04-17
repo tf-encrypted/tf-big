@@ -19,21 +19,21 @@ cc_binary(
     copts = ["-pthread", "-std=c++11", "-D_GLIBCXX_USE_CXX11_ABI=0", "-fPIC"],
 )
 
-cc_test(
-    name = "big_ops_test",
-    srcs = [
-        "cc/big_tensor_test.cc",
-        "cc/big_tensor.h",
-        "cc/big_tensor.cc",
-    ],
-    deps = [
-        "@com_google_googletest//:gtest",
-        "@local_config_tf//:libtensorflow_framework",
-        "@local_config_tf//:tf_header_lib",
-        "@libgmp//:lib"
-    ],
-    copts = ["-pthread", "-std=c++11", "-D_GLIBCXX_USE_CXX11_ABI=0", "-fPIC"],
-)
+# cc_test(
+#     name = "big_ops_test",
+#     srcs = [
+#         "cc/big_tensor_test.cc",
+#         "cc/big_tensor.h",
+#         "cc/big_tensor.cc",
+#     ],
+#     deps = [
+#         "@com_google_googletest//:gtest",
+#         "@local_config_tf//:libtensorflow_framework",
+#         "@local_config_tf//:tf_header_lib",
+#         "@libgmp//:lib"
+#     ],
+#     copts = ["-pthread", "-std=c++11", "-D_GLIBCXX_USE_CXX11_ABI=0", "-fPIC"],
+# )
 
 py_library(
     name = "big_ops_py",
