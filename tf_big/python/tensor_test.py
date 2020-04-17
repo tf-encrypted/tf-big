@@ -124,111 +124,77 @@ class NumberTheoryTest(parameterized.TestCase):
 
 class ConvertTest(parameterized.TestCase):
 
-  def _core_test(self, in_np, out_np, convert_to_tf_tensor, run_eagerly=False, out_tf_dtype=None, out_np_dtype=None):
+  @parameterized.parameters(
+      {
+          "x": x,
+          "tf_cast": tf_cast,
+          "np_cast": np_cast,
+          "expected": expected,
+          "run_eagerly": run_eagerly,
+          "convert_to_tf_tensor": convert_to_tf_tensor,
+      }
+      for x, tf_cast, np_cast, expected in (
+          (
+              np.array([[1,2,3,4]]).astype(np.int32),
+              tf.int32,
+              None,
+              np.array([[1,2,3,4]]).astype(np.int32),
+          ),
+          (
+              np.array([[1,2,3,4]]).astype(np.int64),
+              tf.int32,
+              None,
+              np.array([[1,2,3,4]]).astype(np.int32),
+          ),
+          (
+              np.array([["123456789123456789123456789", "123456789123456789123456789"]]),
+              tf.string,
+              str,
+              np.array([["123456789123456789123456789", "123456789123456789123456789"]]).astype(str),
+          ),
+          (
+              np.array([[b"123456789123456789123456789", b"123456789123456789123456789"]]),
+              tf.string,
+              str,
+              np.array([[b"123456789123456789123456789", b"123456789123456789123456789"]]).astype(str),
+          )
+      )
+      for run_eagerly in (True, False)
+      for convert_to_tf_tensor in (True, False)
+  )
+  def test_foo(
+      self,
+      x,
+      tf_cast,
+      np_cast,
+      expected,
+      convert_to_tf_tensor,
+      run_eagerly,
+  ):
 
     context = tf_execution_context(run_eagerly)
     with context.scope():
 
-      if convert_to_tf_tensor:
-        in_tf = tf.convert_to_tensor(in_np)
-        x = convert_to_tensor(in_tf)
-      else:
-        x = convert_to_tensor(in_np)
+      y = tf.convert_to_tensor(x) if convert_to_tf_tensor else x
+      y = convert_to_tensor(y)
+      z = convert_from_tensor(y, dtype=tf_cast)
 
-      x = convert_from_tensor(x, dtype=out_tf_dtype)
-
-    if out_np_dtype is None:
-      actual = context.evaluate(x)
-      expected = out_np
-    else:
-      actual = context.evaluate(x).astype(out_np_dtype)
-      expected = out_np.astype(out_np_dtype)
-
+    actual = context.evaluate(z)
+    actual = actual.astype(np_cast) if np_cast else actual
+    assert actual.dtype == expected.dtype, "'{}' did not match expected '{}'".format(actual.dtype, expected.dtype)
     np.testing.assert_array_equal(actual, expected)
 
   @parameterized.parameters(
-      {
-          "run_eagerly": run_eagerly,
-          "tf_convert_to_tensor": tf_convert_to_tensor,
-          "in_np": in_np
-      }
-      for run_eagerly in (True, False)
-      for tf_convert_to_tensor in (True, False)
-      for in_np in (
-          np.array([[1,2,3,4]]).astype(np.int32),
-      )
+      {"run_eagerly": run_eagerly} for run_eagerly in (True, False)
   )
-  def test_constant_int32(self, in_np, run_eagerly, tf_convert_to_tensor):
-    self._core_test(
-      in_np=in_np,
-      out_np=in_np.astype(str),
-      convert_to_tf_tensor=tf_convert_to_tensor,
-      run_eagerly=run_eagerly,
-      out_tf_dtype=tf.int32,
-      out_np_dtype=np.int32,
-    )
-
-  @unittest.skip
-  def test_constant_int64(self):
-    x = np.array([[1,2,3,4]]).astype(np.int64)
-    self._core_test(
-      in_np=x,
-      out_np=x.astype(str),
-      convert_to_tf_tensor=False,
-    )
-    self._core_test(
-      in_np=x,
-      out_np=x.astype(str),
-      convert_to_tf_tensor=True,
-    )
-
-  @unittest.skip
-  def test_constant_string(self):
-    x = np.array([["123456789123456789123456789", "123456789123456789123456789"]])
-    self._core_test(
-      in_np=x,
-      out_np=x.astype(str),
-      convert_to_tf_tensor=False,
-    )
-    self._core_test(
-      in_np=x,
-      out_np=x.astype(str),
-      convert_to_tf_tensor=True,
-    )
-
-  @unittest.skip
-  def test_constant_bytes(self):
-    x = np.array([[b"123456789123456789123456789", b"123456789123456789123456789"]])
-    self._core_test(
-      in_np=x,
-      out_np=x.astype(str),
-      convert_to_tf_tensor=False,
-    )
-    self._core_test(
-      in_np=x,
-      out_np=x.astype(str),
-      convert_to_tf_tensor=True,
-    )
-
-  @unittest.skip
-  def test_constant_numpy_object(self):
-    x = np.array([[123456789123456789123456789]])
-    self._core_test(
-      in_np=x,
-      out_np=x.astype(str),
-      convert_to_tf_tensor=False,
-    )
-
-  @unittest.skip
-  def test_is_tensor(self):
-    context = tf_execution_context(False)
+  def test_is_tensor(self, run_eagerly):
+    context = tf_execution_context(run_eagerly)
 
     with context.scope():
       x = convert_to_tensor(np.array([[10, 20]]))
 
     assert tf.is_tensor(x)
 
-  @unittest.skip
   def test_register_tensor_conversion_function(self):
     context = tf_execution_context(False)
     
@@ -239,7 +205,6 @@ class ConvertTest(parameterized.TestCase):
 
     np.testing.assert_array_equal(context.evaluate(z), np.array([["40", "60"]]))
 
-  @unittest.skip
   def test_convert_to_tensor(self):
     context = tf_execution_context(False)
 
