@@ -39,6 +39,7 @@ py_test(
     main = "python/ops/big_ops_test.py",
     deps = [
         ":big_ops_py",
+        "//tf_big/python/test:test_py",
     ],
     srcs_version = "PY2AND3",
 )
@@ -51,6 +52,7 @@ py_test(
     main = "python/tensor_test.py",
     deps = [
         ":big_ops_py",
+        "//tf_big/python/test:test_py",
     ],
     srcs_version = "PY2AND3",
 )
@@ -63,7 +65,8 @@ py_library(
         "python/ops/__init__.py",
     ]),
     deps = [
-        ":big_ops_py"
+        ":big_ops_py",
+        "//tf_big/python/test:test_py",
     ],
     srcs_version = "PY2AND3",
 )

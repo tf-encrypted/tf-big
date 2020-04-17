@@ -4,8 +4,6 @@ from absl.testing import parameterized
 import numpy as np
 import tensorflow as tf
 
-from tf_encrypted.test import tf_execution_context
-
 from tf_big.python.ops.big_ops import big_import
 from tf_big.python.ops.big_ops import big_export
 from tf_big.python.ops.big_ops import big_add
@@ -13,6 +11,7 @@ from tf_big.python.ops.big_ops import big_matmul
 from tf_big.python.ops.big_ops import big_mul
 from tf_big.python.ops.big_ops import big_mod
 from tf_big.python.ops.big_ops import big_pow
+from tf_big.python.test import tf_execution_context
 
 
 class BigTest(parameterized.TestCase):

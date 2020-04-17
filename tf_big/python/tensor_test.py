@@ -4,11 +4,10 @@ from absl.testing import parameterized
 import numpy as np
 import tensorflow as tf
 
-from tf_encrypted.test import tf_execution_context
-
 from tf_big.python.tensor import convert_from_tensor
 from tf_big.python.tensor import convert_to_tensor
 from tf_big.python.tensor import random_uniform
+from tf_big.python.test import tf_execution_context
 
 
 class EvaluationTest(parameterized.TestCase):
