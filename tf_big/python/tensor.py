@@ -40,6 +40,11 @@ class Tensor(object):
     res = ops.big_add(self._raw, other._raw)
     return Tensor(res)
 
+  def __radd__(self, other):
+    other = convert_to_tensor(other)
+    res = ops.big_add(self._raw, other._raw)
+    return Tensor(res)
+
   def __sub__(self, other):
     other = convert_to_tensor(other)
     res = ops.big_sub(self._raw, other._raw)
@@ -48,6 +53,11 @@ class Tensor(object):
   def __mul__(self, other):
     other = convert_to_tensor(other)
     res = ops.big_mul(self._raw, other._raw)
+    return Tensor(res)
+
+  def __floordiv__(self, other):
+    other = convert_to_tensor(other)
+    res = ops.big_div(self._raw, other._raw)
     return Tensor(res)
 
   def pow(self, exponent, modulus=None, secure=None):
@@ -210,7 +220,8 @@ def get_secure_default():
 
 
 def random_uniform(shape, maxval):
-  maxval = convert_to_tensor(maxval)
+  if not isinstance(maxval, Tensor):
+    maxval = convert_to_tensor(maxval)
   r_raw = ops.big_random_uniform(shape, maxval._raw)
   return Tensor(r_raw)
 

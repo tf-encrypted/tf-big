@@ -131,6 +131,10 @@ struct BigTensor {
     return BigTensor(this->value.cwiseProduct(rhs.value));
   }
 
+  BigTensor cwiseQuotient(const BigTensor& rhs) const {
+    return BigTensor(this->value.cwiseQuotient(rhs.value));
+  }
+
   Index rows() const { return value.rows(); }
 
   Index cols() const { return value.cols(); }

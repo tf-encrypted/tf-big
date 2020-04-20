@@ -126,6 +126,26 @@ class BigMulOp : public OpKernel {
   }
 };
 
+class BigDivOp : public OpKernel {
+ public:
+  explicit BigDivOp(OpKernelConstruction* context) : OpKernel(context) {}
+
+  void Compute(OpKernelContext* ctx) override {
+    const BigTensor* val0 = nullptr;
+    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 0, &val0));
+
+    const BigTensor* val1 = nullptr;
+    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 1, &val1));
+
+    Tensor* output;
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, val0->shape(), &output));
+
+    auto res = (*val0).cwiseQuotient(*val1);
+
+    output->flat<Variant>()(0) = std::move(res);
+  }
+};
+
 class BigPowOp : public OpKernel {
  public:
   explicit BigPowOp(OpKernelConstruction* ctx) : OpKernel(ctx) {
@@ -317,6 +337,7 @@ REGISTER_KERNEL_BUILDER(Name("BigRandomUniform").Device(DEVICE_CPU), BigRandomUn
 REGISTER_KERNEL_BUILDER(Name("BigAdd").Device(DEVICE_CPU), BigAddOp);
 REGISTER_KERNEL_BUILDER(Name("BigSub").Device(DEVICE_CPU), BigSubOp);
 REGISTER_KERNEL_BUILDER(Name("BigMul").Device(DEVICE_CPU), BigMulOp);
+REGISTER_KERNEL_BUILDER(Name("BigDiv").Device(DEVICE_CPU), BigDivOp);
 REGISTER_KERNEL_BUILDER(Name("BigPow").Device(DEVICE_CPU), BigPowOp);
 REGISTER_KERNEL_BUILDER(Name("BigMatMul").Device(DEVICE_CPU), BigMatMulOp);
 REGISTER_KERNEL_BUILDER(Name("BigMod").Device(DEVICE_CPU), BigModOp);

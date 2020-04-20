@@ -50,6 +50,7 @@ big_random_uniform = big_ops.big_random_uniform
 big_add = big_ops.big_add
 big_sub = big_ops.big_sub
 big_mul = big_ops.big_mul
+big_div = big_ops.big_div
 big_pow = big_ops.big_pow
 big_matmul = big_ops.big_mat_mul
 big_mod = big_ops.big_mod
