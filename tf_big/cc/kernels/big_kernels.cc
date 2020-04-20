@@ -16,11 +16,10 @@ using tf_big::BigTensor;
 Status GetBigTensor(OpKernelContext* ctx, int index, const BigTensor** res) {
   const Tensor& input = ctx->input(index);
 
-  // TODO(justin1121): check scalar type
-  const BigTensor* big = input.scalar<Variant>()().get<BigTensor>();
+  const BigTensor* big = input.flat<Variant>()(0).get<BigTensor>();
   if (big == nullptr) {
     return errors::InvalidArgument("Input handle is not a big tensor. Saw: '",
-                                   input.scalar<Variant>()().DebugString(),
+                                   input.flat<Variant>()(0).DebugString(),
                                    "'");
   }
 
@@ -41,12 +40,12 @@ class BigImportOp : public OpKernel {
                     "but got shape: ", input.shape().DebugString()));
 
     Tensor* val;
-    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, TensorShape{}, &val));
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, input.shape(), &val));
 
     BigTensor big;
     big.FromTensor<T>(input);
 
-    val->scalar<Variant>()() = std::move(big);
+    val->flat<Variant>()(0) = std::move(big);
   }
 };
 
@@ -79,11 +78,11 @@ class BigAddOp : public OpKernel {
     OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 1, &val1));
 
     Tensor* output;
-    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, TensorShape{}, &output));
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, val0->shape(), &output));
 
     auto res = *val0 + *val1;
 
-    output->scalar<Variant>()() = std::move(res);
+    output->flat<Variant>()(0) = std::move(res);
   }
 };
 
@@ -99,11 +98,11 @@ class BigSubOp : public OpKernel {
     OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 1, &val1));
 
     Tensor* output;
-    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, TensorShape{}, &output));
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, val0->shape(), &output));
 
     auto res = *val0 - *val1;
 
-    output->scalar<Variant>()() = std::move(res);
+    output->flat<Variant>()(0) = std::move(res);
   }
 };
 
@@ -119,11 +118,11 @@ class BigMulOp : public OpKernel {
     OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 1, &val1));
 
     Tensor* output;
-    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, TensorShape{}, &output));
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, val0->shape(), &output));
 
     auto res = (*val0).cwiseProduct(*val1);
 
-    output->scalar<Variant>()() = std::move(res);
+    output->flat<Variant>()(0) = std::move(res);
   }
 };
 
@@ -145,7 +144,7 @@ class BigPowOp : public OpKernel {
     OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 2, &modulus_t));
 
     Tensor* output;
-    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, TensorShape{}, &output));
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, base->shape(), &output));
 
     auto exponent = exponent_t->value(0, 0);
     auto modulus = modulus_t->value(0, 0);
@@ -175,7 +174,7 @@ class BigPowOp : public OpKernel {
     }
     mpz_clear(tmp);
 
-    output->scalar<Variant>()() = BigTensor(res);
+    output->flat<Variant>()(0) = BigTensor(res);
   }
 
  private:
@@ -198,7 +197,7 @@ class BigMatMulOp : public OpKernel {
 
     auto res = *val1 * *val2;
 
-    output->scalar<Variant>()() = std::move(res);
+    output->flat<Variant>()(0) = std::move(res);
   }
 };
 
@@ -228,8 +227,8 @@ class BigModOp : public OpKernel {
     mpz_clear(tmp);
 
     Tensor* res;
-    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, TensorShape{}, &res));
-    res->scalar<Variant>()() = BigTensor(res_matrix);
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, val->shape(), &res));
+    res->flat<Variant>()(0) = BigTensor(res_matrix);
   }
 };
 
@@ -259,8 +258,8 @@ class BigInvOp : public OpKernel {
     mpz_clear(tmp);
 
     Tensor* res;
-    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, TensorShape{}, &res));
-    res->scalar<Variant>()() = BigTensor(res_matrix);
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, val->shape(), &res));
+    res->flat<Variant>()(0) = BigTensor(res_matrix);
   }
 };
 
@@ -293,8 +292,8 @@ class BigRandomUniformOp : public OpKernel {
     mpz_clear(tmp);
 
     Tensor* res;
-    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, TensorShape{}, &res));
-    res->scalar<Variant>()() = BigTensor(res_matrix);
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, shape, &res));
+    res->flat<Variant>()(0) = BigTensor(res_matrix);
   }
 };
 

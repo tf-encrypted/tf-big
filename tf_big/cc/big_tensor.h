@@ -135,6 +135,8 @@ struct BigTensor {
 
   Index cols() const { return value.cols(); }
 
+  TensorShape shape() const { return TensorShape{value.rows(), value.cols()}; }
+
   MatrixXm value;
 };
 
