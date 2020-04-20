@@ -209,7 +209,7 @@ def convert_from_tensor(value, dtype=None):
   raise ValueError("Don't know how to evaluate to dtype '{}'".format(dtype))
 
 
-_SECURE = False
+_SECURE = True
 
 def set_secure_default(value):
   global _SECURE
