@@ -21,7 +21,9 @@ class EvaluationTest(parameterized.TestCase):
     context = tf_execution_context(run_eagerly)
     with context.scope():
       x = convert_to_tensor(x_raw)
+      assert x.shape == x_raw.shape
       x = convert_from_tensor(x)
+      assert x.shape == x_raw.shape
 
     np.testing.assert_array_equal(context.evaluate(x).astype(str), x_raw.astype(str))
 
