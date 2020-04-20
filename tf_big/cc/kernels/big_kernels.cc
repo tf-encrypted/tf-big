@@ -317,6 +317,33 @@ class BigRandomUniformOp : public OpKernel {
   }
 };
 
+// class BigRandomPrimeOp : public OpKernel {
+//  public:
+//   explicit BigRandomPrimeOp(OpKernelConstruction* context) : OpKernel(context) {}
+
+//   void Compute(OpKernelContext* ctx) override {
+//     const Tensor& bitlength_t = ctx->input(0);
+//     int bitlength = bitlength_t.scalar<int32>();
+
+//     Tensor* prime_t;
+//     OP_REQUIRES_OK(ctx, ctx->allocate_output(0, TensorShape{}, &prime_t));
+//     res->flat<Variant>()(0) = BigTensor(res_matrix);
+
+//     mpz_t p;
+//     mpz_init(p);
+
+//     gmp_randstate_t state;
+//     gmp_randinit_mt(state);
+//     do {
+// 			mpz_urandomb(p, rand, bitlength);
+//     } while( !mpz_probab_prime_p(p, 10) );
+
+//     prime_t->flat<Variant>()(0) = BigTensor(p);
+
+//     mpz_clear(p);
+//   }
+// };
+
 REGISTER_UNARY_VARIANT_DECODE_FUNCTION(BigTensor, BigTensor::kTypeName);
 
 REGISTER_KERNEL_BUILDER(Name("BigImport").Device(DEVICE_CPU).TypeConstraint<string>("dtype"), BigImportOp<string>);
@@ -333,6 +360,7 @@ REGISTER_KERNEL_BUILDER(Name("BigExport").Device(DEVICE_CPU).TypeConstraint<int3
 // REGISTER_CPU(int64);
 
 REGISTER_KERNEL_BUILDER(Name("BigRandomUniform").Device(DEVICE_CPU), BigRandomUniformOp);
+// REGISTER_KERNEL_BUILDER(Name("BigRandomPrime").Device(DEVICE_CPU), BigRandomPrimeOp);
 
 REGISTER_KERNEL_BUILDER(Name("BigAdd").Device(DEVICE_CPU), BigAddOp);
 REGISTER_KERNEL_BUILDER(Name("BigSub").Device(DEVICE_CPU), BigSubOp);

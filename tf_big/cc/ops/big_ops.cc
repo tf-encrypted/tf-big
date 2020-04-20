@@ -34,6 +34,18 @@ REGISTER_OP("BigRandomUniform")
         return ::tensorflow::Status::OK();
     });
 
+REGISTER_OP("BigRandomPrime")
+    .Input("shape: int32")
+    .Input("bitlength: int32")
+    .Output("out: variant")
+    .SetIsStateful()
+    .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
+        ::tensorflow::shape_inference::ShapeHandle out;
+        TF_RETURN_IF_ERROR(c->MakeShapeFromShapeTensor(0, &out));
+        c->set_output(0, out);
+        return ::tensorflow::Status::OK();
+    });
+
 REGISTER_OP("BigAdd")
     .Input("val0: variant")
     .Input("val1: variant")
