@@ -1,7 +1,6 @@
 from tf_big.python.tensor import set_secure_default
 from tf_big.python.tensor import get_secure_default
 
-from tf_big.python import test
 from tf_big.python.tensor import Tensor
 
 from tf_big.python.tensor import constant
@@ -22,7 +21,6 @@ __all__ = [
   'set_secure_default',
   'get_secure_default',
 
-  'test',
   'Tensor',
 
   'constant',
