@@ -333,13 +333,13 @@ class BigRandomRsaModulusOp : public OpKernel {
     MatrixXm p_matrix(shape.dim_size(0), shape.dim_size(1));
     auto p_data = p_matrix.data();
     auto size = p_matrix.size();
-
     MatrixXm q_matrix(shape.dim_size(0), shape.dim_size(1));
     auto q_data = q_matrix.data();
-
     MatrixXm n_matrix(shape.dim_size(0), shape.dim_size(1));
     auto n_data = n_matrix.data();
 
+    gmp_randstate_t state;
+    gmp_randinit_mt(state);
     mpz_t p;
     mpz_t q;
     mpz_t n;
@@ -347,10 +347,7 @@ class BigRandomRsaModulusOp : public OpKernel {
     mpz_init(q);
     mpz_init(n);
 
-    gmp_randstate_t state;
-    gmp_randinit_mt(state);
     for (int i = 0; i < size; i++){
-
       do{
         do {
           mpz_urandomb(p, state, *bitlength_val / 2);
@@ -362,12 +359,11 @@ class BigRandomRsaModulusOp : public OpKernel {
 
         mpz_mul(n, p, q);
 
-        p_data[i] = mpz_class(p);
-        q_data[i] = mpz_class(q);
-        n_data[i] = mpz_class(n);
-
       } while( !mpz_tstbit(n, *bitlength_val - 1) );
 
+      p_data[i] = mpz_class(p);
+      q_data[i] = mpz_class(q);
+      n_data[i] = mpz_class(n);
     }
     
     mpz_sub_ui(p, p, 1);
