@@ -47,8 +47,7 @@ class RandomTest(parameterized.TestCase):
     assert context.evaluate(x).shape == shape
   
   @parameterized.parameters(
-      # {"run_eagerly": run_eagerly} for run_eagerly in (True, False)
-      {"run_eagerly": True}
+      {"run_eagerly": run_eagerly} for run_eagerly in (True, False)
   )
   def test_random_rsa_modulus(self, run_eagerly):
     shape = (2, 2)

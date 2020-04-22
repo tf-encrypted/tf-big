@@ -46,8 +46,8 @@ REGISTER_OP("BigRandomRsaModulus")
         ::tensorflow::shape_inference::ShapeHandle q;
         ::tensorflow::shape_inference::ShapeHandle n;
         TF_RETURN_IF_ERROR(c->MakeShapeFromShapeTensor(0, &p));
-        TF_RETURN_IF_ERROR(c->MakeShapeFromShapeTensor(1, &q));
-        TF_RETURN_IF_ERROR(c->MakeShapeFromShapeTensor(2, &n));
+        TF_RETURN_IF_ERROR(c->MakeShapeFromShapeTensor(0, &q));
+        TF_RETURN_IF_ERROR(c->MakeShapeFromShapeTensor(0, &n));
         c->set_output(0, p);
         c->set_output(1, q);
         c->set_output(2, n);
