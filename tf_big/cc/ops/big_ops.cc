@@ -37,12 +37,20 @@ REGISTER_OP("BigRandomUniform")
 REGISTER_OP("BigRandomPrime")
     .Input("shape: int32")
     .Input("bitlength: int32")
-    .Output("out: variant")
+    .Output("p: variant")
+    .Output("q: variant")
+    .Output("n: variant")
     .SetIsStateful()
     .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
-        ::tensorflow::shape_inference::ShapeHandle out;
-        TF_RETURN_IF_ERROR(c->MakeShapeFromShapeTensor(0, &out));
-        c->set_output(0, out);
+        ::tensorflow::shape_inference::ShapeHandle p;
+        ::tensorflow::shape_inference::ShapeHandle q;
+        ::tensorflow::shape_inference::ShapeHandle n;
+        TF_RETURN_IF_ERROR(c->MakeShapeFromShapeTensor(0, &p));
+        TF_RETURN_IF_ERROR(c->MakeShapeFromShapeTensor(1, &q));
+        TF_RETURN_IF_ERROR(c->MakeShapeFromShapeTensor(2, &n));
+        c->set_output(0, p);
+        c->set_output(1, q);
+        c->set_output(2, n);
         return ::tensorflow::Status::OK();
     });
 

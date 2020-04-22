@@ -225,6 +225,10 @@ def random_uniform(shape, maxval):
   r_raw = ops.big_random_uniform(shape, maxval._raw)
   return Tensor(r_raw)
 
+def random_prime(shape, bitlength):
+  p_raw, q_raw, n_raw = ops.big_random_prime(shape, bitlength)
+  return Tensor(p_raw), Tensor(q_raw), Tensor(n_raw)
+
 
 def add(x, y):
   # TODO(Morten) lifting etc

@@ -317,32 +317,79 @@ class BigRandomUniformOp : public OpKernel {
   }
 };
 
-// class BigRandomPrimeOp : public OpKernel {
-//  public:
-//   explicit BigRandomPrimeOp(OpKernelConstruction* context) : OpKernel(context) {}
+class BigRandomPrimeOp : public OpKernel {
+ public:
+  explicit BigRandomPrimeOp(OpKernelConstruction* context) : OpKernel(context) {}
 
-//   void Compute(OpKernelContext* ctx) override {
-//     const Tensor& bitlength_t = ctx->input(0);
-//     int bitlength = bitlength_t.scalar<int32>();
+  void Compute(OpKernelContext* ctx) override {
+    const Tensor& shape_tensor = ctx->input(0);
+    TensorShape shape;
+    OP_REQUIRES_OK(ctx, MakeShape(shape_tensor, &shape));
 
-//     Tensor* prime_t;
-//     OP_REQUIRES_OK(ctx, ctx->allocate_output(0, TensorShape{}, &prime_t));
-//     res->flat<Variant>()(0) = BigTensor(res_matrix);
+    const Tensor& bitlength_t = ctx->input(1);
+    auto bitlength = bitlength_t.scalar<int32>();
+    auto bitlength_val = bitlength.data();
 
-//     mpz_t p;
-//     mpz_init(p);
+    MatrixXm p_matrix(shape.dim_size(0), shape.dim_size(1));
+    auto p_data = p_matrix.data();
+    auto size = p_matrix.size();
 
-//     gmp_randstate_t state;
-//     gmp_randinit_mt(state);
-//     do {
-// 			mpz_urandomb(p, rand, bitlength);
-//     } while( !mpz_probab_prime_p(p, 10) );
+    MatrixXm q_matrix(shape.dim_size(0), shape.dim_size(1));
+    auto q_data = q_matrix.data();
 
-//     prime_t->flat<Variant>()(0) = BigTensor(p);
+    MatrixXm n_matrix(shape.dim_size(0), shape.dim_size(1));
+    auto n_data = n_matrix.data();
 
-//     mpz_clear(p);
-//   }
-// };
+    mpz_t p;
+    mpz_t q;
+    mpz_t n;
+    mpz_init(p);
+    mpz_init(q);
+    mpz_init(n);
+
+    gmp_randstate_t state;
+    gmp_randinit_mt(state);
+    for (int i = 0; i < size; i++){
+
+      do{
+        do {
+          mpz_urandomb(p, state, *bitlength_val / 2);
+        } while( !mpz_probab_prime_p(p, 10) );
+
+        do {
+          mpz_urandomb(q, state, *bitlength_val / 2);
+        } while( !mpz_probab_prime_p(q, 10) );
+
+        mpz_mul(n, p, q);
+
+        p_data[i] = mpz_class(p);
+        q_data[i] = mpz_class(q);
+        n_data[i] = mpz_class(n);
+
+      } while( !mpz_tstbit(n, *bitlength_val - 1) );
+
+    }
+    
+    mpz_sub_ui(p, p, 1);
+	  mpz_sub_ui(q, q, 1);
+
+    Tensor* p_res;
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, shape, &p_res));
+    p_res->flat<Variant>()(0) = BigTensor(p_matrix);
+
+    Tensor* q_res;
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(1, shape, &q_res));
+    q_res->flat<Variant>()(0) = BigTensor(q_matrix);
+
+    Tensor* n_res;
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(2, shape, &n_res));
+    n_res->flat<Variant>()(0) = BigTensor(n_matrix);
+
+    mpz_clear(p);
+    mpz_clear(q);
+    mpz_clear(n);
+  }
+};
 
 REGISTER_UNARY_VARIANT_DECODE_FUNCTION(BigTensor, BigTensor::kTypeName);
 
@@ -360,7 +407,7 @@ REGISTER_KERNEL_BUILDER(Name("BigExport").Device(DEVICE_CPU).TypeConstraint<int3
 // REGISTER_CPU(int64);
 
 REGISTER_KERNEL_BUILDER(Name("BigRandomUniform").Device(DEVICE_CPU), BigRandomUniformOp);
-// REGISTER_KERNEL_BUILDER(Name("BigRandomPrime").Device(DEVICE_CPU), BigRandomPrimeOp);
+REGISTER_KERNEL_BUILDER(Name("BigRandomPrime").Device(DEVICE_CPU), BigRandomPrimeOp);
 
 REGISTER_KERNEL_BUILDER(Name("BigAdd").Device(DEVICE_CPU), BigAddOp);
 REGISTER_KERNEL_BUILDER(Name("BigSub").Device(DEVICE_CPU), BigSubOp);

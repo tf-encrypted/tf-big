@@ -8,6 +8,7 @@ from tf_big.python.tensor import convert_from_tensor
 from tf_big.python.tensor import convert_to_tensor
 
 from tf_big.python.tensor import random_uniform
+from tf_big.python.tensor import random_prime
 
 from tf_big.python.tensor import add
 from tf_big.python.tensor import sub
@@ -28,6 +29,7 @@ __all__ = [
   'convert_to_tensor',
   
   'random_uniform',
+  'randon_prime',
 
   'add',
   'sub',

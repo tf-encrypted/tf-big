@@ -7,6 +7,7 @@ import tensorflow as tf
 from tf_big.python.tensor import convert_from_tensor
 from tf_big.python.tensor import convert_to_tensor
 from tf_big.python.tensor import random_uniform
+from tf_big.python.tensor import random_prime
 from tf_big.python.test import tf_execution_context
 
 
@@ -44,6 +45,28 @@ class RandomTest(parameterized.TestCase):
 
     assert x.shape == shape
     assert context.evaluate(x).shape == shape
+  
+  @parameterized.parameters(
+      {"run_eagerly": run_eagerly} for run_eagerly in (True, False)
+  )
+  def test_random_prime(self, run_eagerly):
+    shape = (2, 2)
+    bitlength = 1024
+
+    context = tf_execution_context(run_eagerly)
+    with context.scope():
+      p, q, n = random_prime(shape=shape, bitlength=bitlength)
+      p = convert_from_tensor(p)
+      q = convert_from_tensor(q)
+      n = convert_from_tensor(n)
+
+    assert p.shape == shape
+    assert q.shape == shape
+    assert n.shape == shape
+
+    assert context.evaluate(p).shape == shape
+    assert context.evaluate(q).shape == shape
+    assert context.evaluate(n).shape == shape
 
 
 class ArithmeticTest(parameterized.TestCase):
