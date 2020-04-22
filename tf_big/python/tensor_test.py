@@ -7,7 +7,7 @@ import tensorflow as tf
 from tf_big.python.tensor import convert_from_tensor
 from tf_big.python.tensor import convert_to_tensor
 from tf_big.python.tensor import random_uniform
-from tf_big.python.tensor import random_prime
+from tf_big.python.tensor import random_rsa_modulus
 from tf_big.python.test import tf_execution_context
 
 
@@ -47,15 +47,16 @@ class RandomTest(parameterized.TestCase):
     assert context.evaluate(x).shape == shape
   
   @parameterized.parameters(
-      {"run_eagerly": run_eagerly} for run_eagerly in (True, False)
+      # {"run_eagerly": run_eagerly} for run_eagerly in (True, False)
+      {"run_eagerly": True}
   )
-  def test_random_prime(self, run_eagerly):
+  def test_random_rsa_modulus(self, run_eagerly):
     shape = (2, 2)
     bitlength = 1024
 
     context = tf_execution_context(run_eagerly)
     with context.scope():
-      p, q, n = random_prime(shape=shape, bitlength=bitlength)
+      p, q, n = random_rsa_modulus(shape=shape, bitlength=bitlength)
       p = convert_from_tensor(p)
       q = convert_from_tensor(q)
       n = convert_from_tensor(n)

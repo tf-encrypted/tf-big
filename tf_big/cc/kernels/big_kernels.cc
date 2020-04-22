@@ -317,9 +317,9 @@ class BigRandomUniformOp : public OpKernel {
   }
 };
 
-class BigRandomPrimeOp : public OpKernel {
+class BigRandomRsaModulusOp : public OpKernel {
  public:
-  explicit BigRandomPrimeOp(OpKernelConstruction* context) : OpKernel(context) {}
+  explicit BigRandomRsaModulusOp(OpKernelConstruction* context) : OpKernel(context) {}
 
   void Compute(OpKernelContext* ctx) override {
     const Tensor& shape_tensor = ctx->input(0);
@@ -407,7 +407,7 @@ REGISTER_KERNEL_BUILDER(Name("BigExport").Device(DEVICE_CPU).TypeConstraint<int3
 // REGISTER_CPU(int64);
 
 REGISTER_KERNEL_BUILDER(Name("BigRandomUniform").Device(DEVICE_CPU), BigRandomUniformOp);
-REGISTER_KERNEL_BUILDER(Name("BigRandomPrime").Device(DEVICE_CPU), BigRandomPrimeOp);
+REGISTER_KERNEL_BUILDER(Name("BigRandomRsaModulus").Device(DEVICE_CPU), BigRandomRsaModulusOp);
 
 REGISTER_KERNEL_BUILDER(Name("BigAdd").Device(DEVICE_CPU), BigAddOp);
 REGISTER_KERNEL_BUILDER(Name("BigSub").Device(DEVICE_CPU), BigSubOp);

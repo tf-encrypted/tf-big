@@ -34,7 +34,7 @@ REGISTER_OP("BigRandomUniform")
         return ::tensorflow::Status::OK();
     });
 
-REGISTER_OP("BigRandomPrime")
+REGISTER_OP("BigRandomRsaModulus")
     .Input("shape: int32")
     .Input("bitlength: int32")
     .Output("p: variant")
