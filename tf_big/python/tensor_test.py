@@ -50,8 +50,8 @@ class RandomTest(parameterized.TestCase):
       {"run_eagerly": run_eagerly} for run_eagerly in (True, False)
   )
   def test_random_rsa_modulus(self, run_eagerly):
-    bitlength = 1024
-    shape = (1, 1)
+    bitlength = 128
+    shape = ()
 
     context = tf_execution_context(run_eagerly)
     with context.scope():

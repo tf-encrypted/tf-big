@@ -360,18 +360,18 @@ class BigRandomRsaModulusOp : public OpKernel {
     q_data[0] = mpz_class(q);
     n_data[0] = mpz_class(n);
     
-    TensorShape shape({1, 1});
+    TensorShape shape({});
     Tensor* p_res;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(0, shape, &p_res));
-    p_res->flat<Variant>()(0) = BigTensor(p_matrix);
+    p_res->scalar<Variant>()(0) = BigTensor(p_matrix);
 
     Tensor* q_res;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(1, shape, &q_res));
-    q_res->flat<Variant>()(0) = BigTensor(q_matrix);
+    q_res->scalar<Variant>()(0) = BigTensor(q_matrix);
 
     Tensor* n_res;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(2, shape, &n_res));
-    n_res->flat<Variant>()(0) = BigTensor(n_matrix);
+    n_res->scalar<Variant>()(0) = BigTensor(n_matrix);
 
     mpz_clear(p);
     mpz_clear(q);
