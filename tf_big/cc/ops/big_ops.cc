@@ -125,12 +125,18 @@ REGISTER_OP("BigPow")
         return ::tensorflow::Status::OK();
     });
 
-// TODO(Morten) add shape inference function
 REGISTER_OP("BigMatMul")
     .Input("val0: variant")
     .Input("val1: variant")
     .Output("res: variant")
-    .SetIsStateful();
+    .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
+        ::tensorflow::shape_inference::ShapeHandle val0 = c->input(0);
+        ::tensorflow::shape_inference::ShapeHandle val1 = c->input(1);
+        ::tensorflow::shape_inference::ShapeHandle res;
+        TF_RETURN_IF_ERROR(c->Merge(val0, val1, &res));
+        c->set_output(0, res);
+        return ::tensorflow::Status::OK();
+    });
 
 REGISTER_OP("BigMod")
     .Input("val: variant")

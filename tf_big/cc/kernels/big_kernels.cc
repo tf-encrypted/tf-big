@@ -216,7 +216,8 @@ class BigMatMulOp : public OpKernel {
     OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 1, &val2));
 
     Tensor* output;
-    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, TensorShape{}, &output));
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, 
+        TensorShape{val1->rows(), val2->cols()}, &output));
 
     auto res = *val1 * *val2;
 
