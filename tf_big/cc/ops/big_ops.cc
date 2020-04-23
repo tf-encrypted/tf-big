@@ -41,9 +41,11 @@ REGISTER_OP("BigRandomRsaModulus")
     .Output("n: variant")
     .SetIsStateful()
     .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
+        ::tensorflow::shape_inference::ShapeHandle bitlength_shape = c->input(0);
         ::tensorflow::shape_inference::ShapeHandle p_shape = c->MakeShape({1, 1});
         ::tensorflow::shape_inference::ShapeHandle q_shape = c->MakeShape({1, 1});
         ::tensorflow::shape_inference::ShapeHandle n_shape = c->MakeShape({1, 1});
+        TF_RETURN_IF_ERROR(c->WithRank(bitlength_shape, 0, &bitlength_shape));
         c->set_output(0, p_shape);
         c->set_output(1, q_shape);
         c->set_output(2, n_shape);
