@@ -10,6 +10,7 @@
 
 #include "tf_big/cc/big_tensor.h"
 
+
 using namespace tensorflow;  // NOLINT
 using tf_big::BigTensor;
 
@@ -17,6 +18,7 @@ Status GetBigTensor(OpKernelContext* ctx, int index, const BigTensor** res) {
   const Tensor& input = ctx->input(index);
 
   const BigTensor* big = input.flat<Variant>()(0).get<BigTensor>();
+
   if (big == nullptr) {
     return errors::InvalidArgument("Input handle is not a big tensor. Saw: '",
                                    input.flat<Variant>()(0).DebugString(),
@@ -56,13 +58,14 @@ class BigExportOp : public OpKernel {
 
   void Compute(OpKernelContext* ctx) override {
     const BigTensor* val = nullptr;
+    TensorShape input_shape = ctx->input(0).shape();
     OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 0, &val));
-    auto output_shape = TensorShape{val->rows(), val->cols()};
 
     Tensor* output;
-    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, output_shape, &output));
+    OP_REQUIRES_OK(ctx, ctx->allocate_output(0, input_shape, &output));
 
     val->ToTensor<T>(output);
+
   }
 };
 

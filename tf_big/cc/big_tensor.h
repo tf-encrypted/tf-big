@@ -84,10 +84,15 @@ struct BigTensor {
     auto rows = value.rows();
     auto cols = value.cols();
 
-    auto mat = t->matrix<T>();
-    for (int i = 0; i < rows; i++) {
-      for (int j = 0; j < cols; j++) {
-        mat(i, j) = value(i, j).get_str();
+    if ((rows==1) && (cols==1)){
+      auto mat = t->scalar<T>();
+      mat(0) = value(0, 0).get_str();
+    }else{
+      auto mat = t->matrix<T>();
+      for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+          mat(i, j) = value(i, j).get_str();
+        }
       }
     }
   }

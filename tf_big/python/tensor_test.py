@@ -56,6 +56,7 @@ class RandomTest(parameterized.TestCase):
     context = tf_execution_context(run_eagerly)
     with context.scope():
       p, q, n = random_rsa_modulus(bitlength=bitlength)
+
       p = convert_from_tensor(p)
       q = convert_from_tensor(q)
       n = convert_from_tensor(n)
@@ -64,9 +65,9 @@ class RandomTest(parameterized.TestCase):
     assert q.shape == shape
     assert n.shape == shape
 
-    assert context.evaluate(p).shape == shape
-    assert context.evaluate(q).shape == shape
-    assert context.evaluate(n).shape == shape
+    assert isinstance(context.evaluate(p), bytes)
+    assert isinstance(context.evaluate(q), bytes)
+    assert isinstance(context.evaluate(n), bytes)
 
 
 class ArithmeticTest(parameterized.TestCase):
