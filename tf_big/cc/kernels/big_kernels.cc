@@ -322,20 +322,16 @@ class BigRandomRsaModulusOp : public OpKernel {
   explicit BigRandomRsaModulusOp(OpKernelConstruction* context) : OpKernel(context) {}
 
   void Compute(OpKernelContext* ctx) override {
-    const Tensor& shape_tensor = ctx->input(0);
-    TensorShape shape;
-    OP_REQUIRES_OK(ctx, MakeShape(shape_tensor, &shape));
 
-    const Tensor& bitlength_t = ctx->input(1);
+    const Tensor& bitlength_t = ctx->input(0);
     auto bitlength = bitlength_t.scalar<int32>();
     auto bitlength_val = bitlength.data();
 
-    MatrixXm p_matrix(shape.dim_size(0), shape.dim_size(1));
+    MatrixXm p_matrix(1, 1);
     auto p_data = p_matrix.data();
-    auto size = p_matrix.size();
-    MatrixXm q_matrix(shape.dim_size(0), shape.dim_size(1));
+    MatrixXm q_matrix(1, 1);
     auto q_data = q_matrix.data();
-    MatrixXm n_matrix(shape.dim_size(0), shape.dim_size(1));
+    MatrixXm n_matrix(1, 1);
     auto n_data = n_matrix.data();
 
     gmp_randstate_t state;
@@ -347,28 +343,24 @@ class BigRandomRsaModulusOp : public OpKernel {
     mpz_init(q);
     mpz_init(n);
 
-    for (int i = 0; i < size; i++){
-      do{
-        do {
-          mpz_urandomb(p, state, *bitlength_val / 2);
-        } while( !mpz_probab_prime_p(p, 10) );
+    do{
+      do {
+        mpz_urandomb(p, state, *bitlength_val / 2);
+      } while( !mpz_probab_prime_p(p, 10) );
 
-        do {
-          mpz_urandomb(q, state, *bitlength_val / 2);
-        } while( !mpz_probab_prime_p(q, 10) );
+      do {
+        mpz_urandomb(q, state, *bitlength_val / 2);
+      } while( !mpz_probab_prime_p(q, 10) );
 
-        mpz_mul(n, p, q);
+      mpz_mul(n, p, q);
 
-      } while( !mpz_tstbit(n, *bitlength_val - 1) );
+    } while( !mpz_tstbit(n, *bitlength_val - 1) );
 
-      p_data[i] = mpz_class(p);
-      q_data[i] = mpz_class(q);
-      n_data[i] = mpz_class(n);
-    }
+    p_data[0] = mpz_class(p);
+    q_data[0] = mpz_class(q);
+    n_data[0] = mpz_class(n);
     
-    mpz_sub_ui(p, p, 1);
-	  mpz_sub_ui(q, q, 1);
-
+    TensorShape shape({1, 1});
     Tensor* p_res;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(0, shape, &p_res));
     p_res->flat<Variant>()(0) = BigTensor(p_matrix);

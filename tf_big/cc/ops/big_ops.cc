@@ -35,22 +35,18 @@ REGISTER_OP("BigRandomUniform")
     });
 
 REGISTER_OP("BigRandomRsaModulus")
-    .Input("shape: int32")
     .Input("bitlength: int32")
     .Output("p: variant")
     .Output("q: variant")
     .Output("n: variant")
     .SetIsStateful()
     .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
-        ::tensorflow::shape_inference::ShapeHandle p;
-        ::tensorflow::shape_inference::ShapeHandle q;
-        ::tensorflow::shape_inference::ShapeHandle n;
-        TF_RETURN_IF_ERROR(c->MakeShapeFromShapeTensor(0, &p));
-        TF_RETURN_IF_ERROR(c->MakeShapeFromShapeTensor(0, &q));
-        TF_RETURN_IF_ERROR(c->MakeShapeFromShapeTensor(0, &n));
-        c->set_output(0, p);
-        c->set_output(1, q);
-        c->set_output(2, n);
+        ::tensorflow::shape_inference::ShapeHandle p_shape = c->MakeShape({1, 1});
+        ::tensorflow::shape_inference::ShapeHandle q_shape = c->MakeShape({1, 1});
+        ::tensorflow::shape_inference::ShapeHandle n_shape = c->MakeShape({1, 1});
+        c->set_output(0, p_shape);
+        c->set_output(1, q_shape);
+        c->set_output(2, n_shape);
         return ::tensorflow::Status::OK();
     });
 

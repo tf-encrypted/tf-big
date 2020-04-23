@@ -225,8 +225,8 @@ def random_uniform(shape, maxval):
   r_raw = ops.big_random_uniform(shape, maxval._raw)
   return Tensor(r_raw)
 
-def random_rsa_modulus(shape, bitlength):
-  p_raw, q_raw, n_raw = ops.big_random_rsa_modulus(shape, bitlength)
+def random_rsa_modulus(bitlength):
+  p_raw, q_raw, n_raw = ops.big_random_rsa_modulus(bitlength)
   return Tensor(p_raw), Tensor(q_raw), Tensor(n_raw)
 
 
