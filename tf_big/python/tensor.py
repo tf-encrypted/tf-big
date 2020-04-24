@@ -177,6 +177,10 @@ def _convert_tensorflow_tensor(tensor):
 
 def convert_to_tensor(tensor):
   if isinstance(tensor, Tensor):
+    # Big tensor ops expect tensors of rank >= 2
+    rank = tensor._raw.shape.rank
+    if rank in (0, 1):
+      tensor._raw = tf.reshape(tensor._raw, [1,1])
     return tensor
 
   if tensor is None:
