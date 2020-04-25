@@ -82,7 +82,7 @@ class ArithmeticTest(parameterized.TestCase):
       )
   )
   def test_op(self, run_eagerly, op_name, op):
-    x_raw = np.array([[123456789123456789687293389, 123456789125927572056789]])
+    x_raw = np.array([[123456789123456789687293389]])
     y_raw = np.array([[123456785629362289123456789, 123456789123456723456789]])
     z_raw = op(x_raw, y_raw)
 
@@ -92,6 +92,7 @@ class ArithmeticTest(parameterized.TestCase):
       x = convert_to_tensor(x_raw)
       y = convert_to_tensor(y_raw)
       z = op(x, y)
+
       z = convert_from_tensor(z)
 
     np.testing.assert_array_equal(context.evaluate(z).astype(str), z_raw.astype(str))

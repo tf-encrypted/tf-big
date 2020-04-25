@@ -37,26 +37,41 @@ class Tensor(object):
 
   def __add__(self, other):
     other = convert_to_tensor(other)
+    # TODO (Yann) This broadcast should be implemented
+    # in big_kernels.cc
+    self, other = broadcast(self, other)
     res = ops.big_add(self._raw, other._raw)
     return Tensor(res)
 
   def __radd__(self, other):
     other = convert_to_tensor(other)
+    # TODO (Yann) This broadcast should be implemented
+    # in big_kernels.cc
+    self, other = broadcast(self, other)
     res = ops.big_add(self._raw, other._raw)
     return Tensor(res)
 
   def __sub__(self, other):
     other = convert_to_tensor(other)
+    # TODO (Yann) This broadcast should be implemented
+    # in big_kernels.cc
+    self, other = broadcast(self, other)
     res = ops.big_sub(self._raw, other._raw)
     return Tensor(res)
 
   def __mul__(self, other):
     other = convert_to_tensor(other)
+    # TODO (Yann) This broadcast should be implemented
+    # in big_kernels.cc
+    self, other = broadcast(self, other)
     res = ops.big_mul(self._raw, other._raw)
     return Tensor(res)
 
   def __floordiv__(self, other):
     other = convert_to_tensor(other)
+    # TODO (Yann) This broadcast should be implemented
+    # in big_kernels.cc
+    self, other = broadcast(self, other)
     res = ops.big_div(self._raw, other._raw)
     return Tensor(res)
 
@@ -262,3 +277,40 @@ def mod(x, n):
 
 def inv(x, n):
   return x.inv(n)
+
+def broadcast(x, y):
+
+  x = convert_from_tensor(x)
+  y = convert_from_tensor(y)
+
+  x_rank = x.shape.rank
+  y_rank = y.shape.rank
+  x_nb_el = x.shape.num_elements()
+  y_nb_el = y.shape.num_elements()
+
+  if x_rank != y_rank: 
+    if x_rank < y_rank: 
+      x = tf.broadcast_to(x, y.shape) 
+    elif y_rank < x_rank: 
+      y = tf.broadcast_to(y, x.shape) 
+
+    x = convert_to_tensor(x)
+    y = convert_to_tensor(y)
+
+    return x, y
+
+  elif x_nb_el != y_nb_el:
+    if x_nb_el < y_nb_el:
+      x = tf.broadcast_to(x, y.shape)
+    elif x_nb_el > y_nb_el:
+      y = tf.broadcast_to(y, x.shape)
+    
+    x = convert_to_tensor(x)
+    y = convert_to_tensor(y)
+
+    return x, y
+
+  x = convert_to_tensor(x)
+  y = convert_to_tensor(y)
+
+  return x, y
