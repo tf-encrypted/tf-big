@@ -2,6 +2,7 @@
 #include "tensorflow/core/framework/common_shape_fns.h"
 #include "tensorflow/core/framework/shape_inference.h"
 
+
 REGISTER_OP("BigImport")
     .Attr("dtype: {int32, string}")
     .Input("in: dtype")
@@ -42,13 +43,11 @@ REGISTER_OP("BigRandomRsaModulus")
     .SetIsStateful()
     .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
         ::tensorflow::shape_inference::ShapeHandle bitlength_shape = c->input(0);
-        ::tensorflow::shape_inference::ShapeHandle p_shape = c->MakeShape({});
-        ::tensorflow::shape_inference::ShapeHandle q_shape = c->MakeShape({});
-        ::tensorflow::shape_inference::ShapeHandle n_shape = c->MakeShape({});
+        ::tensorflow::shape_inference::ShapeHandle scalar_shape = c->MakeShape({});
         TF_RETURN_IF_ERROR(c->WithRank(bitlength_shape, 0, &bitlength_shape));
-        c->set_output(0, p_shape);
-        c->set_output(1, q_shape);
-        c->set_output(2, n_shape);
+        c->set_output(0, scalar_shape);
+        c->set_output(1, scalar_shape);
+        c->set_output(2, scalar_shape);
         return ::tensorflow::Status::OK();
     });
 
@@ -103,6 +102,7 @@ REGISTER_OP("BigDiv")
         ::tensorflow::shape_inference::ShapeHandle val0 = c->input(0);
         ::tensorflow::shape_inference::ShapeHandle val1 = c->input(1);
         ::tensorflow::shape_inference::ShapeHandle res;
+
         TF_RETURN_IF_ERROR(c->Merge(val0, val1, &res));
         c->set_output(0, res);
         return ::tensorflow::Status::OK();
@@ -125,18 +125,12 @@ REGISTER_OP("BigPow")
         return ::tensorflow::Status::OK();
     });
 
+// TODO(Morten) add shape inference function
 REGISTER_OP("BigMatMul")
     .Input("val0: variant")
     .Input("val1: variant")
     .Output("res: variant")
-    .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
-        ::tensorflow::shape_inference::ShapeHandle val0 = c->input(0);
-        ::tensorflow::shape_inference::ShapeHandle val1 = c->input(1);
-        ::tensorflow::shape_inference::ShapeHandle res;
-        TF_RETURN_IF_ERROR(c->Merge(val0, val1, &res));
-        c->set_output(0, res);
-        return ::tensorflow::Status::OK();
-    });
+    .SetIsStateful();
 
 REGISTER_OP("BigMod")
     .Input("val: variant")

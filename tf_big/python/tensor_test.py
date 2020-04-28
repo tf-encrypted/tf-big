@@ -52,7 +52,7 @@ class RandomTest(parameterized.TestCase):
   )
   def test_random_rsa_modulus(self, run_eagerly):
     bitlength = 128
-    shape = ()
+    expected_shape = ()
 
     context = tf_execution_context(run_eagerly)
     with context.scope():
@@ -62,9 +62,9 @@ class RandomTest(parameterized.TestCase):
       q = convert_from_tensor(q)
       n = convert_from_tensor(n)
 
-    assert p.shape == shape
-    assert q.shape == shape
-    assert n.shape == shape
+    assert p.shape == expected_shape
+    assert q.shape == expected_shape
+    assert n.shape == expected_shape
 
     assert isinstance(context.evaluate(p), bytes)
     assert isinstance(context.evaluate(q), bytes)
@@ -74,17 +74,29 @@ class RandomTest(parameterized.TestCase):
 class ArithmeticTest(parameterized.TestCase):
 
   @parameterized.parameters(
-      {"run_eagerly": run_eagerly, "op_name": op_name, "op": op}
+      {"run_eagerly": run_eagerly, 
+       "op_name": op_name, 
+       "op": op,
+       "x_raw": x_raw,
+       "y_raw": y_raw}
       for run_eagerly in (True, False)
       for op_name, op in (
           ("add", lambda x, y: x + y),
           ("sub", lambda x, y: x - y),
           ("mul", lambda x, y: x * y),
       )
+      for x_raw in (
+          np.array([[123456789123456789687293389]]), 
+          np.array([[123456789123456789687293389, 
+                     123456789123456789687293432]])
+        )
+      for y_raw in (
+          np.array([[123456789123456789687293389, 
+                               123456789123456789687293432]]), 
+          np.array([[123456789123456789687293389]])
+        )
   )
-  def test_op(self, run_eagerly, op_name, op):
-    x_raw = np.array([[123456789123456789687293389]])
-    y_raw = np.array([[123456785629362289123456789, 123456789123456723456789]])
+  def test_op(self, run_eagerly, op_name, op, x_raw, y_raw):
     z_raw = op(x_raw, y_raw)
 
     context = tf_execution_context(run_eagerly)
@@ -99,12 +111,12 @@ class ArithmeticTest(parameterized.TestCase):
     np.testing.assert_array_equal(context.evaluate(z).astype(str), z_raw.astype(str))
 
   @parameterized.parameters(
-      {"run_eagerly": run_eagerly}
+      {"run_eagerly": run_eagerly, "x_raw": x_raw, "y_raw": y_raw}
       for run_eagerly in (True, False)
+      for x_raw in (np.array([[3]]), np.array([[3, 4]]))
+      for y_raw in (np.array([[4, 2]]), np.array([[2]]))
   )
-  def test_pow(self, run_eagerly):
-    x_raw = np.array([[3]])
-    y_raw = np.array([[4, 2]])
+  def test_pow(self, run_eagerly, x_raw, y_raw):
     m_raw = np.array([[5]])
 
     z_raw = np.mod(np.power(x_raw, y_raw), m_raw)

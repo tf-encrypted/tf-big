@@ -195,10 +195,6 @@ def _convert_tensorflow_tensor(tensor):
 
 def convert_to_tensor(tensor):
   if isinstance(tensor, Tensor):
-    # Big Tensor ops expect tensors of rank >= 2
-    rank = tensor._raw.shape.rank
-    if rank == 0:
-      tensor._raw = tf.reshape(tensor._raw, [1,1])
     return tensor
 
   if tensor is None:
@@ -283,15 +279,16 @@ def inv(x, n):
 
 def broadcast(x, y):
 
-  x = convert_from_tensor(x)
-  y = convert_from_tensor(y)
-
   x_rank = x.shape.rank
   y_rank = y.shape.rank
   x_nb_el = x.shape.num_elements()
   y_nb_el = y.shape.num_elements()
 
+  # e.g broadcast [1] with [1, 1]
   if x_rank != y_rank: 
+    x = convert_from_tensor(x)
+    y = convert_from_tensor(y)
+
     if x_rank < y_rank: 
       x = tf.broadcast_to(x, y.shape) 
     elif y_rank < x_rank: 
@@ -302,7 +299,11 @@ def broadcast(x, y):
 
     return x, y
 
+  # e.g broadcast [1, 1] with [1, 2]
   elif x_nb_el != y_nb_el:
+    x = convert_from_tensor(x)
+    y = convert_from_tensor(y)
+
     if x_nb_el < y_nb_el:
       x = tf.broadcast_to(x, y.shape)
     elif x_nb_el > y_nb_el:
@@ -312,8 +313,5 @@ def broadcast(x, y):
     y = convert_to_tensor(y)
 
     return x, y
-
-  x = convert_to_tensor(x)
-  y = convert_to_tensor(y)
 
   return x, y
