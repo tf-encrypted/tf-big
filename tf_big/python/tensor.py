@@ -76,8 +76,11 @@ class Tensor(object):
     return Tensor(res)
 
   def pow(self, exponent, modulus=None, secure=None):
+    # TODO (Yann) This broadcast should be implemented
+    # in big_kernels.cc
     exponent = convert_to_tensor(exponent)
     modulus = convert_to_tensor(modulus)
+    self, exponent = broadcast(self, exponent)
     res = ops.big_pow(base=self._raw,
                       exponent=exponent._raw,
                       modulus=modulus._raw if modulus else None,

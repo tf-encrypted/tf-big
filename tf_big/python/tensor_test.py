@@ -6,6 +6,7 @@ import tensorflow as tf
 
 from tf_big.python.tensor import convert_from_tensor
 from tf_big.python.tensor import convert_to_tensor
+from tf_big.python.tensor import pow
 from tf_big.python.tensor import random_uniform
 from tf_big.python.tensor import random_rsa_modulus
 from tf_big.python.test import tf_execution_context
@@ -92,6 +93,29 @@ class ArithmeticTest(parameterized.TestCase):
       x = convert_to_tensor(x_raw)
       y = convert_to_tensor(y_raw)
       z = op(x, y)
+
+      z = convert_from_tensor(z)
+
+    np.testing.assert_array_equal(context.evaluate(z).astype(str), z_raw.astype(str))
+
+  @parameterized.parameters(
+      {"run_eagerly": run_eagerly}
+      for run_eagerly in (True, False)
+  )
+  def test_pow(self, run_eagerly):
+    x_raw = np.array([[3]])
+    y_raw = np.array([[4, 2]])
+    m_raw = np.array([[5]])
+
+    z_raw = np.mod(np.power(x_raw, y_raw), m_raw)
+
+    context = tf_execution_context(run_eagerly)
+    with context.scope():
+
+      x = convert_to_tensor(x_raw)
+      y = convert_to_tensor(y_raw)
+      m = convert_to_tensor(m_raw)
+      z = pow(x, y, m)
 
       z = convert_from_tensor(z)
 

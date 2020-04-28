@@ -169,7 +169,7 @@ class BigPowOp : public OpKernel {
     Tensor* output;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(0, base->shape(), &output));
 
-    auto exponent = exponent_t->value(0, 0);
+    auto exponent = exponent_t->value.data();
     auto modulus = modulus_t->value(0, 0);
 
     MatrixXm res(base->rows(), base->cols());
@@ -183,13 +183,13 @@ class BigPowOp : public OpKernel {
         mpz_powm_sec(
             tmp,
             v[i].get_mpz_t(),
-            exponent.get_mpz_t(),
+            exponent[i].get_mpz_t(),
             modulus.get_mpz_t());
       } else {
         mpz_powm(
           tmp,
           v[i].get_mpz_t(),
-          exponent.get_mpz_t(),
+          exponent[i].get_mpz_t(),
           modulus.get_mpz_t());
       }
 
