@@ -88,8 +88,13 @@ REGISTER_OP("BigMul")
         ::tensorflow::shape_inference::ShapeHandle val0 = c->input(0);
         ::tensorflow::shape_inference::ShapeHandle val1 = c->input(1);
         ::tensorflow::shape_inference::ShapeHandle res;
-        TF_RETURN_IF_ERROR(c->Merge(val0, val1, &res));
-        c->set_output(0, res);
+        // NOTE: Bug - without this condition returns shape of [1,1,1,1]
+        if ((c->Rank(val0)==0) & (c->Rank(val1)==0)){
+            c->set_output(0, c->MakeShape({1, 1}));
+        } else{
+            TF_RETURN_IF_ERROR(c->Merge(val0, val1, &res));
+            c->set_output(0, res);
+        }
         return ::tensorflow::Status::OK();
     });
 
