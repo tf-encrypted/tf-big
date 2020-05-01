@@ -286,31 +286,31 @@ def broadcast(x, y):
 
   # e.g broadcast [1] with [1, 1]
   if x_rank != y_rank: 
-    x = convert_from_tensor(x)
-    y = convert_from_tensor(y)
 
-    if x_rank < y_rank: 
+    if x_rank < y_rank:
+      x = convert_from_tensor(x)
       x = tf.broadcast_to(x, y.shape) 
-    elif y_rank < x_rank: 
-      y = tf.broadcast_to(y, x.shape) 
+      x = convert_to_tensor(x)
 
-    x = convert_to_tensor(x)
-    y = convert_to_tensor(y)
+    elif y_rank < x_rank: 
+      y = convert_from_tensor(y)
+      y = tf.broadcast_to(y, x.shape) 
+      y = convert_to_tensor(y)
 
     return x, y
 
   # e.g broadcast [1, 1] with [1, 2]
   elif x_nb_el != y_nb_el:
-    x = convert_from_tensor(x)
-    y = convert_from_tensor(y)
 
     if x_nb_el < y_nb_el:
+      x = convert_from_tensor(x)
       x = tf.broadcast_to(x, y.shape)
+      x = convert_to_tensor(x)
+
     elif x_nb_el > y_nb_el:
+      y = convert_from_tensor(y)
       y = tf.broadcast_to(y, x.shape)
-    
-    x = convert_to_tensor(x)
-    y = convert_to_tensor(y)
+      y = convert_to_tensor(y)
 
     return x, y
 
