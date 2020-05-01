@@ -1,7 +1,8 @@
-#include <gmp.h>
-#include <string>
-
 #include "tf_big/cc/big_tensor.h"
+
+#include <gmp.h>
+
+#include <string>
 
 namespace tf_big {
 BigTensor::BigTensor(const MatrixXm& mat) { value = mat; }

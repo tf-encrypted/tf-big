@@ -9,6 +9,7 @@ from tf_big.python.ops.big_ops import big_export
 from tf_big.python.ops.big_ops import big_add
 from tf_big.python.ops.big_ops import big_matmul
 from tf_big.python.ops.big_ops import big_mul
+from tf_big.python.ops.big_ops import big_div
 from tf_big.python.ops.big_ops import big_mod
 from tf_big.python.ops.big_ops import big_pow
 from tf_big.python.test import tf_execution_context
@@ -122,6 +123,24 @@ class BigTest(parameterized.TestCase):
       a_var = big_import(a)
       b_var = big_import(b)
       c_var = big_mul(a_var, b_var)
+      c_str = big_export(c_var, tf.int32)
+
+    np.testing.assert_equal(context.evaluate(c_str), expected)
+
+  @parameterized.parameters(
+      {"run_eagerly": run_eagerly} for run_eagerly in (True, False)
+  )
+  def test_div(self, run_eagerly):
+    a = np.array([[10, 11], [15, 5]]).astype(np.int32)
+    b = np.array([[5, 5], [5, 5]]).astype(np.int32)
+    expected = a // b
+
+    context = tf_execution_context(run_eagerly)
+    with context.scope():
+
+      a_var = big_import(a)
+      b_var = big_import(b)
+      c_var = big_div(a_var, b_var)
       c_str = big_export(c_var, tf.int32)
 
     np.testing.assert_equal(context.evaluate(c_str), expected)

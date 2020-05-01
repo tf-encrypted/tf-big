@@ -6,6 +6,8 @@
 
 #include <string>
 
+#include "Eigen/Core"
+#include "Eigen/Dense"
 #include "tensorflow/core/framework/op.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
@@ -14,14 +16,11 @@
 #include "tensorflow/core/framework/variant_op_registry.h"
 #include "tensorflow/core/framework/variant_tensor_data.h"
 
-#include "Eigen/Core"
-#include "Eigen/Dense"
-
 using Eigen::Dynamic;
 using Eigen::Index;
 using Eigen::Matrix;
 
-using namespace tensorflow; // NOLINT
+using namespace tensorflow;  // NOLINT
 
 namespace Eigen {
 template <>
@@ -84,10 +83,15 @@ struct BigTensor {
     auto rows = value.rows();
     auto cols = value.cols();
 
-    auto mat = t->matrix<T>();
-    for (int i = 0; i < rows; i++) {
-      for (int j = 0; j < cols; j++) {
-        mat(i, j) = value(i, j).get_str();
+    if ((rows == 1) && (cols == 1)) {
+      auto mat = t->scalar<T>();
+      mat(0) = value(0, 0).get_str();
+    } else {
+      auto mat = t->matrix<T>();
+      for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+          mat(i, j) = value(i, j).get_str();
+        }
       }
     }
   }
@@ -131,9 +135,15 @@ struct BigTensor {
     return BigTensor(this->value.cwiseProduct(rhs.value));
   }
 
+  BigTensor cwiseQuotient(const BigTensor& rhs) const {
+    return BigTensor(this->value.cwiseQuotient(rhs.value));
+  }
+
   Index rows() const { return value.rows(); }
 
   Index cols() const { return value.cols(); }
+
+  TensorShape shape() const { return TensorShape{value.rows(), value.cols()}; }
 
   MatrixXm value;
 };

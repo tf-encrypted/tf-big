@@ -6,7 +6,9 @@ import tensorflow as tf
 
 from tf_big.python.tensor import convert_from_tensor
 from tf_big.python.tensor import convert_to_tensor
+from tf_big.python.tensor import pow
 from tf_big.python.tensor import random_uniform
+from tf_big.python.tensor import random_rsa_modulus
 from tf_big.python.test import tf_execution_context
 
 
@@ -21,7 +23,9 @@ class EvaluationTest(parameterized.TestCase):
     context = tf_execution_context(run_eagerly)
     with context.scope():
       x = convert_to_tensor(x_raw)
+      assert x.shape == x_raw.shape
       x = convert_from_tensor(x)
+      assert x.shape == x_raw.shape
 
     np.testing.assert_array_equal(context.evaluate(x).astype(str), x_raw.astype(str))
 
@@ -42,22 +46,57 @@ class RandomTest(parameterized.TestCase):
 
     assert x.shape == shape
     assert context.evaluate(x).shape == shape
+  
+  @parameterized.parameters(
+      {"run_eagerly": run_eagerly} for run_eagerly in (True, False)
+  )
+  def test_random_rsa_modulus(self, run_eagerly):
+    bitlength = 128
+    expected_shape = ()
+
+    context = tf_execution_context(run_eagerly)
+    with context.scope():
+      p, q, n = random_rsa_modulus(bitlength=bitlength)
+
+      p = convert_from_tensor(p)
+      q = convert_from_tensor(q)
+      n = convert_from_tensor(n)
+
+    assert p.shape == expected_shape
+    assert q.shape == expected_shape
+    assert n.shape == expected_shape
+
+    assert isinstance(context.evaluate(p), bytes)
+    assert isinstance(context.evaluate(q), bytes)
+    assert isinstance(context.evaluate(n), bytes)
 
 
 class ArithmeticTest(parameterized.TestCase):
 
   @parameterized.parameters(
-      {"run_eagerly": run_eagerly, "op_name": op_name, "op": op}
+      {"run_eagerly": run_eagerly, 
+       "op_name": op_name, 
+       "op": op,
+       "x_raw": x_raw,
+       "y_raw": y_raw}
       for run_eagerly in (True, False)
       for op_name, op in (
           ("add", lambda x, y: x + y),
           ("sub", lambda x, y: x - y),
           ("mul", lambda x, y: x * y),
       )
+      for x_raw in (
+          np.array([[123456789123456789687293389]]), 
+          np.array([[123456789123456789687293389, 
+                     123456789123456789687293432]])
+        )
+      for y_raw in (
+          np.array([[123456789123456789687293389, 
+                               123456789123456789687293432]]), 
+          np.array([[123456789123456789687293389]])
+        )
   )
-  def test_op(self, run_eagerly, op_name, op):
-    x_raw = np.array([[123456789123456789687293389, 123456789125927572056789]])
-    y_raw = np.array([[123456785629362289123456789, 123456789123456723456789]])
+  def test_op(self, run_eagerly, op_name, op, x_raw, y_raw):
     z_raw = op(x_raw, y_raw)
 
     context = tf_execution_context(run_eagerly)
@@ -66,6 +105,30 @@ class ArithmeticTest(parameterized.TestCase):
       x = convert_to_tensor(x_raw)
       y = convert_to_tensor(y_raw)
       z = op(x, y)
+
+      z = convert_from_tensor(z)
+
+    np.testing.assert_array_equal(context.evaluate(z).astype(str), z_raw.astype(str))
+
+  @parameterized.parameters(
+      {"run_eagerly": run_eagerly, "x_raw": x_raw, "y_raw": y_raw}
+      for run_eagerly in (True, False)
+      for x_raw in (np.array([[3]]), np.array([[3, 4]]))
+      for y_raw in (np.array([[4, 2]]), np.array([[2]]))
+  )
+  def test_pow(self, run_eagerly, x_raw, y_raw):
+    m_raw = np.array([[5]])
+
+    z_raw = np.mod(np.power(x_raw, y_raw), m_raw)
+
+    context = tf_execution_context(run_eagerly)
+    with context.scope():
+
+      x = convert_to_tensor(x_raw)
+      y = convert_to_tensor(y_raw)
+      m = convert_to_tensor(m_raw)
+      z = pow(x, y, m)
+
       z = convert_from_tensor(z)
 
     np.testing.assert_array_equal(context.evaluate(z).astype(str), z_raw.astype(str))

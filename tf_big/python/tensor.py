@@ -37,22 +37,50 @@ class Tensor(object):
 
   def __add__(self, other):
     other = convert_to_tensor(other)
+    # TODO (Yann) This broadcast should be implemented
+    # in big_kernels.cc
+    self, other = broadcast(self, other)
+    res = ops.big_add(self._raw, other._raw)
+    return Tensor(res)
+
+  def __radd__(self, other):
+    other = convert_to_tensor(other)
+    # TODO (Yann) This broadcast should be implemented
+    # in big_kernels.cc
+    self, other = broadcast(self, other)
     res = ops.big_add(self._raw, other._raw)
     return Tensor(res)
 
   def __sub__(self, other):
     other = convert_to_tensor(other)
+    # TODO (Yann) This broadcast should be implemented
+    # in big_kernels.cc
+    self, other = broadcast(self, other)
     res = ops.big_sub(self._raw, other._raw)
     return Tensor(res)
 
   def __mul__(self, other):
     other = convert_to_tensor(other)
+    # TODO (Yann) This broadcast should be implemented
+    # in big_kernels.cc
+    self, other = broadcast(self, other)
     res = ops.big_mul(self._raw, other._raw)
     return Tensor(res)
 
+  def __floordiv__(self, other):
+    other = convert_to_tensor(other)
+    # TODO (Yann) This broadcast should be implemented
+    # in big_kernels.cc
+    self, other = broadcast(self, other)
+    res = ops.big_div(self._raw, other._raw)
+    return Tensor(res)
+
   def pow(self, exponent, modulus=None, secure=None):
+    # TODO (Yann) This broadcast should be implemented
+    # in big_kernels.cc
     exponent = convert_to_tensor(exponent)
     modulus = convert_to_tensor(modulus)
+    self, exponent = broadcast(self, exponent)
     res = ops.big_pow(base=self._raw,
                       exponent=exponent._raw,
                       modulus=modulus._raw if modulus else None,
@@ -199,7 +227,7 @@ def convert_from_tensor(value, dtype=None):
   raise ValueError("Don't know how to evaluate to dtype '{}'".format(dtype))
 
 
-_SECURE = False
+_SECURE = True
 
 def set_secure_default(value):
   global _SECURE
@@ -210,9 +238,14 @@ def get_secure_default():
 
 
 def random_uniform(shape, maxval):
-  maxval = convert_to_tensor(maxval)
+  if not isinstance(maxval, Tensor):
+    maxval = convert_to_tensor(maxval)
   r_raw = ops.big_random_uniform(shape, maxval._raw)
   return Tensor(r_raw)
+
+def random_rsa_modulus(bitlength):
+  p_raw, q_raw, n_raw = ops.big_random_rsa_modulus(bitlength)
+  return Tensor(p_raw), Tensor(q_raw), Tensor(n_raw)
 
 
 def add(x, y):
@@ -243,3 +276,42 @@ def mod(x, n):
 
 def inv(x, n):
   return x.inv(n)
+
+def broadcast(x, y):
+
+  x_rank = x.shape.rank
+  y_rank = y.shape.rank
+  x_nb_el = x.shape.num_elements()
+  y_nb_el = y.shape.num_elements()
+
+  # e.g broadcast [1] with [1, 1]
+  if x_rank != y_rank: 
+
+    if x_rank < y_rank:
+      x = convert_from_tensor(x)
+      x = tf.broadcast_to(x, y.shape) 
+      x = convert_to_tensor(x)
+
+    elif y_rank < x_rank: 
+      y = convert_from_tensor(y)
+      y = tf.broadcast_to(y, x.shape) 
+      y = convert_to_tensor(y)
+
+    return x, y
+
+  # e.g broadcast [1, 1] with [1, 2]
+  elif x_nb_el != y_nb_el:
+
+    if x_nb_el < y_nb_el:
+      x = convert_from_tensor(x)
+      x = tf.broadcast_to(x, y.shape)
+      x = convert_to_tensor(x)
+
+    elif x_nb_el > y_nb_el:
+      y = convert_from_tensor(y)
+      y = tf.broadcast_to(y, x.shape)
+      y = convert_to_tensor(y)
+
+    return x, y
+
+  return x, y
