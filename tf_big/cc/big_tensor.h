@@ -6,6 +6,8 @@
 
 #include <string>
 
+#include "Eigen/Core"
+#include "Eigen/Dense"
 #include "tensorflow/core/framework/op.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
@@ -14,14 +16,11 @@
 #include "tensorflow/core/framework/variant_op_registry.h"
 #include "tensorflow/core/framework/variant_tensor_data.h"
 
-#include "Eigen/Core"
-#include "Eigen/Dense"
-
 using Eigen::Dynamic;
 using Eigen::Index;
 using Eigen::Matrix;
 
-using namespace tensorflow; // NOLINT
+using namespace tensorflow;  // NOLINT
 
 namespace Eigen {
 template <>
@@ -84,10 +83,10 @@ struct BigTensor {
     auto rows = value.rows();
     auto cols = value.cols();
 
-    if ((rows==1) && (cols==1)){
+    if ((rows == 1) && (cols == 1)) {
       auto mat = t->scalar<T>();
       mat(0) = value(0, 0).get_str();
-    }else{
+    } else {
       auto mat = t->matrix<T>();
       for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
