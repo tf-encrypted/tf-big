@@ -59,11 +59,11 @@ Setting up a development environment on macOS is a little more involved since we
 - [GMP](https://gmplib.org/) (>= 6.1.2)
 - [TensorFlow](https://www.tensorflow.org/) (== 1.13.1)
 
-Using [Homebrew](https://brew.sh/) we first make sure that both [Bazel](https://docs.bazel.build/versions/master/install-os-x.html#install-with-installer-mac-os-x) and GMP are installed:
+Using [Homebrew](https://brew.sh/) we first make sure that both [Bazel](https://docs.bazel.build/versions/master/install-os-x.html#install-with-installer-mac-os-x) and GMP are installed. We recommend using a Bazel version earlier than 1.0.0, e.g.:
 
 ```
 brew tap bazelbuild/tap
-brew install bazelbuild/tap/bazel
+brew extract bazel bazelbuild/tap --version 0.26.1
 brew install gmp
 brew install mmv
 ```
