@@ -74,6 +74,7 @@ if [[ "$TF_NEED_CUDA" == "0" ]]; then
     if is_linux ; then
         # (Dragos) need to upgrade tf_big class to work with tstring to work on latest tf 2.2
         # see this changelog: https://github.com/google/sentencepiece/commit/3d98bcd122ca6c547ac98c1298a596f85a468eb4
+        pip install --upgrade pip
         pip install tensorflow==2.1.0
      else
         pip install tensorflow
