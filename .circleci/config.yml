@@ -48,7 +48,6 @@ commands:
           name: Install requirements-dev.txt in '<< parameters.python-environment >>'
           command: |
             . << parameters.python-environment >>/bin/activate
-            pip install --upgrade pip
             pip install -q -U -r requirements-dev.txt
             pip freeze
       - run:
@@ -56,6 +55,7 @@ commands:
           command: |
             . << parameters.python-environment >>/bin/activate
             make clean
+            pip install --upgrade pip
             pip install -q -U tensorflow==<< parameters.tensorflow-version >>
             make .bazelrc
             # reduce Bazel output to logs
