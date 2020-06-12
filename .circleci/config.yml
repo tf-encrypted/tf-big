@@ -144,6 +144,7 @@ commands:
             # as a result we first install dependencies by installing the
             # package and then immediately remove it again
             pip install -q -U tf-big --find-links ./out/wheelhouse
+            pip install --upgrade pip
             pip uninstall tf-big -y
             # install the package, but forced to only use the wheelhouse
             pip install -U tf-big --no-deps --no-cache-dir --no-index --find-links ./out/wheelhouse
