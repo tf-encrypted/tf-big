@@ -55,7 +55,6 @@ commands:
           command: |
             . << parameters.python-environment >>/bin/activate
             make clean
-            pip install --upgrade pip
             pip install -q -U tensorflow==<< parameters.tensorflow-version >>
             make .bazelrc
             # reduce Bazel output to logs
