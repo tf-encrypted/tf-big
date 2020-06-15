@@ -148,6 +148,7 @@ commands:
             # install the package, but forced to only use the wheelhouse
             pip install -U tf-big --no-deps --no-cache-dir --no-index --find-links ./out/wheelhouse
             # make sure we are testing against the right version of TensorFlow
+            pip install -q -U -r requirements-bundle.txt
             pip install -q -U tensorflow==<< parameters.tensorflow-version >>
       - run:
           name: Test wheel in '<< parameters.python-environment >>'
