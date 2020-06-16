@@ -71,7 +71,14 @@ if [[ "$TF_NEED_CUDA" == "0" ]]; then
     fi
     # Install CPU version
     echo 'Installing tensorflow......\n'
-    pip install tensorflow
+    if is_linux ; then
+        # (Dragos) need to upgrade tf_big class to work with tstring to work on latest tf 2.2
+        # see this changelog: https://github.com/google/sentencepiece/commit/3d98bcd122ca6c547ac98c1298a596f85a468eb4
+        pip install --upgrade pip
+        pip install tensorflow==2.1.0
+     else
+        pip install tensorflow
+    fi
   fi
 fi
 
@@ -122,9 +129,3 @@ write_action_env_to_bazelrc "TF_SHARED_LIBRARY_DIR" ${SHARED_LIBRARY_DIR}
 write_action_env_to_bazelrc "TF_SHARED_LIBRARY_NAME" ${SHARED_LIBRARY_NAME}
 write_action_env_to_bazelrc "TF_NEED_CUDA" ${TF_NEED_CUDA}
 
-if is_linux; then
-  if [[ "$PIP_MANYLINUX2010" == "1" ]]; then
-    write_to_bazelrc "build --config=manylinux2010cuda101"
-    write_to_bazelrc "test --config=manylinux2010cuda101"
-  fi
-fi

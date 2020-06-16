@@ -24,6 +24,7 @@ setuptools.setup(
     },
     python_requires=">=3.5",
     install_requires=[
+        "pip>=20.1.1",
         "numpy >=1.14",
         "tensorflow ==2.1.0",
     ],
