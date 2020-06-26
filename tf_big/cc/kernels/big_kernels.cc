@@ -377,15 +377,15 @@ class BigRandomRsaModulusOp : public OpKernel {
 REGISTER_UNARY_VARIANT_DECODE_FUNCTION(BigTensor, BigTensor::kTypeName);
 
 REGISTER_KERNEL_BUILDER(
-    Name("BigImport").Device(DEVICE_CPU).TypeConstraint<string>("dtype"),
-    BigImportOp<string>);
+    Name("BigImport").Device(DEVICE_CPU).TypeConstraint<tstring>("dtype"),
+    BigImportOp<tstring>);
 REGISTER_KERNEL_BUILDER(
     Name("BigImport").Device(DEVICE_CPU).TypeConstraint<int32>("dtype"),
     BigImportOp<int32>);
 
 REGISTER_KERNEL_BUILDER(
-    Name("BigExport").Device(DEVICE_CPU).TypeConstraint<string>("dtype"),
-    BigExportOp<string>);
+    Name("BigExport").Device(DEVICE_CPU).TypeConstraint<tstring>("dtype"),
+    BigExportOp<tstring>);
 REGISTER_KERNEL_BUILDER(
     Name("BigExport").Device(DEVICE_CPU).TypeConstraint<int32>("dtype"),
     BigExportOp<int32>);
