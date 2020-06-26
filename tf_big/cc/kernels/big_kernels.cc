@@ -3,6 +3,7 @@
 #include "tensorflow/core/framework/op.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
+#include "tensorflow/core/framework/tensor_util.h"
 #include "tensorflow/core/framework/variant.h"
 #include "tensorflow/core/framework/variant_encode_decode.h"
 #include "tensorflow/core/framework/variant_op_registry.h"
@@ -286,7 +287,7 @@ class BigRandomUniformOp : public OpKernel {
   void Compute(OpKernelContext* ctx) override {
     const Tensor& shape_tensor = ctx->input(0);
     TensorShape shape;
-    OP_REQUIRES_OK(ctx, MakeShape(shape_tensor, &shape));
+    OP_REQUIRES_OK(ctx, tensor::MakeShape(shape_tensor, &shape));
 
     const BigTensor* maxval_tensor = nullptr;
     OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 1, &maxval_tensor));
