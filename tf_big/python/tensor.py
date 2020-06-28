@@ -173,7 +173,17 @@ def _convert_numpy_tensor(tensor):
   raise ValueError("Don't know how to convert NumPy tensor with dtype '{}'".format(tensor.dtype))
 
 
-def _convert_tensorflow_tensor(tensor): 
+def _convert_tensorflow_tensor(tensor, limb_format=False):
+
+  if limb_format is True:
+    if len(tensor.shape) == 3:
+        if tensor.dtype in (tf.uint8, tf.int32):
+            return Tensor(ops.big_import_limbs(tensor))
+        else:
+            raise ValueError("Not implemented limb op")
+    else:
+        raise ValueError("Tensor must have 3D shape when given in GMP format.")
+
   if len(tensor.shape) > 2:
     raise ValueError("Only matrices are supported for now.")
 
@@ -181,7 +191,7 @@ def _convert_tensorflow_tensor(tensor):
   while len(tensor.shape) < 2:
     tensor = tf.expand_dims(tensor, 0)
 
-  if tensor.dtype in (tf.int32, tf.string):
+  if tensor.dtype in (tf.int32, tf.string, tf.uint8):
     # supported as-is
     return Tensor(ops.big_import(tensor))
 
@@ -193,7 +203,7 @@ def _convert_tensorflow_tensor(tensor):
   raise ValueError("Don't know how to convert TensorFlow tensor with dtype '{}'".format(tensor.dtype))
 
 
-def convert_to_tensor(tensor):
+def convert_to_tensor(tensor, limb_format=False):
   if isinstance(tensor, Tensor):
     return tensor
 
@@ -210,16 +220,19 @@ def convert_to_tensor(tensor):
     return _convert_numpy_tensor(tensor)
 
   if isinstance(tensor, tf.Tensor):
-    return _convert_tensorflow_tensor(tensor)
+    return _convert_tensorflow_tensor(tensor, limb_format)
 
   raise ValueError("Don't know how to convert value of type {}".format(type(tensor)))
 
 
-def convert_from_tensor(value, dtype=None):
+def convert_from_tensor(value, dtype=None, limb_format=False, maxval=None):
   assert isinstance(value, Tensor), type(value)
 
   if dtype is None:
     dtype = tf.string
+
+  if limb_format is True:
+    return ops.big_export_limbs(maxval, value._raw, dtype)
 
   if dtype in [tf.int32, tf.string]:
     return ops.big_export(value._raw, dtype=dtype)

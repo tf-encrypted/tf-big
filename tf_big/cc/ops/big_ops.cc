@@ -3,7 +3,7 @@
 #include "tensorflow/core/framework/shape_inference.h"
 
 REGISTER_OP("BigImport")
-    .Attr("dtype: {int32, string}")
+    .Attr("dtype: {int32, string, uint8}")
     .Input("in: dtype")
     .Output("val: variant")
     .SetIsStateful()
@@ -14,12 +14,44 @@ REGISTER_OP("BigImport")
       return ::tensorflow::Status::OK();
     });
 
+REGISTER_OP("BigImportLimbs")
+   .Attr("dtype: {uint8, int32}")
+   .Input("in: dtype")
+   .Output("val: variant")
+   .SetIsStateful()
+   .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
+     ::tensorflow::shape_inference::ShapeHandle inputShape;
+     TF_RETURN_IF_ERROR(c->WithRankAtMost(c->input(0), 3, &inputShape));
+     ::tensorflow::shape_inference::ShapeHandle out = c->MakeShape({c->Dim(inputShape, 1), c->Dim(inputShape, 2)});
+     c->set_output(0, out);
+     return ::tensorflow::Status::OK();
+   });
+
 REGISTER_OP("BigExport")
-    .Attr("dtype: {int32, string}")
+    .Attr("dtype: {int32, string, uint8}")
     .Input("val: variant")
     .Output("out: dtype")
     .SetIsStateful()
     .SetShapeFn(::tensorflow::shape_inference::UnchangedShape);
+
+REGISTER_OP("BigExportLimbs")
+   .Attr("dtype: {int32, uint8}")
+   .Input("maxval: int32")
+   .Input("in: variant")
+   .Output("out: dtype")
+   .SetIsStateful()
+   .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
+     ::tensorflow::shape_inference::ShapeHandle maxvalShape;
+     TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 0, &maxvalShape));
+
+     ::tensorflow::shape_inference::ShapeHandle inputShape;
+     TF_RETURN_IF_ERROR(c->WithRank(c->input(1), 2, &inputShape));
+
+     ::tensorflow::shape_inference::ShapeHandle out = c->MakeShape({c->Dim(inputShape, 1), c->Dim(inputShape, 2), c->UnknownDim()});
+     c->set_output(0, out);
+     return ::tensorflow::Status::OK();
+   });
+ 
 
 REGISTER_OP("BigRandomUniform")
     .Input("shape: int32")

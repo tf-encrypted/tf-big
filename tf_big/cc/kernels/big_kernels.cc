@@ -49,6 +49,30 @@ class BigImportOp : public OpKernel {
 };
 
 template <typename T>
+class BigImportLimbsOp : public OpKernel {
+public:
+ explicit BigImportLimbsOp(OpKernelConstruction* context) : OpKernel(context) {}
+
+ void Compute(OpKernelContext* ctx) override {
+   const Tensor& input = ctx->input(0);
+   OP_REQUIRES(ctx, TensorShapeUtils::IsMatrixOrHigher(input.shape()),
+               errors::InvalidArgument(
+                   "value expected to be at least a matrix ",
+                   "but got shape: ", input.shape().DebugString()));
+
+   Tensor* val;
+   OP_REQUIRES_OK(ctx, ctx->allocate_output(0, TensorShape{input.shape().dim_size(0),
+               input.shape().dim_size(1)}, &val));
+
+   BigTensor big;
+   big.LimbsFromTensor<T>(input);
+
+   val->flat<Variant>()(0) = std::move(big);
+ }
+};
+
+
+template <typename T>
 class BigExportOp : public OpKernel {
  public:
   explicit BigExportOp(OpKernelConstruction* context) : OpKernel(context) {}
@@ -64,6 +88,36 @@ class BigExportOp : public OpKernel {
     val->ToTensor<T>(output);
   }
 };
+
+template <typename T>
+class BigExportLimbsOp : public OpKernel {
+public:
+ explicit BigExportLimbsOp(OpKernelConstruction* context) : OpKernel(context) {}
+
+ void Compute(OpKernelContext* ctx) override {
+
+   const Tensor& maxval_tensor = ctx->input(0);
+   auto maxval = maxval_tensor.flat<int32>()(0);
+
+   const BigTensor* val = nullptr;
+   TensorShape input_shape = ctx->input(1).shape();
+   OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 1, &val));
+
+   Tensor* output;
+
+   TensorShape output_shape;
+   output_shape.AddDim(input_shape.dim_size(0));
+   output_shape.AddDim(input_shape.dim_size(1));
+
+   unsigned int len_field_bytes = 4;
+   output_shape.AddDim((maxval + sizeof(T) - 1 + len_field_bytes)/ sizeof(T));
+
+   OP_REQUIRES_OK(ctx, ctx->allocate_output(0, output_shape, &output));
+
+   val->LimbsToTensor<T>(output);
+ }
+};
+
 
 class BigAddOp : public OpKernel {
  public:
@@ -382,6 +436,10 @@ REGISTER_KERNEL_BUILDER(
 REGISTER_KERNEL_BUILDER(
     Name("BigImport").Device(DEVICE_CPU).TypeConstraint<int32>("dtype"),
     BigImportOp<int32>);
+REGISTER_KERNEL_BUILDER(
+    Name("BigImport").Device(DEVICE_CPU).TypeConstraint<uint8>("dtype"),
+    BigImportOp<uint8>);
+
 
 REGISTER_KERNEL_BUILDER(
     Name("BigExport").Device(DEVICE_CPU).TypeConstraint<string>("dtype"),
@@ -389,6 +447,30 @@ REGISTER_KERNEL_BUILDER(
 REGISTER_KERNEL_BUILDER(
     Name("BigExport").Device(DEVICE_CPU).TypeConstraint<int32>("dtype"),
     BigExportOp<int32>);
+REGISTER_KERNEL_BUILDER(
+    Name("BigExport").Device(DEVICE_CPU).TypeConstraint<uint8>("dtype"),
+    BigExportOp<uint8>);
+
+
+REGISTER_KERNEL_BUILDER(
+    Name("BigImportLimbs").Device(DEVICE_CPU).TypeConstraint<string>("dtype"),
+    BigImportLimbsOp<string>);
+REGISTER_KERNEL_BUILDER(
+    Name("BigImportLimbs").Device(DEVICE_CPU).TypeConstraint<int32>("dtype"),
+    BigImportLimbsOp<int32>);
+REGISTER_KERNEL_BUILDER(
+    Name("BigImportLimbs").Device(DEVICE_CPU).TypeConstraint<uint8>("dtype"),
+    BigImportLimbsOp<uint8>);
+
+REGISTER_KERNEL_BUILDER(
+   Name("BigExportLimbs").Device(DEVICE_CPU).TypeConstraint<string>("dtype"),
+   BigExportLimbsOp<string>);
+REGISTER_KERNEL_BUILDER(
+   Name("BigExportLimbs").Device(DEVICE_CPU).TypeConstraint<int32>("dtype"),
+   BigExportLimbsOp<int32>);
+REGISTER_KERNEL_BUILDER(
+   Name("BigExportLimbs").Device(DEVICE_CPU).TypeConstraint<uint8>("dtype"),
+   BigExportLimbsOp<uint8>);
 
 // TODO(justin1121) there's no simple mpz to int64 convert functions
 // there's a suggestion here (https://stackoverflow.com/a/6248913/1116574) on
