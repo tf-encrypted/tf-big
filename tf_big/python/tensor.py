@@ -150,7 +150,32 @@ def constant(tensor):
   return convert_to_tensor(tensor)
 
 
-def _convert_numpy_tensor(tensor):
+
+def _numpy_limbs_to_tensor(tensor):
+  if len(tensor.shape) != 3:
+    raise ValueError("Tensor must have 3D shape when given in GMP format.")
+
+  if np.issubdtype(tensor.dtype, np.int32) \
+    or np.issubdtype(tensor.dtype, np.uint8):
+    return Tensor(ops.big_import_limbs(tensor))
+  else:
+    raise ValueError("Not implemented limb conversion for this type")
+
+
+def _tensor_limbs_to_tensor(tensor):
+  if len(tensor.shape) != 3:
+    raise ValueError("Tensor must have 3D shape when given in GMP format.")
+
+  if tensor.dtype in (tf.uint8, tf.int32):
+    return Tensor(ops.big_import_limbs(tensor))
+  else:
+    raise ValueError("Not implemented limb conversion")
+
+
+def _convert_numpy_tensor(tensor, limb_format=False):
+  if limb_format is True:
+    return _numpy_limbs_to_tensor(tensor)
+
   if len(tensor.shape) > 2:
     raise ValueError("Only matrices are supported for now.")
     
@@ -176,13 +201,7 @@ def _convert_numpy_tensor(tensor):
 def _convert_tensorflow_tensor(tensor, limb_format=False):
 
   if limb_format is True:
-    if len(tensor.shape) == 3:
-        if tensor.dtype in (tf.uint8, tf.int32):
-            return Tensor(ops.big_import_limbs(tensor))
-        else:
-            raise ValueError("Not implemented limb op")
-    else:
-        raise ValueError("Tensor must have 3D shape when given in GMP format.")
+    return _tensor_limbs_to_tensor(tensor)
 
   if len(tensor.shape) > 2:
     raise ValueError("Only matrices are supported for now.")
@@ -211,13 +230,13 @@ def convert_to_tensor(tensor, limb_format=False):
     return None
 
   if isinstance(tensor, (int, str)):
-    return _convert_numpy_tensor(np.array([tensor]))
+    return _convert_numpy_tensor(np.array([tensor]), limb_format)
 
   if isinstance(tensor, (list, tuple)):
-    return _convert_numpy_tensor(np.array(tensor))
+    return _convert_numpy_tensor(np.array(tensor), limb_format)
 
   if isinstance(tensor, np.ndarray):
-    return _convert_numpy_tensor(tensor)
+    return _convert_numpy_tensor(tensor, limb_format)
 
   if isinstance(tensor, tf.Tensor):
     return _convert_tensorflow_tensor(tensor, limb_format)
@@ -232,7 +251,7 @@ def convert_from_tensor(value, dtype=None, limb_format=False, maxval=None):
     dtype = tf.string
 
   if limb_format is True:
-    return ops.big_export_limbs(maxval, value._raw, dtype)
+     return ops.big_export_limbs(maxval, value._raw, dtype)
 
   if dtype in [tf.int32, tf.string]:
     return ops.big_export(value._raw, dtype=dtype)
