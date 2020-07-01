@@ -25,10 +25,11 @@ setuptools.setup(
     python_requires=">=3.5",
     install_requires=[
         "pip>=20.1.1",
-        "numpy >=1.14",
+        "numpy>=1.14",
     ],
     extras_require={
-        "tf": ["tensorflow ==2.1.0"],
+        "tf": ["tensorflow~=2.2.0"],
+        "nightly": ["tf-nightly"]
     },
     license="Apache License 2.0",
     url="https://github.com/tf-encrypted/tf-big",
