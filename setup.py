@@ -26,7 +26,6 @@ setuptools.setup(
     install_requires=[
         "pip>=20.1.1",
         "numpy >=1.14",
-        "tensorflow ==2.1.0",
     ],
     extras_require={
         "tf": ["tensorflow ==2.1.0"],
