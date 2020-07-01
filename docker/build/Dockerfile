@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:nightly-custom-op-ubuntu16
+FROM tensorflow/tensorflow:custom-op-ubuntu16
 
 # Install tools needed for building
 RUN apt update && \
