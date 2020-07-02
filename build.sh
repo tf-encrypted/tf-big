@@ -17,12 +17,6 @@ OUT=${1}
 bazel clean
 bazel build :build_sh
 
-# tag .so files in build with current TensorFlow version
-TF_VERSION=`python -c "import tensorflow; print(tensorflow.__version__)"`
-pushd ./bazel-bin/build_sh.runfiles/__main__/tf_big
-mmv ";*.so" "#1#2_${TF_VERSION}.so"
-popd
-
 # copy out files to destination
 rsync -avm \
   --exclude "_solib*" \

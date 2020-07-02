@@ -21,7 +21,7 @@ void BigTensor::Encode(VariantTensorData* data) const {
   auto shape = TensorShape{rows, cols};
   Tensor t(DT_STRING, shape);
 
-  auto mat = t.matrix<string>();
+  auto mat = t.matrix<tstring>();
   for (int i = 0; i < rows; i++) {
     for (int j = 0; j < cols; j++) {
       size_t count_p;
@@ -31,7 +31,7 @@ void BigTensor::Encode(VariantTensorData* data) const {
 
       int total_size = count_p * sizeof(int32);
 
-      mat(i, j) = string(p, total_size);
+      mat(i, j) = tstring(p, total_size);
     }
   }
 
@@ -45,7 +45,7 @@ bool BigTensor::Decode(const VariantTensorData& data) {
     return false;
   }
 
-  auto mat = data.tensors()[0].matrix<string>();
+  auto mat = data.tensors()[0].matrix<tstring>();
 
   auto rows = data.tensors()[0].dim_size(0);
   auto cols = data.tensors()[0].dim_size(1);
