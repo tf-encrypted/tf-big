@@ -348,10 +348,10 @@ workflows:
   linux-py3.5:
     jobs:
       - build-linux:
-          name: build-linux-py3.5-tf2.2.0
+          name: build-linux-py3.5-tfnightly
           python-version: "3.5"
-          tensorflow-package: "tensorflow==2.2.0"
-          tensorflow-identifier: "tf2.2.0"
+          tensorflow-package: "tf-nightly"
+          tensorflow-identifier: "tfnightly"
           filters:
             branches:
               only: master
@@ -362,7 +362,7 @@ workflows:
           name: bundle-linux-py3.5
           python-version: "3.5"
           requires:
-            - build-linux-py3.5-tf2.2.0
+            - build-linux-py3.5-tfnightly
           filters:
             branches:
               only: master
@@ -370,9 +370,9 @@ workflows:
               only: /.*/
 
       - whltest-linux:
-          name: whltest-linux-py3.5-tf2.2.0
+          name: whltest-linux-py3.5-tfnightly
           python-version: "3.5"
-          tensorflow-package: "tensorflow==2.2.0"
+          tensorflow-package: "tf-nightly"
           requires:
             - bundle-linux-py3.5
           filters:
@@ -384,7 +384,7 @@ workflows:
       - store:
           name: store-linux-py3.5
           requires:
-            - whltest-linux-py3.5-tf2.2.0
+            - whltest-linux-py3.5-tfnightly
           filters:
             branches:
               only: master
@@ -415,10 +415,10 @@ workflows:
   linux-py3.6:
     jobs:
       - build-linux:
-          name: build-linux-py3.6-tf2.2.0
+          name: build-linux-py3.6-tfnightly
           python-version: "3.6"
-          tensorflow-package: "tensorflow==2.2.0"
-          tensorflow-identifier: "tf2.2.0"
+          tensorflow-package: "tf-nightly"
+          tensorflow-identifier: "tfnightly"
           filters:
             branches:
               only: master
@@ -429,7 +429,7 @@ workflows:
           name: bundle-linux-py3.6
           python-version: "3.6"
           requires:
-            - build-linux-py3.6-tf2.2.0
+            - build-linux-py3.6-tfnightly
           filters:
             branches:
               only: master
@@ -437,9 +437,9 @@ workflows:
               only: /.*/
 
       - whltest-linux:
-          name: whltest-linux-py3.6-tf2.2.0
+          name: whltest-linux-py3.6-tfnightly
           python-version: "3.6"
-          tensorflow-package: "tensorflow==2.2.0"
+          tensorflow-package: "tf-nightly"
           requires:
             - bundle-linux-py3.6
           filters:
@@ -451,7 +451,7 @@ workflows:
       - store:
           name: store-linux-py3.6
           requires:
-            - whltest-linux-py3.6-tf2.2.0
+            - whltest-linux-py3.6-tfnightly
           filters:
             branches:
               only: master
@@ -482,10 +482,10 @@ workflows:
   macos-py3.6:
     jobs:
       - build-macos:
-          name: build-macos-py3.6-tf2.2.0
+          name: build-macos-py3.6-tfnightly
           python-version: "3.6"
-          tensorflow-package: "tensorflow==2.2.0"
-          tensorflow-identifier: "tf2.2.0"
+          tensorflow-package: "tf-nightly"
+          tensorflow-identifier: "tfnightly"
           filters:
             branches:
               only: master
@@ -496,7 +496,7 @@ workflows:
           name: bundle-macos-py3.6
           python-version: "3.6"
           requires:
-            - build-macos-py3.6-tf2.2.0
+            - build-macos-py3.6-tfnightly
           filters:
             branches:
               only: master
@@ -504,9 +504,9 @@ workflows:
               only: /.*/
 
       - whltest-macos:
-          name: whltest-macos-py3.6-tf2.2.0
+          name: whltest-macos-py3.6-tfnightly
           python-version: "3.6"
-          tensorflow-package: "tensorflow==2.2.0"
+          tensorflow-package: "tf-nightly"
           requires:
             - bundle-macos-py3.6
           filters:
@@ -518,7 +518,7 @@ workflows:
       - store:
           name: store-macos-py3.6
           requires:
-            - whltest-macos-py3.6-tf2.2.0
+            - whltest-macos-py3.6-tfnightly
           filters:
             branches:
               only: master
