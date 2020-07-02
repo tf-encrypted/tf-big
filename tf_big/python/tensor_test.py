@@ -282,18 +282,18 @@ class ConvertTest(parameterized.TestCase):
     
     with context.scope():
       x = convert_to_tensor(np.array([[10, 20]]))
-      x_in_limb = convert_from_tensor(x, dtype=tf.int32, limb_format=True, maxval=[20])
+      x_in_limb = convert_from_tensor(x, dtype=tf.int32, limb_format=True, maxval=20)
       x_norm = convert_to_tensor(x_in_limb, limb_format=True)
 
-      y = tf.convert_to_tensor(np.array([30, 40]))
-      y_in_limb = convert_from_tensor(x, dtype=tf.int32, limb_format=True, maxval=[40])
+      y = convert_to_tensor(np.array([[30, 40]]))
+      y_in_limb = convert_from_tensor(y, dtype=tf.int32, limb_format=True, maxval=40)
       y_norm = convert_to_tensor(y_in_limb, limb_format=True) 
 
-      tfbig_znorm = x_norm + y_norm
+      # z = x_norm + y_norm
+      z = x + y
+      res = convert_from_tensor(z)
 
-      z_norm = convert_from_tensor(tfbig_znorm)
-
-    np.testing.assert_array_equal(context.evaluate(z_norm), np.array([["40", "60"]]))
+    np.testing.assert_array_equal(context.evaluate(res).astype(str), np.array([["40", "60"]]))
 
 
 
