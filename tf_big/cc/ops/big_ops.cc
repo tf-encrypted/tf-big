@@ -20,11 +20,13 @@ REGISTER_OP("BigImportLimbs")
     .Output("val: variant")
     .SetIsStateful()
     .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
-      ::tensorflow::shape_inference::ShapeHandle inputShape;
-      TF_RETURN_IF_ERROR(c->WithRankAtMost(c->input(0), 3, &inputShape));
-      ::tensorflow::shape_inference::ShapeHandle out =
-          c->MakeShape({c->Dim(inputShape, 1), c->Dim(inputShape, 2)});
-      c->set_output(0, out);
+      ::tensorflow::shape_inference::ShapeHandle input_shape = c->input(0);
+      TF_RETURN_IF_ERROR(c->WithRank(input_shape, 3, &input_shape));
+
+      ::tensorflow::shape_inference::ShapeHandle val_shape;
+      TF_RETURN_IF_ERROR(c->Subshape(input_shape, 0, -1, &val_shape));
+      c->set_output(0, val_shape);
+
       return ::tensorflow::Status::OK();
     });
 
@@ -42,15 +44,19 @@ REGISTER_OP("BigExportLimbs")
     .Output("out: dtype")
     .SetIsStateful()
     .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
-      ::tensorflow::shape_inference::ShapeHandle maxvalShape;
-      TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 0, &maxvalShape));
+      ::tensorflow::shape_inference::ShapeHandle maxval_shape = c->input(0);
+      TF_RETURN_IF_ERROR(c->WithRank(maxval_shape, 0, &maxval_shape));
 
-      ::tensorflow::shape_inference::ShapeHandle inputShape;
-      TF_RETURN_IF_ERROR(c->WithRank(c->input(1), 2, &inputShape));
+      ::tensorflow::shape_inference::ShapeHandle input_shape = c->input(1);
+      TF_RETURN_IF_ERROR(c->WithRank(input_shape, 2, &input_shape));
 
-      ::tensorflow::shape_inference::ShapeHandle out = c->MakeShape(
-          {c->Dim(inputShape, 1), c->Dim(inputShape, 2), c->UnknownDim()});
-      c->set_output(0, out);
+      ::tensorflow::shape_inference::ShapeHandle expansion_shape =
+          c->MakeShape({c->UnknownDim()});
+      ::tensorflow::shape_inference::ShapeHandle out_shape;
+      TF_RETURN_IF_ERROR(
+          c->Concatenate(input_shape, expansion_shape, &out_shape));
+      c->set_output(0, out_shape);
+
       return ::tensorflow::Status::OK();
     });
 

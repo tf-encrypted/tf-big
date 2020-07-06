@@ -277,20 +277,30 @@ class ConvertTest(parameterized.TestCase):
 
     assert y.dtype is tf.string
 
-  def test_limb_conversion(self):
-    context = tf_execution_context(False)
-    
+  @parameterized.parameters(
+      {"run_eagerly": run_eagerly} for run_eagerly in (True, False)
+  )
+  def test_limb_conversion(self, run_eagerly):
+    context = tf_execution_context(run_eagerly)
+
     with context.scope():
       x = convert_to_tensor(np.array([[10, 20]]))
-      x_in_limb = convert_from_tensor(x, dtype=tf.int32, limb_format=True, maxval=20)
-      x_norm = convert_to_tensor(x_in_limb, limb_format=True)
+      assert x.shape.as_list() == [1, 2], x.shape
+      x_limbs = convert_from_tensor(x, dtype=tf.int32, limb_format=True, maxval=20)
+      assert x_limbs.shape.as_list() == x.shape.as_list() + (
+          [6] if run_eagerly else [None]), x_limbs.shape
+      x_norm = convert_to_tensor(x_limbs, limb_format=True)
+      assert x_norm.shape.as_list() == x.shape.as_list(), x_norm.shape
 
       y = convert_to_tensor(np.array([[30, 40]]))
-      y_in_limb = convert_from_tensor(y, dtype=tf.int32, limb_format=True, maxval=40)
-      y_norm = convert_to_tensor(y_in_limb, limb_format=True) 
+      assert y.shape.as_list() == [1, 2], y.shape
+      y_limbs = convert_from_tensor(y, dtype=tf.int32, limb_format=True, maxval=40)
+      assert y_limbs.shape.as_list() == y.shape.as_list() + (
+          [11] if run_eagerly else [None]), y_limbs.shape
+      y_norm = convert_to_tensor(y_limbs, limb_format=True) 
+      assert y_norm.shape.as_list() == y.shape.as_list(), y_norm.shape
 
-      # z = x_norm + y_norm
-      z = x + y
+      z = x_norm + y_norm
       res = convert_from_tensor(z)
 
     np.testing.assert_array_equal(context.evaluate(res).astype(str), np.array([["40", "60"]]))
