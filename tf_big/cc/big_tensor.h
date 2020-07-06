@@ -105,62 +105,63 @@ struct BigTensor {
       }
     }
   }
- template <typename T>
- void LimbsFromTensor(const Tensor& t) {
-     int rows = t.dim_size(0);
-     int cols = t.dim_size(1);
-     int num_bytes_chunks = t.dim_size(2);
+  template <typename T>
+  void LimbsFromTensor(const Tensor& t) {
+    int rows = t.dim_size(0);
+    int cols = t.dim_size(1);
+    int num_bytes_chunks = t.dim_size(2);
 
-     value = MatrixXm(rows, cols);
-     for (int i = 0; i < rows; i++) {
-       for (int j = 0; j < cols; j++) {
-         // copy tensor contents to buffer
-         T tmp[num_bytes_chunks];
-         for (int k = 0; k < num_bytes_chunks; k++)
-             tmp[k] = t.tensor<T, 3>()(i, j, k);
+    value = MatrixXm(rows, cols);
+    for (int i = 0; i < rows; i++) {
+      for (int j = 0; j < cols; j++) {
+        // copy tensor contents to buffer
+        T tmp[num_bytes_chunks];
+        for (int k = 0; k < num_bytes_chunks; k++)
+          tmp[k] = t.tensor<T, 3>()(i, j, k);
 
-         uint8_t* buffer = reinterpret_cast<uint8_t*>(tmp);
+        uint8_t* buffer = reinterpret_cast<uint8_t*>(tmp);
 
-         size_t skip = 0;
-         unsigned int length = decode_length(buffer);
-         skip += 4;
-         // this won't really work if we get int32
-         mpz_import(value(i, j).get_mpz_t(), length, 1, sizeof(uint8_t), 0, 0, buffer + skip);
-       }
-     }
- }
+        size_t skip = 0;
+        unsigned int length = decode_length(buffer);
+        skip += 4;
+        // this won't really work if we get int32
+        mpz_import(value(i, j).get_mpz_t(), length, 1, sizeof(uint8_t), 0, 0,
+                   buffer + skip);
+      }
+    }
+  }
 
- template <typename T>
- void LimbsToTensor(Tensor* t) const {
-     auto rows = value.rows();
-     auto cols = value.cols();
+  template <typename T>
+  void LimbsToTensor(Tensor* t) const {
+    auto rows = value.rows();
+    auto cols = value.cols();
 
-     size_t expansion_factor = t->dim_size(2) * sizeof(T);
-     uint8_t out_bytes[expansion_factor];
+    size_t expansion_factor = t->dim_size(2) * sizeof(T);
+    uint8_t out_bytes[expansion_factor];
 
-     for (int i = 0; i < rows; i++) {
-       for (int j = 0; j < cols; j++) {
-         unsigned int num = mpz_sizeinbase(value(i, j).get_mpz_t(), 256);
-         size_t skip = 0;
-         encode_length(out_bytes, num);
-         skip += 4;
+    for (int i = 0; i < rows; i++) {
+      for (int j = 0; j < cols; j++) {
+        unsigned int num = mpz_sizeinbase(value(i, j).get_mpz_t(), 256);
+        size_t skip = 0;
+        encode_length(out_bytes, num);
+        skip += 4;
 
-         size_t ll;
-         mpz_export(out_bytes + skip, &ll, 1, sizeof(uint8_t), 0, 0, value(i, j).get_mpz_t());
-         if (ll >= expansion_factor + skip) {
-           // how to throw an exception here?
-         }
-         for (size_t k = ll+skip; k < expansion_factor; k++)
-          out_bytes[k] = 0;
+        size_t ll;
+        mpz_export(out_bytes + skip, &ll, 1, sizeof(uint8_t), 0, 0,
+                   value(i, j).get_mpz_t());
+        if (ll >= expansion_factor + skip) {
+          // how to throw an exception here?
+        }
+        for (size_t k = ll + skip; k < expansion_factor; k++) out_bytes[k] = 0;
 
-         T* tmp = reinterpret_cast<T*>(out_bytes);
-         // copy buffer contents to tensor
-         for (size_t k = 0; k < expansion_factor/sizeof(T); k++) {
-           t->tensor<T, 3>()(i, j, k) = tmp[k];
-         }
-       }
-     }
- }
+        T* tmp = reinterpret_cast<T*>(out_bytes);
+        // copy buffer contents to tensor
+        for (size_t k = 0; k < expansion_factor / sizeof(T); k++) {
+          t->tensor<T, 3>()(i, j, k) = tmp[k];
+        }
+      }
+    }
+  }
 
   BigTensor& operator+=(const BigTensor& rhs) {
     this->value += rhs.value;
@@ -229,17 +230,16 @@ inline void BigTensor::ToTensor<int32>(Tensor* t) const {
 
 template <>
 inline void BigTensor::ToTensor<uint8>(Tensor* t) const {
-    auto rows = value.rows();
-    auto cols = value.cols();
+  auto rows = value.rows();
+  auto cols = value.cols();
 
-    auto mat = t->matrix<uint8>();
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            mat(i, j) = (uint8)value(i, j).get_si();
-        }
+  auto mat = t->matrix<uint8>();
+  for (int i = 0; i < rows; i++) {
+    for (int j = 0; j < cols; j++) {
+      mat(i, j) = (uint8)value(i, j).get_si();
     }
+  }
 }
-
 
 template <>
 inline void BigTensor::FromTensor<string>(const Tensor& t) {
@@ -255,7 +255,6 @@ inline void BigTensor::FromTensor<string>(const Tensor& t) {
     }
   }
 }
-
 
 }  // namespace tf_big
 
