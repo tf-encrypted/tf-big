@@ -61,24 +61,8 @@ if [[ "$TF_NEED_CUDA" == "0" ]]; then
   if [[ $(pip show tensorflow) == *tensorflow* ]] || [[ $(pip show tf-nightly) == *tf-nightly* ]] ; then
     echo 'Using installed tensorflow'
   else
-    # Uninstall GPU version if it is installed.
-    if [[ $(pip show tensorflow-gpu) == *tensorflow-gpu* ]]; then
-      echo 'Already have gpu version of tensorflow installed. Uninstalling......\n'
-      pip uninstall tensorflow-gpu
-    elif [[ $(pip show tf-nightly-gpu) == *tf-nightly-gpu* ]]; then
-      echo 'Already have gpu version of tensorflow installed. Uninstalling......\n'
-      pip uninstall tf-nightly-gpu
-    fi
-    # Install CPU version
-    echo 'Installing tensorflow......\n'
-    if is_linux ; then
-        # (Dragos) need to upgrade tf_big class to work with tstring to work on latest tf 2.2
-        # see this changelog: https://github.com/google/sentencepiece/commit/3d98bcd122ca6c547ac98c1298a596f85a468eb4
-        pip install --upgrade pip
-        pip install tensorflow==2.1.0
-     else
-        pip install tensorflow
-    fi
+    echo "Error: expected tensorflow to be installed before running configure.sh."
+    exit 1
   fi
 fi
 

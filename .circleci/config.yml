@@ -35,7 +35,9 @@ commands:
     parameters:
       python-version:
         type: string
-      tensorflow-version:
+      tensorflow-package:
+        type: string
+      tensorflow-identifier:
         type: string
       # next parameter should be derived 
       python-environment:
@@ -51,11 +53,11 @@ commands:
             pip install -q -U -r requirements-dev.txt
             pip freeze
       - run:
-          name: Install TensorFlow << parameters.tensorflow-version >> in '<< parameters.python-environment >>'
+          name: Install << parameters.tensorflow-package >> in '<< parameters.python-environment >>'
           command: |
             . << parameters.python-environment >>/bin/activate
             make clean
-            pip install -q -U tensorflow==<< parameters.tensorflow-version >>
+            pip install -q -U << parameters.tensorflow-package >>
             make .bazelrc
             # reduce Bazel output to logs
             echo 'test --noshow_progress --noshow_loading_progress' >> .bazelrc
@@ -73,11 +75,11 @@ commands:
             . << parameters.python-environment >>/bin/activate
             python --version
             pip freeze
-            DIR_TAGGED=./out/builds/py<< parameters.python-version >>-tf<< parameters.tensorflow-version >> make build
+            DIR_TAGGED=./out/builds/py<< parameters.python-version >>-<< parameters.tensorflow-identifier >> make build
       - persist_to_workspace:
           root: ./out
           paths:
-            - builds/py<< parameters.python-version >>-tf<< parameters.tensorflow-version >>
+            - builds/py<< parameters.python-version >>-<< parameters.tensorflow-identifier >>
   
   bundle:
     parameters:
@@ -121,7 +123,7 @@ commands:
     parameters:
       python-version:
         type: string
-      tensorflow-version:
+      tensorflow-package:
         type: string
       python-environment:
         type: string
@@ -132,7 +134,7 @@ commands:
       - attach_workspace:
           at: ./out
       - run:
-          name: Configure '<< parameters.python-environment >>' to use TensorFlow << parameters.tensorflow-version >>
+          name: Configure '<< parameters.python-environment >>' to use << parameters.tensorflow-package >>
           command: |
             set -e
             set -x
@@ -149,7 +151,7 @@ commands:
             # install the package, but forced to only use the wheelhouse
             pip install -U tf-big --no-deps --no-cache-dir --no-index --find-links ./out/wheelhouse
             # make sure we are testing against the right version of TensorFlow
-            pip install -q -U tensorflow==<< parameters.tensorflow-version >>
+            pip install -q -U << parameters.tensorflow-package >>
       - run:
           name: Test wheel in '<< parameters.python-environment >>'
           command: |
@@ -164,7 +166,9 @@ jobs:
     parameters:
       python-version:
         type: string
-      tensorflow-version:
+      tensorflow-package:
+        type: string
+      tensorflow-identifier:
         type: string
     docker:
       - image: tfencrypted/tf-big:build
@@ -173,14 +177,17 @@ jobs:
       - checkout
       - build:
           python-version: << parameters.python-version >>
-          tensorflow-version: << parameters.tensorflow-version >>
-          python-environment: build-linux-py<< parameters.python-version >>-tf<< parameters.tensorflow-version >>
+          tensorflow-package: << parameters.tensorflow-package >>
+          tensorflow-identifier: << parameters.tensorflow-identifier >>
+          python-environment: build-linux-py<< parameters.python-version >>-<< parameters.tensorflow-identifier >>
 
   build-macos:
     parameters:
       python-version:
         type: string
-      tensorflow-version:
+      tensorflow-package:
+        type: string
+      tensorflow-identifier:
         type: string
     macos:
       xcode: "10.0.0"
@@ -190,8 +197,9 @@ jobs:
       - bootstrap-macos
       - build:
           python-version: << parameters.python-version >>
-          tensorflow-version: << parameters.tensorflow-version >>
-          python-environment: build-macos-py<< parameters.python-version >>-tf<< parameters.tensorflow-version >>
+          tensorflow-package: << parameters.tensorflow-package >>
+          tensorflow-identifier: << parameters.tensorflow-identifier >>
+          python-environment: build-macos-py<< parameters.python-version >>-<< parameters.tensorflow-identifier >>
 
   bundle-linux:
     parameters:
@@ -224,7 +232,7 @@ jobs:
     parameters:
       python-version:
         type: string
-      tensorflow-version:
+      tensorflow-package:
         type: string
     docker:
       - image: tfencrypted/tf-big:whltest
@@ -234,13 +242,13 @@ jobs:
       - whltest:
           python-version: << parameters.python-version >>
           python-environment: test-linux-py<< parameters.python-version >>
-          tensorflow-version: << parameters.tensorflow-version >>
+          tensorflow-package: << parameters.tensorflow-package >>
 
   whltest-macos:
     parameters:
       python-version:
         type: string
-      tensorflow-version:
+      tensorflow-package:
         type: string
     macos:
       xcode: "10.0.0"
@@ -251,7 +259,7 @@ jobs:
       - whltest:
           python-version: << parameters.python-version >>
           python-environment: test-macos-py<< parameters.python-version >>
-          tensorflow-version: << parameters.tensorflow-version >>
+          tensorflow-package: << parameters.tensorflow-package >>
 
   store:
     docker:
@@ -304,9 +312,10 @@ workflows:
   quicktest:
     jobs:
       - build-linux:
-          name: build-linux-py3.6-tf2.1.0
+          name: build-linux-py3.6-tfnightly
           python-version: "3.6"
-          tensorflow-version: "2.1.0"
+          tensorflow-package: "tf-nightly"
+          tensorflow-identifier: "tfnightly"
           filters:
             branches:
               ignore: master
@@ -317,7 +326,7 @@ workflows:
           name: bundle-linux-py3.6
           python-version: "3.6"
           requires:
-            - build-linux-py3.6-tf2.1.0
+            - build-linux-py3.6-tfnightly
           filters:
             branches:
               ignore: master
@@ -325,9 +334,9 @@ workflows:
               ignore: /.*/
 
       - whltest-linux:
-          name: whltest-linux-py3.6-tf2.1.0
+          name: whltest-linux-py3.6-tfnightly
           python-version: "3.6"
-          tensorflow-version: "2.1.0"
+          tensorflow-package: "tf-nightly"
           requires:
             - bundle-linux-py3.6
           filters:
@@ -339,9 +348,10 @@ workflows:
   linux-py3.5:
     jobs:
       - build-linux:
-          name: build-linux-py3.5-tf2.1.0
+          name: build-linux-py3.5-tfnightly
           python-version: "3.5"
-          tensorflow-version: "2.1.0"
+          tensorflow-package: "tf-nightly"
+          tensorflow-identifier: "tfnightly"
           filters:
             branches:
               only: master
@@ -352,7 +362,7 @@ workflows:
           name: bundle-linux-py3.5
           python-version: "3.5"
           requires:
-            - build-linux-py3.5-tf2.1.0
+            - build-linux-py3.5-tfnightly
           filters:
             branches:
               only: master
@@ -360,9 +370,9 @@ workflows:
               only: /.*/
 
       - whltest-linux:
-          name: whltest-linux-py3.5-tf2.1.0
+          name: whltest-linux-py3.5-tfnightly
           python-version: "3.5"
-          tensorflow-version: "2.1.0"
+          tensorflow-package: "tf-nightly"
           requires:
             - bundle-linux-py3.5
           filters:
@@ -374,7 +384,7 @@ workflows:
       - store:
           name: store-linux-py3.5
           requires:
-            - whltest-linux-py3.5-tf2.1.0
+            - whltest-linux-py3.5-tfnightly
           filters:
             branches:
               only: master
@@ -405,9 +415,10 @@ workflows:
   linux-py3.6:
     jobs:
       - build-linux:
-          name: build-linux-py3.6-tf2.1.0
+          name: build-linux-py3.6-tfnightly
           python-version: "3.6"
-          tensorflow-version: "2.1.0"
+          tensorflow-package: "tf-nightly"
+          tensorflow-identifier: "tfnightly"
           filters:
             branches:
               only: master
@@ -418,7 +429,7 @@ workflows:
           name: bundle-linux-py3.6
           python-version: "3.6"
           requires:
-            - build-linux-py3.6-tf2.1.0
+            - build-linux-py3.6-tfnightly
           filters:
             branches:
               only: master
@@ -426,9 +437,9 @@ workflows:
               only: /.*/
 
       - whltest-linux:
-          name: whltest-linux-py3.6-tf2.1.0
+          name: whltest-linux-py3.6-tfnightly
           python-version: "3.6"
-          tensorflow-version: "2.1.0"
+          tensorflow-package: "tf-nightly"
           requires:
             - bundle-linux-py3.6
           filters:
@@ -440,7 +451,7 @@ workflows:
       - store:
           name: store-linux-py3.6
           requires:
-            - whltest-linux-py3.6-tf2.1.0
+            - whltest-linux-py3.6-tfnightly
           filters:
             branches:
               only: master
@@ -471,9 +482,10 @@ workflows:
   macos-py3.6:
     jobs:
       - build-macos:
-          name: build-macos-py3.6-tf2.1.0
+          name: build-macos-py3.6-tfnightly
           python-version: "3.6"
-          tensorflow-version: "2.1.0"
+          tensorflow-package: "tf-nightly"
+          tensorflow-identifier: "tfnightly"
           filters:
             branches:
               only: master
@@ -484,7 +496,7 @@ workflows:
           name: bundle-macos-py3.6
           python-version: "3.6"
           requires:
-            - build-macos-py3.6-tf2.1.0
+            - build-macos-py3.6-tfnightly
           filters:
             branches:
               only: master
@@ -492,9 +504,9 @@ workflows:
               only: /.*/
 
       - whltest-macos:
-          name: whltest-macos-py3.6-tf2.1.0
+          name: whltest-macos-py3.6-tfnightly
           python-version: "3.6"
-          tensorflow-version: "2.1.0"
+          tensorflow-package: "tf-nightly"
           requires:
             - bundle-macos-py3.6
           filters:
@@ -506,7 +518,7 @@ workflows:
       - store:
           name: store-macos-py3.6
           requires:
-            - whltest-macos-py3.6-tf2.1.0
+            - whltest-macos-py3.6-tfnightly
           filters:
             branches:
               only: master

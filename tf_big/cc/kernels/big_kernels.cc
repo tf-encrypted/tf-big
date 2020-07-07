@@ -3,6 +3,7 @@
 #include "tensorflow/core/framework/op.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
+#include "tensorflow/core/framework/tensor_util.h"
 #include "tensorflow/core/framework/variant.h"
 #include "tensorflow/core/framework/variant_encode_decode.h"
 #include "tensorflow/core/framework/variant_op_registry.h"
@@ -374,7 +375,7 @@ class BigRandomUniformOp : public OpKernel {
   void Compute(OpKernelContext* ctx) override {
     const Tensor& shape_tensor = ctx->input(0);
     TensorShape shape;
-    OP_REQUIRES_OK(ctx, MakeShape(shape_tensor, &shape));
+    OP_REQUIRES_OK(ctx, tensor::MakeShape(shape_tensor, &shape));
 
     const BigTensor* maxval_tensor = nullptr;
     OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 1, &maxval_tensor));
@@ -465,8 +466,8 @@ class BigRandomRsaModulusOp : public OpKernel {
 REGISTER_UNARY_VARIANT_DECODE_FUNCTION(BigTensor, BigTensor::kTypeName);
 
 REGISTER_KERNEL_BUILDER(
-    Name("BigImport").Device(DEVICE_CPU).TypeConstraint<string>("dtype"),
-    BigImportOp<string>);
+    Name("BigImport").Device(DEVICE_CPU).TypeConstraint<tstring>("dtype"),
+    BigImportOp<tstring>);
 REGISTER_KERNEL_BUILDER(
     Name("BigImport").Device(DEVICE_CPU).TypeConstraint<int32>("dtype"),
     BigImportOp<int32>);
@@ -475,8 +476,8 @@ REGISTER_KERNEL_BUILDER(
     BigImportOp<uint8>);
 
 REGISTER_KERNEL_BUILDER(
-    Name("BigExport").Device(DEVICE_CPU).TypeConstraint<string>("dtype"),
-    BigExportOp<string>);
+    Name("BigExport").Device(DEVICE_CPU).TypeConstraint<tstring>("dtype"),
+    BigExportOp<tstring>);
 REGISTER_KERNEL_BUILDER(
     Name("BigExport").Device(DEVICE_CPU).TypeConstraint<int32>("dtype"),
     BigExportOp<int32>);

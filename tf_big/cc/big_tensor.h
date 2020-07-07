@@ -210,13 +210,13 @@ inline void BigTensor::ToTensor<uint8>(Tensor* t) const {
 }
 
 template <>
-inline void BigTensor::FromTensor<string>(const Tensor& t) {
+inline void BigTensor::FromTensor<tstring>(const Tensor& t) {
   auto rows = t.dim_size(0);
   auto cols = t.dim_size(1);
 
   value = MatrixXm(rows, cols);
 
-  auto mat = t.matrix<string>();
+  auto mat = t.matrix<tstring>();
   for (int i = 0; i < rows; i++) {
     for (int j = 0; j < cols; j++) {
       value(i, j) = mpz_class(mat(i, j), 10);

@@ -9,6 +9,7 @@ from tensorflow.python.framework import ops as tf_ops
 
 
 class Tensor(object):
+  is_tensor_like = True  # needed to pass tf.is_tensor, new as of TF 2.2+
 
   def __init__(self, value):
     assert isinstance(value, tf.Tensor), type(value)
@@ -133,10 +134,6 @@ def _tensor_conversion_function(tensor, dtype=None, name=None, as_ref=False):
 # but since the output dtype is determined by the outer context
 # we essentially have to export with the implied risk of data loss
 tf_ops.register_tensor_conversion_function(Tensor, _tensor_conversion_function)
-
-
-# this allows Tensor to pass the tf.is_tensor test
-tf_ops.register_dense_tensor_like_type(Tensor)
 
 
 # this allows tf_big.Tensor to be plumbed through Keras layers
