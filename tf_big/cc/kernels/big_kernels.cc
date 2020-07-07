@@ -102,9 +102,9 @@ class BigExportLimbsOp : public OpKernel {
     const Tensor& maxval_tensor = ctx->input(0);
     auto max_bitlen = maxval_tensor.flat<int32>()(0);
 
-    const BigTensor* val = nullptr;
+    const BigTensor* curBigTensor = nullptr;
     TensorShape input_shape = ctx->input(1).shape();
-    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 1, &val));
+    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 1, &curBigTensor));
 
     Tensor* output;
 
@@ -121,7 +121,35 @@ class BigExportLimbsOp : public OpKernel {
 
     OP_REQUIRES_OK(ctx, ctx->allocate_output(0, output_shape, &output));
 
-    val->LimbsToTensor<T>(output);
+    auto rows = curBigTensor->value.rows();
+    auto cols = curBigTensor->value.cols();
+
+    auto flatened = output->flat<T>();
+    uint8_t* result = reinterpret_cast<uint8_t*>(flatened.data());
+
+    size_t expansion_factor = output->dim_size(2) * sizeof(T);
+    size_t header_len = 4;
+    size_t pointer = 0;
+
+    for (int i = 0; i < rows; i++) {
+      for (int j = 0; j < cols; j++) {
+        unsigned int num =
+            mpz_sizeinbase(curBigTensor->value(i, j).get_mpz_t(), 256);
+        tf_big::encode_length(result + pointer, num);
+
+        size_t exported_len;
+        mpz_export(result + pointer + header_len, &exported_len, 1,
+                   sizeof(uint8_t), 0, 0,
+                   curBigTensor->value(i, j).get_mpz_t());
+        OP_REQUIRES(
+            ctx, header_len + exported_len <= expansion_factor,
+            errors::Internal("User selected wrong byte length, required: ",
+                             exported_len, " bytes"));
+        for (size_t k = header_len + exported_len; k < expansion_factor; k++)
+          result[pointer + k] = 0;
+        pointer += expansion_factor;
+      }
+    }
   }
 };
 

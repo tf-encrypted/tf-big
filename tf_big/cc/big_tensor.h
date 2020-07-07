@@ -49,13 +49,14 @@ typedef Matrix<mpz_class, Dynamic, Dynamic> MatrixXm;
 namespace tf_big {
 
 inline void encode_length(uint8_t* buffer, unsigned int len) {
-  buffer[0] = len & 255;
-  buffer[1] = (len >> 8) & 255;
-  buffer[2] = (len >> 16) & 255;
-  buffer[3] = (len >> 24) & 255;
+  buffer[0] = len & 0xFF;
+  buffer[1] = (len >> 8) & 0xFF;
+  buffer[2] = (len >> 16) & 0xFF;
+  buffer[3] = (len >> 24) & 0xFF;
 }
 inline unsigned int decode_length(const uint8_t* buffer) {
-  return buffer[0] + 256 * buffer[1] + 65536 * buffer[2] + 16777216 * buffer[3];
+  return buffer[0] + 0x100 * buffer[1] + 0x10000 * buffer[2] +
+         0x1000000 * buffer[3];
 }
 
 struct BigTensor {
