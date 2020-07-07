@@ -131,39 +131,6 @@ struct BigTensor {
     }
   }
 
-  template <typename T>
-  void LimbsToTensor(Tensor* t) const {
-    auto rows = value.rows();
-    auto cols = value.cols();
-
-    auto flatened = t->flat<T>();
-    uint8_t* result = reinterpret_cast<uint8_t*>(flatened.data());
-
-    size_t expansion_factor = t->dim_size(2) * sizeof(T);
-    size_t skip = 4;
-    size_t pointer = 0;
-
-    for (int i = 0; i < rows; i++) {
-      for (int j = 0; j < cols; j++) {
-        unsigned int num = mpz_sizeinbase(value(i, j).get_mpz_t(), 256);
-        encode_length(result + pointer, num);
-
-        size_t ll;
-        mpz_export(result + pointer + skip, &ll, 1, sizeof(uint8_t), 0, 0,
-                   value(i, j).get_mpz_t());
-
-        if (expansion_factor < ll + skip) {
-          std::cout << "you're in deep trouble" << std::endl;
-        }
-        for (size_t k = pointer + skip + ll; k < pointer + expansion_factor;
-             k++) {
-          result[k] = 0;
-        }
-        pointer += expansion_factor;
-      }
-    }
-  }
-
   BigTensor& operator+=(const BigTensor& rhs) {
     this->value += rhs.value;
     return *this;
