@@ -54,7 +54,7 @@ inline void encode_length(uint8_t* buffer, unsigned int len) {
   buffer[2] = (len >> 16) & 255;
   buffer[3] = (len >> 24) & 255;
 }
-inline unsigned int decode_length(uint8_t* buffer) {
+inline unsigned int decode_length(const uint8_t* buffer) {
   return buffer[0] + 256 * buffer[1] + 65536 * buffer[2] + 16777216 * buffer[3];
 }
 
@@ -109,23 +109,23 @@ struct BigTensor {
   void LimbsFromTensor(const Tensor& t) {
     int rows = t.dim_size(0);
     int cols = t.dim_size(1);
-    int num_bytes_chunks = t.dim_size(2);
+    size_t num_real_limbs =
+        t.dim_size(2) * sizeof(T) - 4;  // get rid of header length
 
     value = MatrixXm(rows, cols);
+
+    auto input_tensor = t.flat<T>();
+    const uint8_t* buffer =
+        reinterpret_cast<const uint8_t*>(input_tensor.data());
+
+    size_t pointer = 0;
     for (int i = 0; i < rows; i++) {
       for (int j = 0; j < cols; j++) {
-        // copy tensor contents to buffer
-        T tmp[num_bytes_chunks];
-        for (int k = 0; k < num_bytes_chunks; k++)
-          tmp[k] = t.tensor<T, 3>()(i, j, k);
-
-        uint8_t* buffer = reinterpret_cast<uint8_t*>(tmp);
-
-        size_t skip = 0;
-        unsigned int length = decode_length(buffer);
-        skip += 4;
+        unsigned int length = decode_length(buffer + pointer);
+        pointer += 4;
         mpz_import(value(i, j).get_mpz_t(), length, 1, sizeof(uint8_t), 0, 0,
-                   buffer + skip);
+                   buffer + pointer);
+        pointer += num_real_limbs;
       }
     }
   }
@@ -135,30 +135,30 @@ struct BigTensor {
     auto rows = value.rows();
     auto cols = value.cols();
 
+    auto flatened = t->flat<T>();
+    uint8_t* result = reinterpret_cast<uint8_t*>(flatened.data());
+
     size_t expansion_factor = t->dim_size(2) * sizeof(T);
-    uint8_t out_bytes[expansion_factor];
+    size_t skip = 4;
+    size_t pointer = 0;
 
     for (int i = 0; i < rows; i++) {
       for (int j = 0; j < cols; j++) {
         unsigned int num = mpz_sizeinbase(value(i, j).get_mpz_t(), 256);
-        size_t skip = 0;
-        encode_length(out_bytes, num);
-        skip += 4;
+        encode_length(result + pointer, num);
 
         size_t ll;
-        mpz_export(out_bytes + skip, &ll, 1, sizeof(uint8_t), 0, 0,
+        mpz_export(result + pointer + skip, &ll, 1, sizeof(uint8_t), 0, 0,
                    value(i, j).get_mpz_t());
 
-        if (ll >= expansion_factor + skip) {
-          // how to throw an exception here?
+        if (expansion_factor < ll + skip) {
+          std::cout << "you're in deep trouble" << std::endl;
         }
-        for (size_t k = ll + skip; k < expansion_factor; k++) out_bytes[k] = 0;
-
-        T* tmp = reinterpret_cast<T*>(out_bytes);
-        // copy buffer contents to tensor
-        for (size_t k = 0; k < expansion_factor / sizeof(T); k++) {
-          t->tensor<T, 3>()(i, j, k) = tmp[k];
+        for (size_t k = pointer + skip + ll; k < pointer + expansion_factor;
+             k++) {
+          result[k] = 0;
         }
+        pointer += expansion_factor;
       }
     }
   }
