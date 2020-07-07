@@ -100,7 +100,7 @@ class BigExportLimbsOp : public OpKernel {
 
   void Compute(OpKernelContext* ctx) override {
     const Tensor& maxval_tensor = ctx->input(0);
-    auto maxval = maxval_tensor.flat<int32>()(0);
+    auto max_bitlen = maxval_tensor.flat<int32>()(0);
 
     const BigTensor* val = nullptr;
     TensorShape input_shape = ctx->input(1).shape();
@@ -112,16 +112,10 @@ class BigExportLimbsOp : public OpKernel {
     output_shape.AddDim(input_shape.dim_size(0));
     output_shape.AddDim(input_shape.dim_size(1));
 
-    // set_d for double in case we have large values
-    mpz_t valmpz;
-    mpz_init(valmpz);
-    mpz_set_d(valmpz, maxval);
-    unsigned int num_bytes_val = mpz_sizeinbase(valmpz, 256);
-    mpz_clear(valmpz);
-
-    unsigned int len_field_bytes = 4;
+    unsigned int type_bitlen = sizeof(T) * 8;
+    unsigned int len_field_bits = 32;
     unsigned int num_max_limbs =
-        (num_bytes_val + len_field_bytes + sizeof(T) - 1) / sizeof(T);
+        (len_field_bits + max_bitlen + type_bitlen - 1) / type_bitlen;
 
     output_shape.AddDim(num_max_limbs);
 
@@ -463,18 +457,12 @@ REGISTER_KERNEL_BUILDER(
     BigExportOp<uint8>);
 
 REGISTER_KERNEL_BUILDER(
-    Name("BigImportLimbs").Device(DEVICE_CPU).TypeConstraint<string>("dtype"),
-    BigImportLimbsOp<string>);
-REGISTER_KERNEL_BUILDER(
     Name("BigImportLimbs").Device(DEVICE_CPU).TypeConstraint<int32>("dtype"),
     BigImportLimbsOp<int32>);
 REGISTER_KERNEL_BUILDER(
     Name("BigImportLimbs").Device(DEVICE_CPU).TypeConstraint<uint8>("dtype"),
     BigImportLimbsOp<uint8>);
 
-REGISTER_KERNEL_BUILDER(
-    Name("BigExportLimbs").Device(DEVICE_CPU).TypeConstraint<string>("dtype"),
-    BigExportLimbsOp<string>);
 REGISTER_KERNEL_BUILDER(
     Name("BigExportLimbs").Device(DEVICE_CPU).TypeConstraint<int32>("dtype"),
     BigExportLimbsOp<int32>);

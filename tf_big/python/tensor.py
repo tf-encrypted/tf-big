@@ -244,14 +244,14 @@ def convert_to_tensor(tensor, limb_format=False):
   raise ValueError("Don't know how to convert value of type {}".format(type(tensor)))
 
 
-def convert_from_tensor(value, dtype=None, limb_format=False, maxval=None):
+def convert_from_tensor(value, dtype=None, limb_format=False, max_bitlen=None):
   assert isinstance(value, Tensor), type(value)
 
   if dtype is None:
     dtype = tf.string
 
   if limb_format is True:
-     return ops.big_export_limbs(maxval, value._raw, dtype)
+     return ops.big_export_limbs(max_bitlen, value._raw, dtype)
 
   if dtype in [tf.int32, tf.string]:
     return ops.big_export(value._raw, dtype=dtype)

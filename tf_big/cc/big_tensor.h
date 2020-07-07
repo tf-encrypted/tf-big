@@ -124,7 +124,6 @@ struct BigTensor {
         size_t skip = 0;
         unsigned int length = decode_length(buffer);
         skip += 4;
-        // this won't really work if we get int32
         mpz_import(value(i, j).get_mpz_t(), length, 1, sizeof(uint8_t), 0, 0,
                    buffer + skip);
       }
@@ -149,6 +148,7 @@ struct BigTensor {
         size_t ll;
         mpz_export(out_bytes + skip, &ll, 1, sizeof(uint8_t), 0, 0,
                    value(i, j).get_mpz_t());
+
         if (ll >= expansion_factor + skip) {
           // how to throw an exception here?
         }
