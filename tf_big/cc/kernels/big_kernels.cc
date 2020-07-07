@@ -112,8 +112,18 @@ class BigExportLimbsOp : public OpKernel {
     output_shape.AddDim(input_shape.dim_size(0));
     output_shape.AddDim(input_shape.dim_size(1));
 
+    // set_d for double in case we have large values
+    mpz_t valmpz;
+    mpz_init(valmpz);
+    mpz_set_d(valmpz, maxval);
+    unsigned int num_bytes_val = mpz_sizeinbase(valmpz, 256);
+    mpz_clear(valmpz);
+
     unsigned int len_field_bytes = 4;
-    output_shape.AddDim((maxval + sizeof(T) - 1 + len_field_bytes) / sizeof(T));
+    unsigned int num_max_limbs =
+        (num_bytes_val + len_field_bytes + sizeof(T) - 1) / sizeof(T);
+
+    output_shape.AddDim(num_max_limbs);
 
     OP_REQUIRES_OK(ctx, ctx->allocate_output(0, output_shape, &output));
 
