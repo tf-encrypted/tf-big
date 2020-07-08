@@ -3,7 +3,7 @@
 #include "tensorflow/core/framework/shape_inference.h"
 
 REGISTER_OP("BigImport")
-    .Attr("dtype: {int32, string}")
+    .Attr("dtype: {int32, string, uint8}")
     .Input("in: dtype")
     .Output("val: variant")
     .SetIsStateful()
@@ -14,12 +14,51 @@ REGISTER_OP("BigImport")
       return ::tensorflow::Status::OK();
     });
 
+REGISTER_OP("BigImportLimbs")
+    .Attr("dtype: {uint8, int32}")
+    .Input("in: dtype")
+    .Output("val: variant")
+    .SetIsStateful()
+    .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
+      ::tensorflow::shape_inference::ShapeHandle input_shape = c->input(0);
+      TF_RETURN_IF_ERROR(c->WithRank(input_shape, 3, &input_shape));
+
+      ::tensorflow::shape_inference::ShapeHandle val_shape;
+      TF_RETURN_IF_ERROR(c->Subshape(input_shape, 0, -1, &val_shape));
+      c->set_output(0, val_shape);
+
+      return ::tensorflow::Status::OK();
+    });
+
 REGISTER_OP("BigExport")
-    .Attr("dtype: {int32, string}")
+    .Attr("dtype: {int32, string, uint8}")
     .Input("val: variant")
     .Output("out: dtype")
     .SetIsStateful()
     .SetShapeFn(::tensorflow::shape_inference::UnchangedShape);
+
+REGISTER_OP("BigExportLimbs")
+    .Attr("dtype: {int32, uint8}")
+    .Input("maxval: int32")
+    .Input("in: variant")
+    .Output("out: dtype")
+    .SetIsStateful()
+    .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
+      ::tensorflow::shape_inference::ShapeHandle maxval_shape = c->input(0);
+      TF_RETURN_IF_ERROR(c->WithRank(maxval_shape, 0, &maxval_shape));
+
+      ::tensorflow::shape_inference::ShapeHandle input_shape = c->input(1);
+      TF_RETURN_IF_ERROR(c->WithRank(input_shape, 2, &input_shape));
+
+      ::tensorflow::shape_inference::ShapeHandle expansion_shape =
+          c->MakeShape({c->UnknownDim()});
+      ::tensorflow::shape_inference::ShapeHandle out_shape;
+      TF_RETURN_IF_ERROR(
+          c->Concatenate(input_shape, expansion_shape, &out_shape));
+      c->set_output(0, out_shape);
+
+      return ::tensorflow::Status::OK();
+    });
 
 REGISTER_OP("BigRandomUniform")
     .Input("shape: int32")

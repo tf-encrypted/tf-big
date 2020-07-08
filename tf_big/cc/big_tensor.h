@@ -48,6 +48,17 @@ typedef Matrix<mpz_class, Dynamic, Dynamic> MatrixXm;
 
 namespace tf_big {
 
+inline void encode_length(uint8_t* buffer, unsigned int len) {
+  buffer[0] = len & 0xFF;
+  buffer[1] = (len >> 8) & 0xFF;
+  buffer[2] = (len >> 16) & 0xFF;
+  buffer[3] = (len >> 24) & 0xFF;
+}
+inline unsigned int decode_length(const uint8_t* buffer) {
+  return buffer[0] + 0x100 * buffer[1] + 0x10000 * buffer[2] +
+         0x1000000 * buffer[3];
+}
+
 struct BigTensor {
   BigTensor() {}
   BigTensor(const BigTensor& other);
@@ -92,6 +103,30 @@ struct BigTensor {
         for (int j = 0; j < cols; j++) {
           mat(i, j) = value(i, j).get_str();
         }
+      }
+    }
+  }
+  template <typename T>
+  void LimbsFromTensor(const Tensor& t) {
+    int rows = t.dim_size(0);
+    int cols = t.dim_size(1);
+    size_t num_real_limbs =
+        t.dim_size(2) * sizeof(T) - 4;  // get rid of header length
+
+    value = MatrixXm(rows, cols);
+
+    auto input_tensor = t.flat<T>();
+    const uint8_t* buffer =
+        reinterpret_cast<const uint8_t*>(input_tensor.data());
+
+    size_t pointer = 0;
+    for (int i = 0; i < rows; i++) {
+      for (int j = 0; j < cols; j++) {
+        unsigned int length = decode_length(buffer + pointer);
+        pointer += 4;
+        mpz_import(value(i, j).get_mpz_t(), length, 1, sizeof(uint8_t), 0, 0,
+                   buffer + pointer);
+        pointer += num_real_limbs;
       }
     }
   }
@@ -157,6 +192,19 @@ inline void BigTensor::ToTensor<int32>(Tensor* t) const {
   for (int i = 0; i < rows; i++) {
     for (int j = 0; j < cols; j++) {
       mat(i, j) = value(i, j).get_si();
+    }
+  }
+}
+
+template <>
+inline void BigTensor::ToTensor<uint8>(Tensor* t) const {
+  auto rows = value.rows();
+  auto cols = value.cols();
+
+  auto mat = t->matrix<uint8>();
+  for (int i = 0; i < rows; i++) {
+    for (int j = 0; j < cols; j++) {
+      mat(i, j) = (uint8)value(i, j).get_si();
     }
   }
 }
