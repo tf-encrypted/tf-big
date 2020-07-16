@@ -149,8 +149,8 @@ def constant(tensor):
 
 
 def _numpy_limbs_to_tensor(tensor):
-  if len(tensor.shape) != 3:
-    raise ValueError("Tensor must have 3D shape when given in GMP format.")
+  if len(tensor.shape) < 2:
+    raise ValueError("Tensor must have at least a 2D shape when given in GMP format.")
 
   if np.issubdtype(tensor.dtype, np.int32) \
     or np.issubdtype(tensor.dtype, np.uint8):
@@ -160,8 +160,8 @@ def _numpy_limbs_to_tensor(tensor):
 
 
 def _tensor_limbs_to_tensor(tensor):
-  if len(tensor.shape) != 3:
-    raise ValueError("Tensor must have 3D shape when given in GMP format.")
+  if len(tensor.shape) < 2:
+    raise ValueError("Tensor must have at least a 2D shape when given in GMP format.")
 
   if tensor.dtype in (tf.uint8, tf.int32):
     return Tensor(ops.big_import_limbs(tensor))
@@ -248,7 +248,8 @@ def convert_from_tensor(value, dtype=None, limb_format=False, max_bitlen=None):
     dtype = tf.string
 
   if limb_format is True:
-     return ops.big_export_limbs(max_bitlen, value._raw, dtype)
+    assert max_bitlen != None
+    return ops.big_export_limbs(max_bitlen, value._raw, dtype)
 
   if dtype in [tf.int32, tf.string]:
     return ops.big_export(value._raw, dtype=dtype)

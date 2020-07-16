@@ -48,6 +48,7 @@ REGISTER_OP("BigExportLimbs")
       TF_RETURN_IF_ERROR(c->WithRank(maxval_shape, 0, &maxval_shape));
 
       ::tensorflow::shape_inference::ShapeHandle input_shape = c->input(1);
+
       TF_RETURN_IF_ERROR(c->WithRank(input_shape, 2, &input_shape));
 
       ::tensorflow::shape_inference::ShapeHandle expansion_shape =
@@ -82,7 +83,7 @@ REGISTER_OP("BigRandomRsaModulus")
     .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
       ::tensorflow::shape_inference::ShapeHandle bitlength_shape = c->input(0);
       ::tensorflow::shape_inference::ShapeHandle scalar_shape =
-          c->MakeShape({});
+          c->MakeShape({1, 1});
       TF_RETURN_IF_ERROR(c->WithRank(bitlength_shape, 0, &bitlength_shape));
       c->set_output(0, scalar_shape);
       c->set_output(1, scalar_shape);
