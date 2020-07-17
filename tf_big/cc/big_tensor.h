@@ -6,6 +6,9 @@
 
 #include <string>
 
+#include <fcntl.h>
+#include <unistd.h>
+
 #include "Eigen/Core"
 #include "Eigen/Dense"
 #include "tensorflow/core/framework/op.h"
@@ -47,6 +50,27 @@ struct NumTraits<mpz_class> : GenericNumTraits<mpz_class> {
 typedef Matrix<mpz_class, Dynamic, Dynamic> MatrixXm;
 
 namespace tf_big {
+
+namespace gmp_utils {
+inline void reseed(unsigned long& seed) {
+  int file;
+  /* re-seed random number generator */
+  if ((file = open("/dev/urandom", O_RDONLY)) == -1) {
+    (void)fprintf(stderr, "Error opening /dev/urandom\n");
+  } else {
+    if (read(file, &seed, sizeof seed) == -1) {
+      (void)fprintf(stderr, "Error reading from /dev/urandom\n");
+      (void)close(file);
+    }
+  }
+}
+inline void init_randstate(gmp_randstate_t& state) {
+  gmp_randinit_mt(state);
+  unsigned long seed;
+  reseed(seed);
+  gmp_randseed_ui(state, seed);
+}
+}  // namespace gmp_utils
 
 inline void encode_length(uint8_t* buffer, unsigned int len) {
   buffer[0] = len & 0xFF;

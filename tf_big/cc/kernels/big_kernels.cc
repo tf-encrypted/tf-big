@@ -387,7 +387,7 @@ class BigRandomUniformOp : public OpKernel {
 
     // TODO(Morten) offer secure randomness
     gmp_randstate_t state;
-    gmp_randinit_mt(state);
+    tf_big::gmp_utils::init_randstate(state);
     mpz_t tmp;
     mpz_init(tmp);
     for (int i = 0; i < size; i++) {
@@ -420,7 +420,7 @@ class BigRandomRsaModulusOp : public OpKernel {
     auto n_data = n_matrix.data();
 
     gmp_randstate_t state;
-    gmp_randinit_mt(state);
+    tf_big::gmp_utils::init_randstate(state);
     mpz_t p;
     mpz_t q;
     mpz_t n;
@@ -444,18 +444,18 @@ class BigRandomRsaModulusOp : public OpKernel {
     q_data[0] = mpz_class(q);
     n_data[0] = mpz_class(n);
 
-    TensorShape shape({});
+    TensorShape shape({1, 1});
     Tensor* p_res;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(0, shape, &p_res));
-    p_res->scalar<Variant>()(0) = BigTensor(p_matrix);
+    p_res->flat<Variant>()(0) = BigTensor(p_matrix);
 
     Tensor* q_res;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(1, shape, &q_res));
-    q_res->scalar<Variant>()(0) = BigTensor(q_matrix);
+    q_res->flat<Variant>()(0) = BigTensor(q_matrix);
 
     Tensor* n_res;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(2, shape, &n_res));
-    n_res->scalar<Variant>()(0) = BigTensor(n_matrix);
+    n_res->flat<Variant>()(0) = BigTensor(n_matrix);
 
     mpz_clear(p);
     mpz_clear(q);

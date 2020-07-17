@@ -52,7 +52,7 @@ class RandomTest(parameterized.TestCase):
   )
   def test_random_rsa_modulus(self, run_eagerly):
     bitlength = 128
-    expected_shape = ()
+    expected_shape = (1,1)
 
     context = tf_execution_context(run_eagerly)
     with context.scope():
@@ -66,9 +66,9 @@ class RandomTest(parameterized.TestCase):
     assert q.shape == expected_shape
     assert n.shape == expected_shape
 
-    assert isinstance(context.evaluate(p), bytes)
-    assert isinstance(context.evaluate(q), bytes)
-    assert isinstance(context.evaluate(n), bytes)
+    assert isinstance(context.evaluate(p)[0][0], bytes)
+    assert isinstance(context.evaluate(q)[0][0], bytes)
+    assert isinstance(context.evaluate(n)[0][0], bytes)
 
 
 class ArithmeticTest(parameterized.TestCase):
