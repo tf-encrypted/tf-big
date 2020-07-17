@@ -387,7 +387,7 @@ class BigRandomUniformOp : public OpKernel {
 
     // TODO(Morten) offer secure randomness
     gmp_randstate_t state;
-    gmp_randinit_mt(state);
+    tf_big::gmp_utils::init_randstate(state);
     mpz_t tmp;
     mpz_init(tmp);
     for (int i = 0; i < size; i++) {
@@ -420,7 +420,7 @@ class BigRandomRsaModulusOp : public OpKernel {
     auto n_data = n_matrix.data();
 
     gmp_randstate_t state;
-    gmp_randinit_mt(state);
+    tf_big::gmp_utils::init_randstate(state);
     mpz_t p;
     mpz_t q;
     mpz_t n;
