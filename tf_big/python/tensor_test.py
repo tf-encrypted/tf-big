@@ -287,20 +287,20 @@ class ConvertTest(parameterized.TestCase):
     context = tf_execution_context(run_eagerly)
 
     with context.scope():
-      x = convert_to_tensor(np.array([[10, 20]]))
+      x = convert_to_tensor(np.array([[10, 20]]), bitlength=16)
       assert x.shape.as_list() == [1, 2], x.shape
-      x_limbs = convert_from_tensor(x, dtype=tf_type, limb_format=True, max_bitlen=16)
+      x_limbs = convert_from_tensor(x, dtype=tf_type, limb_format=True)
       assert x_limbs.shape.as_list() == x.shape.as_list() + (
           [tf_shape] if run_eagerly else [None]), x_limbs.shape
-      x_norm = convert_to_tensor(x_limbs, limb_format=True)
+      x_norm = convert_to_tensor(x_limbs, bitlength=16, limb_format=True)
       assert x_norm.shape.as_list() == x.shape.as_list(), x_norm.shape
 
-      y = convert_to_tensor(np.array([[30, 40]]))
+      y = convert_to_tensor(np.array([[30, 40]]), bitlength=16)
       assert y.shape.as_list() == [1, 2], y.shape
-      y_limbs = convert_from_tensor(y, dtype=tf_type, limb_format=True, max_bitlen=16)
+      y_limbs = convert_from_tensor(y, dtype=tf_type, limb_format=True)
       assert y_limbs.shape.as_list() == y.shape.as_list() + (
           [tf_shape] if run_eagerly else [None]), y_limbs.shape
-      y_norm = convert_to_tensor(y_limbs, limb_format=True) 
+      y_norm = convert_to_tensor(y_limbs, bitlength=16, limb_format=True)
       assert y_norm.shape.as_list() == y.shape.as_list(), y_norm.shape
 
       z = x_norm + y_norm

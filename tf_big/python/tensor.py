@@ -11,10 +11,19 @@ from tensorflow.python.framework import ops as tf_ops
 class Tensor(object):
   is_tensor_like = True  # needed to pass tf.is_tensor, new as of TF 2.2+
 
-  def __init__(self, value):
+  def __init__(self, value, bitlength=None):
     assert isinstance(value, tf.Tensor), type(value)
     assert value.dtype is tf.variant, value.dtype
     self._raw = value
+    if bitlength is not None:
+      assert isinstance(bitlength, int), type(bitlength)
+      self._bitlength = bitlength
+    else:
+      self._bitlength = bitlength
+
+  @property
+  def bitlength(self):
+    return self._bitlength
 
   @property
   def shape(self):
@@ -27,6 +36,7 @@ class Tensor(object):
   @property
   def dtype(self):
     return tf.int32
+    # TODO check if future TF versions (2.x.x) resolve this issue
     # return tf.string
 
   def eval(self, session=None, dtype=None):
@@ -147,35 +157,40 @@ def constant(tensor):
   return convert_to_tensor(tensor)
 
 
-
-def _numpy_limbs_to_tensor(tensor):
+def _numpy_limbs_to_tensor(tensor, bitlength):
+  assert bitlength is not None
   if len(tensor.shape) < 2:
     raise ValueError("Tensor must have at least a 2D shape when given in GMP format.")
 
   if np.issubdtype(tensor.dtype, np.int32) \
     or np.issubdtype(tensor.dtype, np.uint8):
-    return Tensor(ops.big_import_limbs(tensor))
+    return Tensor(ops.big_import_limbs(tensor), bitlength=bitlength)
   else:
-    raise ValueError("Not implemented limb conversion for this type")
+    raise ValueError(
+        "Failed limb conversion for {}, input dtype must be subtype of "
+        "np.int32 or np.uint8".format(tensor.dtype))
 
 
-def _tensor_limbs_to_tensor(tensor):
+def _tensor_limbs_to_tensor(tensor, bitlength):
+  assert bitlength is not None
   if len(tensor.shape) < 2:
     raise ValueError("Tensor must have at least a 2D shape when given in GMP format.")
 
   if tensor.dtype in (tf.uint8, tf.int32):
-    return Tensor(ops.big_import_limbs(tensor))
+    return Tensor(ops.big_import_limbs(tensor), bitlength=bitlength)
   else:
-    raise ValueError("Not implemented limb conversion")
+    raise ValueError(
+        "Failed limb conversion for {}, input dtype must be "
+        "tf.int32 or tf.uint8".format(tensor.dtype))
 
 
-def _convert_numpy_tensor(tensor, limb_format=False):
-  if limb_format is True:
-    return _numpy_limbs_to_tensor(tensor)
+def _convert_numpy_tensor(tensor, bitlength, limb_format):
+  if limb_format:
+    return _numpy_limbs_to_tensor(tensor, bitlength)
 
   if len(tensor.shape) > 2:
     raise ValueError("Only matrices are supported for now.")
-    
+
   # make sure we have a full matrix
   while len(tensor.shape) < 2:
     tensor = np.expand_dims(tensor, 0)
@@ -184,21 +199,21 @@ def _convert_numpy_tensor(tensor, limb_format=False):
      or np.issubdtype(tensor.dtype, np.string_) \
      or np.issubdtype(tensor.dtype, np.unicode_):
     # supported as-is
-    return Tensor(ops.big_import(tensor))
+    return Tensor(ops.big_import(tensor), bitlength=bitlength)
 
   if np.issubdtype(tensor.dtype, np.int64) \
      or np.issubdtype(tensor.dtype, np.object_):
     # supported as strings
     tensor = tensor.astype(np.string_)
-    return Tensor(ops.big_import(tensor))
+    return Tensor(ops.big_import(tensor), bitlength=bitlength)
   
   raise ValueError("Don't know how to convert NumPy tensor with dtype '{}'".format(tensor.dtype))
 
 
-def _convert_tensorflow_tensor(tensor, limb_format=False):
+def _convert_tensorflow_tensor(tensor, bitlength, limb_format):
 
-  if limb_format is True:
-    return _tensor_limbs_to_tensor(tensor)
+  if limb_format:
+    return _tensor_limbs_to_tensor(tensor, bitlength)
 
   if len(tensor.shape) > 2:
     raise ValueError("Only matrices are supported for now.")
@@ -209,17 +224,23 @@ def _convert_tensorflow_tensor(tensor, limb_format=False):
 
   if tensor.dtype in (tf.int32, tf.string, tf.uint8):
     # supported as-is
-    return Tensor(ops.big_import(tensor))
+    return Tensor(ops.big_import(tensor), bitlength=bitlength)
 
   if tensor.dtype in (tf.int64, ):
     # supported as strings
     tensor = tf.as_string(tensor)
-    return Tensor(ops.big_import(tensor))
+    return Tensor(ops.big_import(tensor), bitlength=bitlength)
 
   raise ValueError("Don't know how to convert TensorFlow tensor with dtype '{}'".format(tensor.dtype))
 
 
-def convert_to_tensor(tensor, limb_format=False):
+def convert_to_tensor(tensor, bitlength=None, limb_format=False):
+  assert isinstance(limb_format, bool), type(limb_format)
+  if bitlength is not None and not isinstance(bitlength, int):
+    raise ValueError(
+        "Optional bitlength kwarg must be an integer, "
+        "got {}.".format(type(bitlength)))
+
   if isinstance(tensor, Tensor):
     return tensor
 
@@ -227,29 +248,42 @@ def convert_to_tensor(tensor, limb_format=False):
     return None
 
   if isinstance(tensor, (int, str)):
-    return _convert_numpy_tensor(np.array([tensor]), limb_format)
+    return _convert_numpy_tensor(np.array([tensor]), bitlength, limb_format)
 
   if isinstance(tensor, (list, tuple)):
-    return _convert_numpy_tensor(np.array(tensor), limb_format)
+    return _convert_numpy_tensor(np.array(tensor), bitlength, limb_format)
 
   if isinstance(tensor, np.ndarray):
-    return _convert_numpy_tensor(tensor, limb_format)
+    return _convert_numpy_tensor(tensor, bitlength, limb_format)
 
   if isinstance(tensor, tf.Tensor):
-    return _convert_tensorflow_tensor(tensor, limb_format)
+    return _convert_tensorflow_tensor(tensor, bitlength, limb_format)
 
   raise ValueError("Don't know how to convert value of type {}".format(type(tensor)))
 
 
-def convert_from_tensor(value, dtype=None, limb_format=False, max_bitlen=None):
+def convert_from_tensor(value, dtype=None, limb_format=False, bitlength=None):
   assert isinstance(value, Tensor), type(value)
+  assert isinstance(limb_format, bool), type(limb_format)
+
+  if limb_format:
+
+    if bitlength is not None:
+      assert isinstance(bitlength, int), type(bitlength)
+      assert bitlength > 0
+      bitlength_to_check = value.bitlength or -1
+      assert bitlength_to_check <= bitlength
+    elif value.bitlength is not None:
+      bitlength = value.bitlength
+    else:
+      raise ValueError("No bitlength provided for input tensor, cannot export in limb format.")
+    if dtype is None:
+      dtype = tf.int32
+
+    return ops.big_export_limbs(bitlength, value._raw, dtype=dtype)
 
   if dtype is None:
     dtype = tf.string
-
-  if limb_format is True:
-    assert max_bitlen != None
-    return ops.big_export_limbs(max_bitlen, value._raw, dtype)
 
   if dtype in [tf.int32, tf.string]:
     return ops.big_export(value._raw, dtype=dtype)
