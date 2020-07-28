@@ -234,12 +234,16 @@ def _convert_tensorflow_tensor(tensor, bitlength, limb_format):
   raise ValueError("Don't know how to convert TensorFlow tensor with dtype '{}'".format(tensor.dtype))
 
 
-def convert_to_tensor(tensor, bitlength=None, limb_format=False):
+def convert_to_tensor(tensor, limb_format=False, bitlength=None):
   assert isinstance(limb_format, bool), type(limb_format)
   if bitlength is not None and not isinstance(bitlength, int):
     raise ValueError(
         "Optional bitlength kwarg must be an integer, "
         "got {}.".format(type(bitlength)))
+  if limb_format and bitlength is None:
+    raise ValueError(
+        "Bitlength is a required argument whenever limb_format=True."
+    )
 
   if isinstance(tensor, Tensor):
     return tensor
@@ -281,6 +285,9 @@ def convert_from_tensor(value, dtype=None, limb_format=False, bitlength=None):
       dtype = tf.int32
 
     return ops.big_export_limbs(bitlength, value._raw, dtype=dtype)
+
+  if bitlength is not None:
+    raise ValueError("Passing explicit bitlength has no effect when limb_format=False.")
 
   if dtype is None:
     dtype = tf.string
