@@ -31,14 +31,14 @@ class Tensor(object):
         # return tf.string
 
     def eval(self, session=None, dtype=None):
-        tf_tensor = convert_from_tensor(self, dtype=dtype)
+        tf_tensor = export_tensor(self, dtype=dtype)
         evaluated = tf_tensor.eval(session=session)
         if tf_tensor.dtype is tf.string:
             return evaluated.astype(str)
         return evaluated
 
     def __add__(self, other):
-        other = convert_to_tensor(other)
+        other = import_tensor(other)
         # TODO (Yann) This broadcast should be implemented
         # in big_kernels.cc
         self, other = broadcast(self, other)
@@ -46,7 +46,7 @@ class Tensor(object):
         return Tensor(res)
 
     def __radd__(self, other):
-        other = convert_to_tensor(other)
+        other = import_tensor(other)
         # TODO (Yann) This broadcast should be implemented
         # in big_kernels.cc
         self, other = broadcast(self, other)
@@ -54,7 +54,7 @@ class Tensor(object):
         return Tensor(res)
 
     def __sub__(self, other):
-        other = convert_to_tensor(other)
+        other = import_tensor(other)
         # TODO (Yann) This broadcast should be implemented
         # in big_kernels.cc
         self, other = broadcast(self, other)
@@ -62,7 +62,7 @@ class Tensor(object):
         return Tensor(res)
 
     def __mul__(self, other):
-        other = convert_to_tensor(other)
+        other = import_tensor(other)
         # TODO (Yann) This broadcast should be implemented
         # in big_kernels.cc
         self, other = broadcast(self, other)
@@ -70,7 +70,7 @@ class Tensor(object):
         return Tensor(res)
 
     def __floordiv__(self, other):
-        other = convert_to_tensor(other)
+        other = import_tensor(other)
         # TODO (Yann) This broadcast should be implemented
         # in big_kernels.cc
         self, other = broadcast(self, other)
@@ -80,8 +80,8 @@ class Tensor(object):
     def pow(self, exponent, modulus=None, secure=None):
         # TODO (Yann) This broadcast should be implemented
         # in big_kernels.cc
-        exponent = convert_to_tensor(exponent)
-        modulus = convert_to_tensor(modulus)
+        exponent = import_tensor(exponent)
+        modulus = import_tensor(modulus)
         self, exponent = broadcast(self, exponent)
         res = ops.big_pow(
             base=self._raw,
@@ -95,18 +95,18 @@ class Tensor(object):
         return self.pow(exponent)
 
     def __mod__(self, modulus):
-        modulus = convert_to_tensor(modulus)
+        modulus = import_tensor(modulus)
         res = ops.big_mod(val=self._raw, mod=modulus._raw)
         return Tensor(res)
 
     def inv(self, modulus):
-        modulus = convert_to_tensor(modulus)
+        modulus = import_tensor(modulus)
         res = ops.big_inv(val=self._raw, mod=modulus._raw)
         return Tensor(res)
 
 
 def _fetch_function(big_tensor):
-    unwrapped = [convert_from_tensor(big_tensor, dtype=tf.string)]
+    unwrapped = [export_tensor(big_tensor, dtype=tf.string)]
     rewrapper = lambda components_fetched: components_fetched[0].astype(str)
     return unwrapped, rewrapper
 
@@ -133,7 +133,7 @@ def _tensor_conversion_function(tensor, dtype=None, name=None, as_ref=False):
     assert name is None, "Not implemented, name='{}'".format(name)
     assert not as_ref, "Not implemented, as_ref={}".format(as_ref)
     assert dtype in [tf.int32, None], dtype
-    return convert_from_tensor(tensor, dtype=dtype)
+    return export_tensor(tensor, dtype=dtype)
 
 
 # TODO(Morten)
@@ -151,7 +151,7 @@ tf_utils.register_symbolic_tensor_type(Tensor)
 
 def constant(tensor):
     assert isinstance(tensor, (np.ndarray, list, tuple)), type(tensor)
-    return convert_to_tensor(tensor)
+    return import_tensor(tensor)
 
 
 def _convert_to_numpy_tensor(tensor):
@@ -277,7 +277,7 @@ def get_secure_default():
 
 def random_uniform(shape, maxval):
     if not isinstance(maxval, Tensor):
-        maxval = convert_to_tensor(maxval)
+        maxval = import_tensor(maxval)
     r_raw = ops.big_random_uniform(shape, maxval._raw)
     return Tensor(r_raw)
 
@@ -332,14 +332,14 @@ def broadcast(x, y):
     if x_rank != y_rank:
 
         if x_rank < y_rank:
-            x = convert_from_tensor(x)
+            x = export_tensor(x)
             x = tf.broadcast_to(x, y.shape)
-            x = convert_to_tensor(x)
+            x = import_tensor(x)
 
         elif y_rank < x_rank:
-            y = convert_from_tensor(y)
+            y = export_tensor(y)
             y = tf.broadcast_to(y, x.shape)
-            y = convert_to_tensor(y)
+            y = import_tensor(y)
 
         return x, y
 
@@ -347,14 +347,14 @@ def broadcast(x, y):
     elif x_nb_el != y_nb_el:
 
         if x_nb_el < y_nb_el:
-            x = convert_from_tensor(x)
+            x = export_tensor(x)
             x = tf.broadcast_to(x, y.shape)
-            x = convert_to_tensor(x)
+            x = import_tensor(x)
 
         elif x_nb_el > y_nb_el:
-            y = convert_from_tensor(y)
+            y = export_tensor(y)
             y = tf.broadcast_to(y, x.shape)
-            y = convert_to_tensor(y)
+            y = import_tensor(y)
 
         return x, y
 

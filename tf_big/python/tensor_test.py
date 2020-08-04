@@ -4,10 +4,10 @@ import numpy as np
 import tensorflow as tf
 from absl.testing import parameterized
 
-from tf_big.python.tensor import convert_from_tensor
-from tf_big.python.tensor import convert_to_tensor
 from tf_big.python.tensor import export_limbs_tensor
+from tf_big.python.tensor import export_tensor
 from tf_big.python.tensor import import_limbs_tensor
+from tf_big.python.tensor import import_tensor
 from tf_big.python.tensor import pow
 from tf_big.python.tensor import random_rsa_modulus
 from tf_big.python.tensor import random_uniform
@@ -23,9 +23,9 @@ class EvaluationTest(parameterized.TestCase):
 
         context = tf_execution_context(run_eagerly)
         with context.scope():
-            x = convert_to_tensor(x_raw)
+            x = import_tensor(x_raw)
             assert x.shape == x_raw.shape
-            x = convert_from_tensor(x)
+            x = export_tensor(x)
             assert x.shape == x_raw.shape
 
         np.testing.assert_array_equal(
@@ -44,7 +44,7 @@ class RandomTest(parameterized.TestCase):
         context = tf_execution_context(run_eagerly)
         with context.scope():
             x = random_uniform(shape=shape, maxval=maxval)
-            x = convert_from_tensor(x)
+            x = export_tensor(x)
 
         assert x.shape == shape
         assert context.evaluate(x).shape == shape
@@ -60,9 +60,9 @@ class RandomTest(parameterized.TestCase):
         with context.scope():
             p, q, n = random_rsa_modulus(bitlength=bitlength)
 
-            p = convert_from_tensor(p)
-            q = convert_from_tensor(q)
-            n = convert_from_tensor(n)
+            p = export_tensor(p)
+            q = export_tensor(q)
+            n = export_tensor(n)
 
         assert p.shape == expected_shape
         assert q.shape == expected_shape
@@ -103,11 +103,11 @@ class ArithmeticTest(parameterized.TestCase):
         context = tf_execution_context(run_eagerly)
         with context.scope():
 
-            x = convert_to_tensor(x_raw)
-            y = convert_to_tensor(y_raw)
+            x = import_tensor(x_raw)
+            y = import_tensor(y_raw)
             z = op(x, y)
 
-            z = convert_from_tensor(z)
+            z = export_tensor(z)
 
         np.testing.assert_array_equal(
             context.evaluate(z).astype(str), z_raw.astype(str)
@@ -127,12 +127,12 @@ class ArithmeticTest(parameterized.TestCase):
         context = tf_execution_context(run_eagerly)
         with context.scope():
 
-            x = convert_to_tensor(x_raw)
-            y = convert_to_tensor(y_raw)
-            m = convert_to_tensor(m_raw)
+            x = import_tensor(x_raw)
+            y = import_tensor(y_raw)
+            m = import_tensor(m_raw)
             z = pow(x, y, m)
 
-            z = convert_from_tensor(z)
+            z = export_tensor(z)
 
         np.testing.assert_array_equal(
             context.evaluate(z).astype(str), z_raw.astype(str)
@@ -151,10 +151,10 @@ class NumberTheoryTest(parameterized.TestCase):
         context = tf_execution_context(run_eagerly)
         with context.scope():
 
-            x = convert_to_tensor(x_raw)
-            n = convert_to_tensor(n_raw)
+            x = import_tensor(x_raw)
+            n = import_tensor(n_raw)
             y = x % n
-            y = convert_from_tensor(y)
+            y = export_tensor(y)
 
         np.testing.assert_array_equal(
             context.evaluate(y).astype(str), y_raw.astype(str)
@@ -181,10 +181,10 @@ class NumberTheoryTest(parameterized.TestCase):
         context = tf_execution_context(run_eagerly)
         with context.scope():
 
-            x = convert_to_tensor(x_raw)
-            n = convert_to_tensor(n_raw)
+            x = import_tensor(x_raw)
+            n = import_tensor(n_raw)
             y = x.inv(n)
-            y = convert_from_tensor(y)
+            y = export_tensor(y)
 
         np.testing.assert_array_equal(
             context.evaluate(y).astype(str), y_raw.astype(str)
@@ -246,8 +246,8 @@ class ConvertTest(parameterized.TestCase):
         with context.scope():
 
             y = tf.convert_to_tensor(x) if convert_to_tf_tensor else x
-            y = convert_to_tensor(y)
-            z = convert_from_tensor(y, dtype=tf_cast)
+            y = import_tensor(y)
+            z = export_tensor(y, dtype=tf_cast)
 
         actual = context.evaluate(z)
         actual = actual.astype(np_cast) if np_cast else actual
@@ -263,7 +263,7 @@ class ConvertTest(parameterized.TestCase):
         context = tf_execution_context(run_eagerly)
 
         with context.scope():
-            x = convert_to_tensor(np.array([[10, 20]]))
+            x = import_tensor(np.array([[10, 20]]))
 
         assert tf.is_tensor(x)
 
@@ -271,7 +271,7 @@ class ConvertTest(parameterized.TestCase):
         context = tf_execution_context(False)
 
         with context.scope():
-            x = convert_to_tensor(np.array([[10, 20]]))
+            x = import_tensor(np.array([[10, 20]]))
             y = tf.convert_to_tensor(np.array([[30, 40]]))
             z = x + y
 
@@ -281,7 +281,7 @@ class ConvertTest(parameterized.TestCase):
         context = tf_execution_context(False)
 
         with context.scope():
-            x = convert_to_tensor(np.array([[10, 20]]))
+            x = import_tensor(np.array([[10, 20]]))
             y = tf.convert_to_tensor(x)
 
         assert y.dtype is tf.string
@@ -306,7 +306,7 @@ class ConvertTest(parameterized.TestCase):
         context = tf_execution_context(run_eagerly)
 
         with context.scope():
-            x = convert_to_tensor(x_np)
+            x = import_tensor(x_np)
             assert x.shape.as_list() == [1, 2], x.shape
             x_limbs = export_limbs_tensor(x, dtype=tf_type, max_bitlen=max_bitlen)
             assert x_limbs.shape.as_list() == x.shape.as_list() + (
@@ -315,7 +315,7 @@ class ConvertTest(parameterized.TestCase):
             x_norm = import_limbs_tensor(x_limbs)
             assert x_norm.shape.as_list() == x.shape.as_list(), x_norm.shape
 
-            y = convert_to_tensor(np.array([[30, 40]]))
+            y = import_tensor(np.array([[30, 40]]))
             assert y.shape.as_list() == [1, 2], y.shape
             y_limbs = export_limbs_tensor(y, dtype=tf_type, max_bitlen=max_bitlen)
             assert y_limbs.shape.as_list() == y.shape.as_list() + (
@@ -325,7 +325,7 @@ class ConvertTest(parameterized.TestCase):
             assert y_norm.shape.as_list() == y.shape.as_list(), y_norm.shape
 
             z = x_norm + y_norm
-            res = convert_from_tensor(z)
+            res = export_tensor(z)
 
         np.testing.assert_array_equal(
             context.evaluate(res).astype(str), np.array([["40", "60"]])
