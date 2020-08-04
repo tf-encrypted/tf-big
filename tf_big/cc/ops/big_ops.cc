@@ -39,17 +39,16 @@ REGISTER_OP("BigExport")
 
 REGISTER_OP("BigExportLimbs")
     .Attr("dtype: {int32, uint8}")
-    .Input("maxval: int32")
-    .Input("in: variant")
+    .Input("val: variant")
+    .Input("max_bitlen: int32")
     .Output("out: dtype")
     .SetIsStateful()
     .SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
-      ::tensorflow::shape_inference::ShapeHandle maxval_shape = c->input(0);
-      TF_RETURN_IF_ERROR(c->WithRank(maxval_shape, 0, &maxval_shape));
-
-      ::tensorflow::shape_inference::ShapeHandle input_shape = c->input(1);
-
+      ::tensorflow::shape_inference::ShapeHandle input_shape = c->input(0);
       TF_RETURN_IF_ERROR(c->WithRank(input_shape, 2, &input_shape));
+
+      ::tensorflow::shape_inference::ShapeHandle max_bitlen_shape = c->input(1);
+      TF_RETURN_IF_ERROR(c->WithRank(max_bitlen_shape, 0, &max_bitlen_shape));
 
       ::tensorflow::shape_inference::ShapeHandle expansion_shape =
           c->MakeShape({c->UnknownDim()});

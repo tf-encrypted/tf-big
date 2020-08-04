@@ -147,32 +147,7 @@ def constant(tensor):
   return convert_to_tensor(tensor)
 
 
-
-def _numpy_limbs_to_tensor(tensor):
-  if len(tensor.shape) < 2:
-    raise ValueError("Tensor must have at least a 2D shape when given in GMP format.")
-
-  if np.issubdtype(tensor.dtype, np.int32) \
-    or np.issubdtype(tensor.dtype, np.uint8):
-    return Tensor(ops.big_import_limbs(tensor))
-  else:
-    raise ValueError("Not implemented limb conversion for this type")
-
-
-def _tensor_limbs_to_tensor(tensor):
-  if len(tensor.shape) < 2:
-    raise ValueError("Tensor must have at least a 2D shape when given in GMP format.")
-
-  if tensor.dtype in (tf.uint8, tf.int32):
-    return Tensor(ops.big_import_limbs(tensor))
-  else:
-    raise ValueError("Not implemented limb conversion")
-
-
-def _convert_numpy_tensor(tensor, limb_format=False):
-  if limb_format is True:
-    return _numpy_limbs_to_tensor(tensor)
-
+def _import_numpy_tensor(tensor):
   if len(tensor.shape) > 2:
     raise ValueError("Only matrices are supported for now.")
     
@@ -195,10 +170,7 @@ def _convert_numpy_tensor(tensor, limb_format=False):
   raise ValueError("Don't know how to convert NumPy tensor with dtype '{}'".format(tensor.dtype))
 
 
-def _convert_tensorflow_tensor(tensor, limb_format=False):
-
-  if limb_format is True:
-    return _tensor_limbs_to_tensor(tensor)
+def _import_tensorflow_tensor(tensor):
 
   if len(tensor.shape) > 2:
     raise ValueError("Only matrices are supported for now.")
@@ -216,10 +188,10 @@ def _convert_tensorflow_tensor(tensor, limb_format=False):
     tensor = tf.as_string(tensor)
     return Tensor(ops.big_import(tensor))
 
-  raise ValueError("Don't know how to convert TensorFlow tensor with dtype '{}'".format(tensor.dtype))
+  raise ValueError("Don't know how to import TensorFlow tensor with dtype '{}'".format(tensor.dtype))
 
 
-def convert_to_tensor(tensor, limb_format=False):
+def convert_to_tensor(tensor):
   if isinstance(tensor, Tensor):
     return tensor
 
@@ -227,34 +199,77 @@ def convert_to_tensor(tensor, limb_format=False):
     return None
 
   if isinstance(tensor, (int, str)):
-    return _convert_numpy_tensor(np.array([tensor]), limb_format)
+    return _import_numpy_tensor(np.array([tensor]))
 
   if isinstance(tensor, (list, tuple)):
-    return _convert_numpy_tensor(np.array(tensor), limb_format)
+    return _import_numpy_tensor(np.array(tensor))
 
   if isinstance(tensor, np.ndarray):
-    return _convert_numpy_tensor(tensor, limb_format)
+    return _import_numpy_tensor(tensor)
 
   if isinstance(tensor, tf.Tensor):
-    return _convert_tensorflow_tensor(tensor, limb_format)
+    return _import_tensorflow_tensor(tensor)
 
   raise ValueError("Don't know how to convert value of type {}".format(type(tensor)))
 
 
-def convert_from_tensor(value, dtype=None, limb_format=False, max_bitlen=None):
+def convert_from_tensor(value, dtype=None):
   assert isinstance(value, Tensor), type(value)
 
   if dtype is None:
     dtype = tf.string
 
-  if limb_format is True:
-    assert max_bitlen != None
-    return ops.big_export_limbs(max_bitlen, value._raw, dtype)
-
   if dtype in [tf.int32, tf.string]:
     return ops.big_export(value._raw, dtype=dtype)
 
   raise ValueError("Don't know how to evaluate to dtype '{}'".format(dtype))
+
+
+def _import_numpy_limbs_tensor(tensor):
+  if len(tensor.shape) < 2:
+    raise ValueError("Tensor must have at least a 2D shape when given as limbs.")
+
+  if np.issubdtype(tensor.dtype, np.int32) \
+    or np.issubdtype(tensor.dtype, np.uint8):
+    return Tensor(ops.big_import_limbs(tensor))
+
+  raise ValueError("Not implemented limb conversion for dtype {}".format(tensor.dtype))
+
+
+def _import_tensorflow_limbs_tensor(tensor):
+  if len(tensor.shape) < 2:
+    raise ValueError("Tensor must have at least a 2D shape when given as limbs.")
+
+  if tensor.dtype in [tf.uint8, tf.int32]:
+    return Tensor(ops.big_import_limbs(tensor))
+
+  raise ValueError("Not implemented limb conversion for dtype {}".format(tensor.dtype))
+
+
+def import_limbs_tensor(limbs_tensor):
+  if isinstance(limbs_tensor, (int, str)):
+    return _import_numpy_limbs_tensor(np.array([limbs_tensor]))
+
+  if isinstance(limbs_tensor, (list, tuple)):
+    return _import_numpy_limbs_tensor(np.array(limbs_tensor))
+
+  if isinstance(limbs_tensor, np.ndarray):
+    return _import_numpy_limbs_tensor(limbs_tensor)
+
+  if isinstance(limbs_tensor, tf.Tensor):
+    return _import_tensorflow_limbs_tensor(limbs_tensor)
+
+  raise ValueError("Don't know how to import limbs tensor with dtype {}".format(type(limbs_tensor)))
+
+
+def export_limbs_tensor(big_tensor, dtype=None, max_bitlen=None):
+  dtype = dtype or tf.uint8
+  max_bitlen = max_bitlen or -1
+
+  if dtype in [tf.uint8, tf.int32]:
+    return ops.big_export_limbs(big_tensor._raw, max_bitlen=max_bitlen, dtype=dtype)
+
+  raise ValueError("Don't know how to export to limbs tensor with dtype '{}'".format(dtype))
 
 
 _SECURE = True

@@ -6,6 +6,8 @@ import tensorflow as tf
 
 from tf_big.python.tensor import convert_from_tensor
 from tf_big.python.tensor import convert_to_tensor
+from tf_big.python.tensor import export_limbs_tensor
+from tf_big.python.tensor import import_limbs_tensor
 from tf_big.python.tensor import pow
 from tf_big.python.tensor import random_uniform
 from tf_big.python.tensor import random_rsa_modulus
@@ -278,36 +280,39 @@ class ConvertTest(parameterized.TestCase):
     assert y.dtype is tf.string
 
   @parameterized.parameters(
-      {"run_eagerly": run_eagerly, "tf_type": tf_type, "tf_shape": tf_shape}
+      {"run_eagerly": run_eagerly, "x_np": x_np, "tf_type": tf_type, "max_bitlen": max_bitlen, "tf_shape": tf_shape}
       for run_eagerly in (True, False)
-      for tf_type, tf_shape in [(tf.int32, 2), (tf.uint8, 6)]
-
+      for x_np, tf_type, max_bitlen, tf_shape in [
+          (np.array([[10, 20]]), tf.int32, None, 2),
+          (np.array([[10, 20]]), tf.int32, 16, 2),
+          (np.array([[10, 20]]), tf.uint8, None, 5),
+          (np.array([[10, 20]]), tf.uint8, 16, 6),
+      ]
   )
-  def test_limb_conversion(self, run_eagerly, tf_type, tf_shape):
+  def test_limb_conversion(self, run_eagerly, x_np, tf_type, max_bitlen, tf_shape):
     context = tf_execution_context(run_eagerly)
 
     with context.scope():
-      x = convert_to_tensor(np.array([[10, 20]]))
+      x = convert_to_tensor(x_np)
       assert x.shape.as_list() == [1, 2], x.shape
-      x_limbs = convert_from_tensor(x, dtype=tf_type, limb_format=True, max_bitlen=16)
+      x_limbs = export_limbs_tensor(x, dtype=tf_type, max_bitlen=max_bitlen)
       assert x_limbs.shape.as_list() == x.shape.as_list() + (
           [tf_shape] if run_eagerly else [None]), x_limbs.shape
-      x_norm = convert_to_tensor(x_limbs, limb_format=True)
+      x_norm = import_limbs_tensor(x_limbs)
       assert x_norm.shape.as_list() == x.shape.as_list(), x_norm.shape
 
       y = convert_to_tensor(np.array([[30, 40]]))
       assert y.shape.as_list() == [1, 2], y.shape
-      y_limbs = convert_from_tensor(y, dtype=tf_type, limb_format=True, max_bitlen=16)
+      y_limbs = export_limbs_tensor(y, dtype=tf_type, max_bitlen=max_bitlen)
       assert y_limbs.shape.as_list() == y.shape.as_list() + (
           [tf_shape] if run_eagerly else [None]), y_limbs.shape
-      y_norm = convert_to_tensor(y_limbs, limb_format=True) 
+      y_norm = import_limbs_tensor(y_limbs) 
       assert y_norm.shape.as_list() == y.shape.as_list(), y_norm.shape
 
       z = x_norm + y_norm
       res = convert_from_tensor(z)
 
     np.testing.assert_array_equal(context.evaluate(res).astype(str), np.array([["40", "60"]]))
-
 
 
 if __name__ == '__main__':
