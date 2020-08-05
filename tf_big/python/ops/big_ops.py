@@ -2,7 +2,6 @@ import tensorflow as tf
 from tensorflow.python.framework.errors import NotFoundError
 from tensorflow.python.platform import resource_loader
 
-
 big_ops_libfile = resource_loader.get_path_to_datafile("_big_ops.so")
 big_ops = tf.load_op_library(big_ops_libfile)
 

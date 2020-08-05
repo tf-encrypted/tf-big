@@ -1,117 +1,123 @@
+from typing import Optional
+
 import numpy as np
 import tensorflow as tf
+from tensorflow.python.client import session as tf_session
+from tensorflow.python.framework import ops as tf_ops
+from tensorflow.python.keras.utils import tf_utils
 
 import tf_big.python.ops.big_ops as ops
 
-from tensorflow.python.keras.utils import tf_utils
-from tensorflow.python.client import session as tf_session
-from tensorflow.python.framework import ops as tf_ops
-
 
 class Tensor(object):
-  is_tensor_like = True  # needed to pass tf.is_tensor, new as of TF 2.2+
+    is_tensor_like = True  # needed to pass tf.is_tensor, new as of TF 2.2+
 
-  def __init__(self, value):
-    assert isinstance(value, tf.Tensor), type(value)
-    assert value.dtype is tf.variant, value.dtype
-    self._raw = value
+    def __init__(self, value):
+        assert isinstance(value, tf.Tensor), type(value)
+        assert value.dtype is tf.variant, value.dtype
+        self._raw = value
 
-  @property
-  def shape(self):
-    return self._raw.shape
+    @property
+    def shape(self):
+        return self._raw.shape
 
-  @property
-  def name(self):
-    return self._raw.name
+    @property
+    def name(self):
+        return self._raw.name
 
-  @property
-  def dtype(self):
-    return tf.int32
-    # return tf.string
+    @property
+    def dtype(self):
+        return tf.int32
+        # return tf.string
 
-  def eval(self, session=None, dtype=None):
-    tf_tensor = convert_from_tensor(self, dtype=dtype)
-    evaluated = tf_tensor.eval(session=session)
-    if tf_tensor.dtype is tf.string:
-      return evaluated.astype(str)
-    return evaluated
+    def eval(self, session=None, dtype=None):
+        tf_tensor = export_tensor(self, dtype=dtype)
+        evaluated = tf_tensor.eval(session=session)
+        if tf_tensor.dtype is tf.string:
+            return evaluated.astype(str)
+        return evaluated
 
-  def __add__(self, other):
-    other = convert_to_tensor(other)
-    # TODO (Yann) This broadcast should be implemented
-    # in big_kernels.cc
-    self, other = broadcast(self, other)
-    res = ops.big_add(self._raw, other._raw)
-    return Tensor(res)
+    def __add__(self, other):
+        other = import_tensor(other)
+        # TODO (Yann) This broadcast should be implemented
+        # in big_kernels.cc
+        self, other = broadcast(self, other)
+        res = ops.big_add(self._raw, other._raw)
+        return Tensor(res)
 
-  def __radd__(self, other):
-    other = convert_to_tensor(other)
-    # TODO (Yann) This broadcast should be implemented
-    # in big_kernels.cc
-    self, other = broadcast(self, other)
-    res = ops.big_add(self._raw, other._raw)
-    return Tensor(res)
+    def __radd__(self, other):
+        other = import_tensor(other)
+        # TODO (Yann) This broadcast should be implemented
+        # in big_kernels.cc
+        self, other = broadcast(self, other)
+        res = ops.big_add(self._raw, other._raw)
+        return Tensor(res)
 
-  def __sub__(self, other):
-    other = convert_to_tensor(other)
-    # TODO (Yann) This broadcast should be implemented
-    # in big_kernels.cc
-    self, other = broadcast(self, other)
-    res = ops.big_sub(self._raw, other._raw)
-    return Tensor(res)
+    def __sub__(self, other):
+        other = import_tensor(other)
+        # TODO (Yann) This broadcast should be implemented
+        # in big_kernels.cc
+        self, other = broadcast(self, other)
+        res = ops.big_sub(self._raw, other._raw)
+        return Tensor(res)
 
-  def __mul__(self, other):
-    other = convert_to_tensor(other)
-    # TODO (Yann) This broadcast should be implemented
-    # in big_kernels.cc
-    self, other = broadcast(self, other)
-    res = ops.big_mul(self._raw, other._raw)
-    return Tensor(res)
+    def __mul__(self, other):
+        other = import_tensor(other)
+        # TODO (Yann) This broadcast should be implemented
+        # in big_kernels.cc
+        self, other = broadcast(self, other)
+        res = ops.big_mul(self._raw, other._raw)
+        return Tensor(res)
 
-  def __floordiv__(self, other):
-    other = convert_to_tensor(other)
-    # TODO (Yann) This broadcast should be implemented
-    # in big_kernels.cc
-    self, other = broadcast(self, other)
-    res = ops.big_div(self._raw, other._raw)
-    return Tensor(res)
+    def __floordiv__(self, other):
+        other = import_tensor(other)
+        # TODO (Yann) This broadcast should be implemented
+        # in big_kernels.cc
+        self, other = broadcast(self, other)
+        res = ops.big_div(self._raw, other._raw)
+        return Tensor(res)
 
-  def pow(self, exponent, modulus=None, secure=None):
-    # TODO (Yann) This broadcast should be implemented
-    # in big_kernels.cc
-    exponent = convert_to_tensor(exponent)
-    modulus = convert_to_tensor(modulus)
-    self, exponent = broadcast(self, exponent)
-    res = ops.big_pow(base=self._raw,
-                      exponent=exponent._raw,
-                      modulus=modulus._raw if modulus else None,
-                      secure=secure if secure is not None else get_secure_default())
-    return Tensor(res)
+    def pow(self, exponent, modulus=None, secure=None):
+        # TODO (Yann) This broadcast should be implemented
+        # in big_kernels.cc
+        exponent = import_tensor(exponent)
+        modulus = import_tensor(modulus)
+        self, exponent = broadcast(self, exponent)
+        res = ops.big_pow(
+            base=self._raw,
+            exponent=exponent._raw,
+            modulus=modulus._raw if modulus else None,
+            secure=secure if secure is not None else get_secure_default(),
+        )
+        return Tensor(res)
 
-  def __pow__(self, exponent):
-    return self.pow(exponent)
+    def __pow__(self, exponent):
+        return self.pow(exponent)
 
-  def __mod__(self, modulus):
-    modulus = convert_to_tensor(modulus)
-    res = ops.big_mod(val=self._raw, mod=modulus._raw)
-    return Tensor(res)
+    def __mod__(self, modulus):
+        modulus = import_tensor(modulus)
+        res = ops.big_mod(val=self._raw, mod=modulus._raw)
+        return Tensor(res)
 
-  def inv(self, modulus):
-    modulus = convert_to_tensor(modulus)
-    res = ops.big_inv(val=self._raw, mod=modulus._raw)
-    return Tensor(res)
+    def inv(self, modulus):
+        modulus = import_tensor(modulus)
+        res = ops.big_inv(val=self._raw, mod=modulus._raw)
+        return Tensor(res)
 
 
 def _fetch_function(big_tensor):
-  unwrapped = [convert_from_tensor(big_tensor, dtype=tf.string)]
-  rewrapper = lambda components_fetched: components_fetched[0].astype(str)
-  return unwrapped, rewrapper
+    unwrapped = [export_tensor(big_tensor, dtype=tf.string)]
+    rewrapper = lambda components_fetched: components_fetched[0].astype(str)
+    return unwrapped, rewrapper
+
 
 def _feed_function(big_tensor, feed_value):
-  return [(big_tensor._raw, feed_value)]
+    return [(big_tensor._raw, feed_value)]
+
 
 def _feed_function_for_partial_run(big_tensor):
-  return [big_tensor._raw]
+    return [big_tensor._raw]
+
 
 # this allows tf_big.Tensor to be passed directly to tf.Session.run,
 # unwrapping and converting the result as needed
@@ -124,10 +130,11 @@ tf_session.register_session_run_conversion_functions(
 
 
 def _tensor_conversion_function(tensor, dtype=None, name=None, as_ref=False):
-  assert name is None, "Not implemented, name='{}'".format(name)
-  assert not as_ref, "Not implemented, as_ref={}".format(as_ref)
-  assert dtype in [tf.int32, None], dtype
-  return convert_from_tensor(tensor, dtype=dtype)
+    assert name is None, "Not implemented, name='{}'".format(name)
+    assert not as_ref, "Not implemented, as_ref={}".format(as_ref)
+    assert dtype in [tf.int32, None], dtype
+    return export_tensor(tensor, dtype=dtype)
+
 
 # TODO(Morten)
 # this allows implicit convertion of tf_big.Tensor to tf.Tensor,
@@ -143,205 +150,212 @@ tf_utils.register_symbolic_tensor_type(Tensor)
 
 
 def constant(tensor):
-  assert isinstance(tensor, (np.ndarray, list, tuple)), type(tensor)
-  return convert_to_tensor(tensor)
+    assert isinstance(tensor, (np.ndarray, list, tuple)), type(tensor)
+    return import_tensor(tensor)
 
 
+def _convert_to_numpy_tensor(tensor):
+    if isinstance(tensor, np.ndarray):
+        return tensor
 
-def _numpy_limbs_to_tensor(tensor):
-  if len(tensor.shape) < 2:
-    raise ValueError("Tensor must have at least a 2D shape when given in GMP format.")
+    if isinstance(tensor, (int, str)):
+        return np.array([[tensor]])
 
-  if np.issubdtype(tensor.dtype, np.int32) \
-    or np.issubdtype(tensor.dtype, np.uint8):
-    return Tensor(ops.big_import_limbs(tensor))
-  else:
-    raise ValueError("Not implemented limb conversion for this type")
+    if isinstance(tensor, (list, tuple)):
+        return np.array(tensor)
 
-
-def _tensor_limbs_to_tensor(tensor):
-  if len(tensor.shape) < 2:
-    raise ValueError("Tensor must have at least a 2D shape when given in GMP format.")
-
-  if tensor.dtype in (tf.uint8, tf.int32):
-    return Tensor(ops.big_import_limbs(tensor))
-  else:
-    raise ValueError("Not implemented limb conversion")
+    raise ValueError("Cannot convert to NumPy tensor: '{}'".format(type(tensor)))
 
 
-def _convert_numpy_tensor(tensor, limb_format=False):
-  if limb_format is True:
-    return _numpy_limbs_to_tensor(tensor)
+def _import_tensor_numpy(tensor):
+    tensor = _convert_to_numpy_tensor(tensor)
 
-  if len(tensor.shape) > 2:
-    raise ValueError("Only matrices are supported for now.")
-    
-  # make sure we have a full matrix
-  while len(tensor.shape) < 2:
-    tensor = np.expand_dims(tensor, 0)
+    if np.issubdtype(tensor.dtype, np.int64) or np.issubdtype(tensor.dtype, np.object_):
+        tensor = tensor.astype(np.string_)
+    elif not (
+        np.issubdtype(tensor.dtype, np.int32)
+        or np.issubdtype(tensor.dtype, np.string_)
+        or np.issubdtype(tensor.dtype, np.unicode_)
+    ):
+        raise ValueError("Unsupported dtype '{}'.".format(tensor.dtype))
 
-  if np.issubdtype(tensor.dtype, np.int32) \
-     or np.issubdtype(tensor.dtype, np.string_) \
-     or np.issubdtype(tensor.dtype, np.unicode_):
-    # supported as-is
+    if len(tensor.shape) != 2:
+        raise ValueError("Tensors must have rank 2.")
+
     return Tensor(ops.big_import(tensor))
 
-  if np.issubdtype(tensor.dtype, np.int64) \
-     or np.issubdtype(tensor.dtype, np.object_):
-    # supported as strings
-    tensor = tensor.astype(np.string_)
-    return Tensor(ops.big_import(tensor))
-  
-  raise ValueError("Don't know how to convert NumPy tensor with dtype '{}'".format(tensor.dtype))
 
+def _import_tensor_tensorflow(tensor):
+    if tensor.dtype in [tf.int64]:
+        tensor = tf.as_string(tensor)
+    elif tensor.dtype not in [tf.uint8, tf.int32, tf.string]:
+        raise ValueError("Unsupported dtype '{}'".format(tensor.dtype))
 
-def _convert_tensorflow_tensor(tensor, limb_format=False):
+    if len(tensor.shape) != 2:
+        raise ValueError("Tensor must have rank 2.")
 
-  if limb_format is True:
-    return _tensor_limbs_to_tensor(tensor)
-
-  if len(tensor.shape) > 2:
-    raise ValueError("Only matrices are supported for now.")
-
-  # make sure we have a full matrix
-  while len(tensor.shape) < 2:
-    tensor = tf.expand_dims(tensor, 0)
-
-  if tensor.dtype in (tf.int32, tf.string, tf.uint8):
-    # supported as-is
     return Tensor(ops.big_import(tensor))
 
-  if tensor.dtype in (tf.int64, ):
-    # supported as strings
-    tensor = tf.as_string(tensor)
-    return Tensor(ops.big_import(tensor))
 
-  raise ValueError("Don't know how to convert TensorFlow tensor with dtype '{}'".format(tensor.dtype))
-
-
-def convert_to_tensor(tensor, limb_format=False):
-  if isinstance(tensor, Tensor):
-    return tensor
-
-  if tensor is None:
-    return None
-
-  if isinstance(tensor, (int, str)):
-    return _convert_numpy_tensor(np.array([tensor]), limb_format)
-
-  if isinstance(tensor, (list, tuple)):
-    return _convert_numpy_tensor(np.array(tensor), limb_format)
-
-  if isinstance(tensor, np.ndarray):
-    return _convert_numpy_tensor(tensor, limb_format)
-
-  if isinstance(tensor, tf.Tensor):
-    return _convert_tensorflow_tensor(tensor, limb_format)
-
-  raise ValueError("Don't know how to convert value of type {}".format(type(tensor)))
+def import_tensor(tensor):
+    if isinstance(tensor, Tensor):
+        return tensor
+    if isinstance(tensor, tf.Tensor):
+        return _import_tensor_tensorflow(tensor)
+    return _import_tensor_numpy(tensor)
 
 
-def convert_from_tensor(value, dtype=None, limb_format=False, max_bitlen=None):
-  assert isinstance(value, Tensor), type(value)
+def export_tensor(tensor, dtype=None):
+    assert isinstance(tensor, Tensor), type(value)
 
-  if dtype is None:
-    dtype = tf.string
+    dtype = dtype or tf.string
+    if dtype not in [tf.int32, tf.string]:
+        raise ValueError("Unsupported dtype '{}'".format(dtype))
 
-  if limb_format is True:
-    assert max_bitlen != None
-    return ops.big_export_limbs(max_bitlen, value._raw, dtype)
+    return ops.big_export(tensor._raw, dtype=dtype)
 
-  if dtype in [tf.int32, tf.string]:
-    return ops.big_export(value._raw, dtype=dtype)
 
-  raise ValueError("Don't know how to evaluate to dtype '{}'".format(dtype))
+def _import_limbs_tensor_tensorflow(limbs_tensor):
+    if limbs_tensor.dtype not in [tf.uint8, tf.int32]:
+        raise ValueError(
+            "Not implemented limb conversion for dtype {}".format(limbs_tensor.dtype)
+        )
+
+    if len(limbs_tensor.shape) != 3:
+        raise ValueError("Limbs tensors must be rank 3.")
+
+    return Tensor(ops.big_import_limbs(limbs_tensor))
+
+
+def _import_limbs_tensor_numpy(limbs_tensor):
+    limbs_tensor = _convert_to_numpy_tensor(limbs_tensor)
+
+    if len(tensor.shape) != 3:
+        raise ValueError("Limbs tensors must have rank 3.")
+
+    if not (
+        np.issubdtype(limbs_tensor.dtype, np.int32)
+        or np.issubdtype(limbs_tensor.dtype, np.uint8)
+    ):
+        raise ValueError(
+            "Not implemented limb conversion for dtype {}".format(tensor.dtype)
+        )
+
+    return Tensor(ops.big_import_limbs(limbs_tensor))
+
+
+def import_limbs_tensor(limbs_tensor):
+    if isinstance(limbs_tensor, tf.Tensor):
+        return _import_limbs_tensor_tensorflow(limbs_tensor)
+    return _import_limbs_tensor_numpy(limbs_tensor)
+
+
+def export_limbs_tensor(tensor, dtype=None, max_bitlen=None):
+    assert isinstance(tensor, Tensor), type(value)
+
+    # Indicate missing value as negative
+    max_bitlen = max_bitlen or -1
+
+    dtype = dtype or tf.uint8
+    if dtype not in [tf.uint8, tf.int32]:
+        raise ValueError("Unsupported dtype '{}'".format(dtype))
+
+    return ops.big_export_limbs(tensor._raw, dtype=dtype, max_bitlen=max_bitlen)
 
 
 _SECURE = True
 
+
 def set_secure_default(value):
-  global _SECURE
-  _SECURE = value
+    global _SECURE
+    _SECURE = value
+
 
 def get_secure_default():
-  return _SECURE
+    return _SECURE
 
 
 def random_uniform(shape, maxval):
-  if not isinstance(maxval, Tensor):
-    maxval = convert_to_tensor(maxval)
-  r_raw = ops.big_random_uniform(shape, maxval._raw)
-  return Tensor(r_raw)
+    if not isinstance(maxval, Tensor):
+        maxval = import_tensor(maxval)
+    r_raw = ops.big_random_uniform(shape, maxval._raw)
+    return Tensor(r_raw)
+
 
 def random_rsa_modulus(bitlength):
-  p_raw, q_raw, n_raw = ops.big_random_rsa_modulus(bitlength)
-  return Tensor(p_raw), Tensor(q_raw), Tensor(n_raw)
+    p_raw, q_raw, n_raw = ops.big_random_rsa_modulus(bitlength)
+    return Tensor(p_raw), Tensor(q_raw), Tensor(n_raw)
 
 
 def add(x, y):
-  # TODO(Morten) lifting etc
-  return x + y
+    # TODO(Morten) lifting etc
+    return x + y
+
 
 def sub(x, y):
-  # TODO(Morten) lifting etc
-  return x - y
+    # TODO(Morten) lifting etc
+    return x - y
+
 
 def mul(x, y):
-  # TODO(Morten) lifting etc
-  return x * y
+    # TODO(Morten) lifting etc
+    return x * y
+
 
 def pow(base, exponent, modulus=None, secure=None):
-  # TODO(Morten) lifting etc
-  assert isinstance(base, Tensor)
-  return base.pow(exponent=exponent,
-                  modulus=modulus,
-                  secure=secure)
+    # TODO(Morten) lifting etc
+    assert isinstance(base, Tensor)
+    return base.pow(exponent=exponent, modulus=modulus, secure=secure)
+
 
 def matmul(x, y):
-  # TODO(Morten) lifting etc
-  return x.matmul(y)
+    # TODO(Morten) lifting etc
+    return x.matmul(y)
+
 
 def mod(x, n):
-  return x.mod(n)
+    return x.mod(n)
+
 
 def inv(x, n):
-  return x.inv(n)
+    return x.inv(n)
+
 
 def broadcast(x, y):
 
-  x_rank = x.shape.rank
-  y_rank = y.shape.rank
-  x_nb_el = x.shape.num_elements()
-  y_nb_el = y.shape.num_elements()
+    x_rank = x.shape.rank
+    y_rank = y.shape.rank
+    x_nb_el = x.shape.num_elements()
+    y_nb_el = y.shape.num_elements()
 
-  # e.g broadcast [1] with [1, 1]
-  if x_rank != y_rank: 
+    # e.g broadcast [1] with [1, 1]
+    if x_rank != y_rank:
 
-    if x_rank < y_rank:
-      x = convert_from_tensor(x)
-      x = tf.broadcast_to(x, y.shape) 
-      x = convert_to_tensor(x)
+        if x_rank < y_rank:
+            x = export_tensor(x)
+            x = tf.broadcast_to(x, y.shape)
+            x = import_tensor(x)
 
-    elif y_rank < x_rank: 
-      y = convert_from_tensor(y)
-      y = tf.broadcast_to(y, x.shape) 
-      y = convert_to_tensor(y)
+        elif y_rank < x_rank:
+            y = export_tensor(y)
+            y = tf.broadcast_to(y, x.shape)
+            y = import_tensor(y)
+
+        return x, y
+
+    # e.g broadcast [1, 1] with [1, 2]
+    elif x_nb_el != y_nb_el:
+
+        if x_nb_el < y_nb_el:
+            x = export_tensor(x)
+            x = tf.broadcast_to(x, y.shape)
+            x = import_tensor(x)
+
+        elif x_nb_el > y_nb_el:
+            y = export_tensor(y)
+            y = tf.broadcast_to(y, x.shape)
+            y = import_tensor(y)
+
+        return x, y
 
     return x, y
-
-  # e.g broadcast [1, 1] with [1, 2]
-  elif x_nb_el != y_nb_el:
-
-    if x_nb_el < y_nb_el:
-      x = convert_from_tensor(x)
-      x = tf.broadcast_to(x, y.shape)
-      x = convert_to_tensor(x)
-
-    elif x_nb_el > y_nb_el:
-      y = convert_from_tensor(y)
-      y = tf.broadcast_to(y, x.shape)
-      y = convert_to_tensor(y)
-
-    return x, y
-
-  return x, y

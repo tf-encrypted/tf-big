@@ -5,6 +5,7 @@ bazel*
 **.pyc
 .mypy*
 __pycache__
+**/*egg-info
 
 artifacts/*
 wheelhouse/*

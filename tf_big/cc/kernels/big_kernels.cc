@@ -100,55 +100,72 @@ class BigExportLimbsOp : public OpKernel {
       : OpKernel(context) {}
 
   void Compute(OpKernelContext* ctx) override {
-    const Tensor& maxval_tensor = ctx->input(0);
-    auto max_bitlen = maxval_tensor.flat<int32>()(0);
+    const Tensor& maxval_tensor = ctx->input(1);
+    int32_t max_bitlen = maxval_tensor.flat<int32>()(0);
 
-    const BigTensor* curBigTensor = nullptr;
-    TensorShape input_shape = ctx->input(1).shape();
-    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 1, &curBigTensor));
+    const BigTensor* input = nullptr;
+    TensorShape input_shape = ctx->input(0).shape();
+    OP_REQUIRES_OK(ctx, GetBigTensor(ctx, 0, &input));
 
-    Tensor* output;
+    // Compute maxval if left unspecified by user
+    if (max_bitlen < 0) {
+      for (int i = 0; i < input->rows(); i++) {
+        for (int j = 0; j < input->cols(); j++) {
+          auto ele = input->value(i, j).get_mpz_t();
+          int32_t ele_bitlen = mpz_sizeinbase(ele, 2);
+          if (max_bitlen < ele_bitlen) {
+            max_bitlen = ele_bitlen;
+          }
+        }
+      }
+    }
+    OP_REQUIRES(ctx, max_bitlen >= 0,
+                errors::Internal("Malformed max bitlength: ", max_bitlen));
+    unsigned int max_bytelen = max_bitlen * 8;
+
+    unsigned int header_bytelen = 4;
+    unsigned int header_bitlen = header_bytelen * 8;
+    unsigned int entry_bitlen = header_bitlen + max_bitlen;
+    unsigned int type_bitlen = sizeof(T) * 8;
+    unsigned int num_limbs = (entry_bitlen + type_bitlen - 1) / type_bitlen;
+    unsigned int entry_bytelen = num_limbs * sizeof(T);
 
     TensorShape output_shape;
     output_shape.AddDim(input_shape.dim_size(0));
     output_shape.AddDim(input_shape.dim_size(1));
+    output_shape.AddDim(num_limbs);
 
-    unsigned int type_bitlen = sizeof(T) * 8;
-    unsigned int len_field_bits = 32;
-    unsigned int num_max_limbs =
-        (len_field_bits + max_bitlen + type_bitlen - 1) / type_bitlen;
-
-    output_shape.AddDim(num_max_limbs);
-
+    Tensor* output;
     OP_REQUIRES_OK(ctx, ctx->allocate_output(0, output_shape, &output));
+    auto output_flattened = output->flat<T>();
+    uint8_t* output_data = reinterpret_cast<uint8_t*>(output_flattened.data());
 
-    auto rows = curBigTensor->value.rows();
-    auto cols = curBigTensor->value.cols();
-
-    auto flatened = output->flat<T>();
-    uint8_t* result = reinterpret_cast<uint8_t*>(flatened.data());
-
-    size_t expansion_factor = output->dim_size(2) * sizeof(T);
-    size_t header_len = 4;
     size_t pointer = 0;
+    for (int i = 0; i < input->rows(); i++) {
+      for (int j = 0; j < input->cols(); j++) {
+        auto ele = input->value(i, j).get_mpz_t();
 
-    for (int i = 0; i < rows; i++) {
-      for (int j = 0; j < cols; j++) {
-        unsigned int num =
-            mpz_sizeinbase(curBigTensor->value(i, j).get_mpz_t(), 256);
-        tf_big::encode_length(result + pointer, num);
-
-        size_t exported_len;
-        mpz_export(result + pointer + header_len, &exported_len, 1,
-                   sizeof(uint8_t), 0, 0,
-                   curBigTensor->value(i, j).get_mpz_t());
+        // Write header to output buffer
+        unsigned int ele_bytelen = mpz_sizeinbase(ele, 256);
+        tf_big::encode_length(output_data + pointer, ele_bytelen);
         OP_REQUIRES(
-            ctx, header_len + exported_len <= expansion_factor,
+            ctx, ele_bytelen <= max_bytelen,
             errors::Internal("User selected wrong byte length, required: ",
-                             exported_len, " bytes"));
-        for (size_t k = header_len + exported_len; k < expansion_factor; k++)
-          result[pointer + k] = 0;
-        pointer += expansion_factor;
+                             ele_bytelen, " bytes"));
+
+        // Write element to output buffer
+        size_t exported_bytelen;
+        mpz_export(output_data + pointer + header_bytelen, &exported_bytelen, 1,
+                   sizeof(uint8_t), 0, 0, ele);
+
+        // Zero-out remaining bytes of entry
+        for (size_t k = header_bytelen + exported_bytelen; k < entry_bytelen;
+             k++) {
+          output_data[pointer + k] = 0;
+        }
+
+        // Advance pointer to next entry
+        pointer += entry_bytelen;
       }
     }
   }

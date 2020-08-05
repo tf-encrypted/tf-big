@@ -1,13 +1,12 @@
 #ifndef TF_BIG_CC_BIG_TENSOR_H_
 #define TF_BIG_CC_BIG_TENSOR_H_
 
+#include <fcntl.h>
 #include <gmp.h>
 #include <gmpxx.h>
+#include <unistd.h>
 
 #include <string>
-
-#include <fcntl.h>
-#include <unistd.h>
 
 #include "Eigen/Core"
 #include "Eigen/Dense"
