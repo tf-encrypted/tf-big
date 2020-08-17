@@ -17,7 +17,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="tf-big",
-    version="0.2.0",
+    version="0.2.0-rc0",
     packages=setuptools.find_packages(),
     package_data={
         '': ['*.so'],
