@@ -29,7 +29,7 @@ setuptools.setup(
     ],
     extras_require={
         "tf": ["tensorflow~=2.2.0"],
-        "nightly": ["tf-nightly"]
+        "nightly": ["tf-nightly"],
     },
     license="Apache License 2.0",
     url="https://github.com/tf-encrypted/tf-big",
