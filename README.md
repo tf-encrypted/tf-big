@@ -56,7 +56,7 @@ Setting up a development environment on macOS is a little more involved since we
 - Python (>= 3.5)
 - [Bazel](https://www.bazel.build/) (>= 0.15.0)
 - [GMP](https://gmplib.org/) (>= 6.1.2)
-- [TensorFlow](https://www.tensorflow.org/) (== 1.13.1)
+- [TensorFlow](https://www.tensorflow.org/) (see setup.py for version requirements for your TF Big version)
 
 Using [Homebrew](https://brew.sh/) we first make sure that both [Bazel](https://docs.bazel.build/versions/master/install-os-x.html#install-with-installer-mac-os-x) and GMP are installed. We recommend using a Bazel version earlier than 1.0.0, e.g.:
 
